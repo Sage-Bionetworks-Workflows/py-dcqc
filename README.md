@@ -6,9 +6,9 @@
 -->
 [![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](#pyscaffold)
 
-> Add a short description here!
+> Python package for performing quality control (QC) for data coordination (DC)
 
-A longer description of your project goes here...
+This Python package provides a framework for performing quality control (QC) on data files. Quality control can range from low-level integrity checks (_e.g._ MD5 checksum, file extension) to high-level checks such as conformance to a format specification and consistency with associated metadata.
 
 # PyScaffold
 
