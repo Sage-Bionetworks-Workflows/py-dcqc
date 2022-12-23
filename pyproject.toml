@@ -12,3 +12,9 @@ version_scheme = "no-guess-dev"
 filterwarnings = [
     "ignore::UserWarning"
 ]
+
+[tool.flake8]
+per-file-ignores = [
+    '*/__init__.py:F401',
+]
+max-line-length = 88
