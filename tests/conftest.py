@@ -7,4 +7,18 @@
     - https://docs.pytest.org/en/stable/writing_plugins.html
 """
 
-# import pytest
+from pathlib import Path
+
+import pytest
+
+CNFPATH = Path(__file__).resolve()
+TESTDIR = CNFPATH.parent
+DATADIR = TESTDIR / "data"
+
+
+@pytest.fixture
+def get_data():
+    def _get_data(filename: str) -> Path:
+        return DATADIR / filename
+
+    yield _get_data
