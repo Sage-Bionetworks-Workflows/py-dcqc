@@ -10,6 +10,13 @@ finally:
 
 import logging
 
+from fs.opener import registry
+
+from dcqc.filesystems.openers import SynapseFSOpener
+
 # Set default logging handler to avoid "No handler found" warnings
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 logging.captureWarnings(True)
+
+# Register PyFileSystem SynapseFS opener
+registry.install(SynapseFSOpener)

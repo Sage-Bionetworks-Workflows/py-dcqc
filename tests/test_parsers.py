@@ -1,7 +1,7 @@
 from collections.abc import Generator
 
 from dcqc.parsers.csv_parser import CsvParser
-from dcqc.targets.file_qc_target import QcTargetABC
+from dcqc.targets.qc_target_abc import QcTargetABC
 
 
 def test_that_parsing_a_targets_csv_file_yields_qc_targets(get_data):

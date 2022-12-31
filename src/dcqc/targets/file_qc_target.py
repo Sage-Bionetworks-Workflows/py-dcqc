@@ -1,4 +1,4 @@
-from dcqc.targets.base_qc_target import QcTargetABC
+from dcqc.targets.qc_target_abc import QcTargetABC
 
 
 class FileQcTarget(QcTargetABC):

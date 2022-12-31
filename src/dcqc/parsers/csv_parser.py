@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 
-from dcqc.targets import FileQcTarget
+from dcqc.targets.file_qc_target import FileQcTarget
 
 
 class CsvParser:

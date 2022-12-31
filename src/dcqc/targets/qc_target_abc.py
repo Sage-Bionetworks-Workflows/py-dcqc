@@ -3,33 +3,40 @@ from collections.abc import Mapping
 from typing import Optional
 from warnings import warn
 
+from dcqc.uri import URI
+
 
 class QcTargetABC(ABC):
     # Class properties
-    used_uris: set[str]
+    used_uris: set[URI]
     used_indices: set[int]
     next_index: int
 
     # Instance properties
-    uri: str
+    uri: URI
     metadata: dict
     index: int
 
     def __init__(
-        self, uri: str, metadata: Optional[Mapping] = None, index: Optional[int] = None
+        self,
+        uri: str | URI,
+        metadata: Optional[Mapping] = None,
+        index: Optional[int] = None,
     ):
         self.type = self.__class__.__name__
+        if isinstance(uri, str):
+            uri = URI(uri)
         self.uri = self._process_uri(uri)
         metadata = metadata or dict()
         self.metadata = dict(metadata)  # Cast Mapping to dict
         self.index = self._process_index(index)
 
-    def _process_uri(self, uri: str):
+    def _process_uri(self, uri: URI):
         self._check_uri(uri)
         self.used_uris.add(uri)
         return uri
 
-    def _check_uri(self, uri: str):
+    def _check_uri(self, uri: URI):
         if uri in self.used_uris:
             warn(f"URI '{uri}' already used. URIs should probably be unique.")
 
@@ -74,10 +81,6 @@ class QcTargetABC(ABC):
             )
         target = cls(dictionary["uri"], dictionary["metadata"], dictionary["index"])
         return target
-
-
-class BaseQcTarget(QcTargetABC):
-    pass
 
 
 QcTargetABC.reset_memory()

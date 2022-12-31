@@ -9,6 +9,9 @@ build-backend = "setuptools.build_meta"
 version_scheme = "no-guess-dev"
 
 [tool.pytest.ini_options]
+# addopts = [
+#     "-m not integration"
+# ]
 filterwarnings = [
     "ignore::UserWarning"
 ]
