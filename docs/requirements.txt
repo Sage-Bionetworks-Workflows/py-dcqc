@@ -1,4 +1,5 @@
 fs~=2.4
+fs~=2.4
 # Requirements file for ReadTheDocs, check .readthedocs.yml.
 # To build the module reference correctly, make sure every external package
 # under `install_requires` in `setup.cfg` is also listed here!
