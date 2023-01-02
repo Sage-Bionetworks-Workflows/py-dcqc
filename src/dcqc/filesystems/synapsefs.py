@@ -437,7 +437,7 @@ class SynapseFS(FS):
             raise ResourceNotFound(path)
 
         # Create temporary directory for housing files
-        temp_dir = TemporaryDirectory(ignore_cleanup_errors=True)
+        temp_dir = TemporaryDirectory()
         temp_path = temp_dir.name
 
         def on_close(remote_file):
