@@ -1,9 +1,11 @@
 from abc import ABC
 from collections.abc import Mapping
-from typing import Optional
+from typing import Optional, Union
 from warnings import warn
 
 from dcqc.uri import URI
+
+UriType = Union[str, URI]
 
 
 class QcTargetABC(ABC):
@@ -19,7 +21,7 @@ class QcTargetABC(ABC):
 
     def __init__(
         self,
-        uri: str | URI,
+        uri: UriType,
         metadata: Optional[Mapping] = None,
         index: Optional[int] = None,
     ):
