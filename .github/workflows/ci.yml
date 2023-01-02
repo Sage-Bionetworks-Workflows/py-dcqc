@@ -69,7 +69,16 @@ jobs:
       - name: Retrieve pre-built distribution files
         uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
-      - name: Run tests
+      - name: Run tests (without integration tests)
+        if: matrix.platform != 'ubuntu-latest' || matrix.python != '3.10'
+        env:
+          SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
+        run: >-
+          pipx run --spec 'tox~=3.0' tox
+          --installpkg '${{ needs.prepare.outputs.wheel-distribution }}'
+          -- -rFEx --durations 10 --color yes
+      - name: Run tests (with integration tests)
+        if: matrix.platform == 'ubuntu-latest' && matrix.python == '3.10'
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
         run: >-
