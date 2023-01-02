@@ -8,6 +8,7 @@ from time import time_ns
 import pytest
 from fs import ResourceType, errors, open_fs
 from fs.opener.errors import OpenerError
+from fs.subfs import SubFS
 from fs.test import FSTestCases
 from synapseclient import Folder, Synapse
 from synapseclient.core.exceptions import SynapseFileNotFoundError, SynapseHTTPError
@@ -44,7 +45,7 @@ def test_that_staging_a_local_file_creates_a_copy(get_data):
 
 def test_that_staging_a_synapse_file_creates_a_copy(mocker):
     mocked_synapse = mocker.patch("synapseclient.Synapse")
-    synapse_fs = open_fs("syn://syn50545516/subdir")
+    synapse_fs = open_fs("syn://syn50545516")
     with TemporaryDirectory() as tmp_dir_name:
         tmp_dir_path = Path(tmp_dir_name)
         tmp_file_path = tmp_dir_path / "mocked.txt"
@@ -58,6 +59,12 @@ def test_that_staging_a_synapse_file_creates_a_copy(mocker):
         synapse_fs.download("test.txt", target_file)
         target_file.close()
         assert target_path.exists()
+
+
+@pytest.mark.integration
+def test_that_open_fs_will_return_a_sub_fs_when_uri_contains_subdirectory():
+    synapse_fs = open_fs("syn://syn50545516/TestSubDir")
+    assert isinstance(synapse_fs, SubFS)
 
 
 @pytest.mark.integration
