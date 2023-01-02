@@ -76,25 +76,14 @@ jobs:
           pipx run --spec 'tox~=3.0' tox
           --installpkg '${{ needs.prepare.outputs.wheel-distribution }}'
           -- -rFEx --durations 10 --color yes
-      - name: Generate coverage report
-        run: pipx run coverage lcov -o coverage.lcov
-      - name: Upload partial coverage report
-        uses: coverallsapp/github-action@master
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.platform == 'ubuntu-latest' && matrix.python == '3.10'
         with:
-          path-to-lcov: coverage.lcov
-          github-token: ${{ secrets.github_token }}
-          flag-name: ${{ matrix.platform }} - py${{ matrix.python }}
-          parallel: true
-
-  finalize:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Finalize coverage report
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
+          fail_ci_if_error: true
+          files: coverage.xml
+          name: ${{ matrix.platform }} - py${{ matrix.python }}
+          verbose: true
 
   publish:
     needs: finalize

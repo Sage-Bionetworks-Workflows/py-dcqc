@@ -50,7 +50,9 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.auth_token = os.environ["SYNAPSE_AUTH_TOKEN"]
+        cls.auth_token = os.environ.get("SYNAPSE_AUTH_TOKEN")
+        if cls.auth_token is None:
+            cls.skipTest(cls, "'SYNAPSE_AUTH_TOKEN' not set in environment.")
         cls.synapse = Synapse()
         cls.synapse.login(authToken=cls.auth_token)
         cls._empty_project()

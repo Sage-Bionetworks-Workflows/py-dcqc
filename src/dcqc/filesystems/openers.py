@@ -15,7 +15,7 @@ class SynapseFSOpener(Opener):
         if not root:
             message = f"Invalid Synapse URL ({fs_url}). Must start with project/folder."
             raise OpenerError(message)
-        auth_token = os.environ["SYNAPSE_AUTH_TOKEN"]
+        auth_token = os.environ.get("SYNAPSE_AUTH_TOKEN")
         synapsefs = SynapseFS(root, auth_token)
         if subdir:
             synapsefs = SubFS(synapsefs, subdir)
