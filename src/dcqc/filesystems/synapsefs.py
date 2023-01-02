@@ -162,14 +162,17 @@ class SynapseFS(FS):
                 continue
             if part == self.PARENT_DIR:
                 visited_parts.pop()
+                current_entity = visited_parts[-1][1]
                 continue
-            visited_parts.append(part)
             children_list = self._get_children(current_entity)
             children = {entity["name"]: entity for entity in children_list}
             if part in children:
                 current_entity = children[part]["id"]
+                visited_parts.append((part, current_entity))
             else:
-                visited_path = self.DELIMITER + self.DELIMITER.join(visited_parts)
+                visited_parts.append((part, None))
+                delim = self.DELIMITER
+                visited_path = delim + delim.join(part for part, _ in visited_parts)
                 message = f"This Synapse entity ({visited_path}) does not exist."
                 raise ResourceNotFound(path)
 
@@ -463,10 +466,11 @@ class SynapseFS(FS):
             entity = self._path_to_entity(path)
             with synapse_errors(path):
                 entity = self.synapse.get(entity, downloadLocation=temp_path)
+            # TODO: Re-enable this if we identify a use case
             # Truncate "empty" files that only contain the null byte
-            with open(entity.path, "r+b") as f:
-                if f.read(2) == self.NULL_BYTE:
-                    f.truncate(0)
+            # with open(entity.path, "r+b") as f:
+            #     if f.read(2) == self.NULL_BYTE:
+            #         f.truncate(0)
             # Re-open the file using the specified mode
             target_file = open(entity.path, mode_bin, buffering)
         # Otherwise, any existing file will be ignored

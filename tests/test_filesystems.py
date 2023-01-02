@@ -7,10 +7,26 @@ from time import time_ns
 
 import pytest
 from fs import ResourceType, errors, open_fs
+from fs.opener.errors import OpenerError
 from fs.test import FSTestCases
 from synapseclient import Folder, Synapse
+from synapseclient.core.exceptions import SynapseFileNotFoundError, SynapseHTTPError
 
-from dcqc.filesystems.synapsefs import SynapseFS
+from dcqc.filesystems.synapsefs import SynapseFS, synapse_errors
+
+
+def test_for_error_when_providing_invalid_uri_to_open_fs():
+    with pytest.raises(OpenerError):
+        open_fs("syn://")
+
+
+def test_for_fs_errors_when_using_synapse_errors_context_manager():
+    with pytest.raises(errors.FSError):
+        with synapse_errors("foo"):
+            raise SynapseFileNotFoundError("bar")
+    with pytest.raises(errors.FSError):
+        with synapse_errors("foo"):
+            raise SynapseHTTPError("does not exist")
 
 
 def test_that_staging_a_local_file_creates_a_copy(get_data):
@@ -28,7 +44,7 @@ def test_that_staging_a_local_file_creates_a_copy(get_data):
 
 def test_that_staging_a_synapse_file_creates_a_copy(mocker):
     mocked_synapse = mocker.patch("synapseclient.Synapse")
-    synapse_fs = open_fs("syn://syn50545516")
+    synapse_fs = open_fs("syn://syn50545516/subdir")
     with TemporaryDirectory() as tmp_dir_name:
         tmp_dir_path = Path(tmp_dir_name)
         tmp_file_path = tmp_dir_path / "mocked.txt"
@@ -194,3 +210,19 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
         self.assertEqual(self.fs.getsize("foo"), 3)
         self.fs.create("foo", wipe=False)
         self.assertEqual(self.fs.getsize("foo"), 3)
+
+    def test_getinfo_synapse(self):
+        self.fs.create("foo")
+        info = self.fs.getinfo("foo", namespaces=["synapse", "annotations"])
+        self.assertIn("synapse", info.namespaces)
+        self.assertIn("annotations", info.namespaces)
+
+    def test_valid_types(self):
+        with self.assertRaises(errors.ResourceInvalid):
+            self.fs._synapse_id_to_entity("syn50557522")  # TestTable
+
+    def test_double_period_in_path(self):
+        self.fs.makedirs("foo/bar/baz")
+        synapse_id_1 = self.fs._path_to_synapse_id("foo/bar/baz")
+        synapse_id_2 = self.fs._path_to_synapse_id("foo/bar/../bar/baz")
+        self.assertEqual(synapse_id_1, synapse_id_2)

@@ -2,19 +2,11 @@ from __future__ import annotations
 
 import io
 import os
-import tempfile
 from typing import BinaryIO
 
 
 class RemoteFile(io.IOBase, BinaryIO):
     """Proxy for a remote file."""
-
-    @classmethod
-    def factory(cls, filename, mode, on_close) -> RemoteFile:
-        """Create a RemoteFile backed with a temporary file."""
-        _temp_file = tempfile.NamedTemporaryFile()
-        remote_file = cls(_temp_file, filename, mode, on_close=on_close)
-        return remote_file
 
     def __init__(self, f, filename, mode, on_close=None):
         self._f = f
@@ -50,8 +42,8 @@ class RemoteFile(io.IOBase, BinaryIO):
     def flush(self):
         return self._f.flush()
 
-    def isatty(self):
-        return self._f.asatty()
+    # def isatty(self):
+    #     return self._f.asatty()
 
     def readable(self):
         return self.__mode.reading
@@ -95,8 +87,8 @@ class RemoteFile(io.IOBase, BinaryIO):
             raise IOError("not open for reading")
         return self._f.read(n)
 
-    def readall(self):
-        return self._f.readall()
+    # def readall(self):
+    #     return self._f.readall()
 
     def readinto(self, b):
         return self._f.readinto(b)
