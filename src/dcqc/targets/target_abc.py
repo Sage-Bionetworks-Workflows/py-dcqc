@@ -8,7 +8,7 @@ from dcqc.uri import URI
 UriType = Union[str, URI]
 
 
-class QcTargetABC(ABC):
+class TargetABC(ABC):
     # Class properties
     used_uris: set[URI]
     used_indices: set[int]
@@ -85,4 +85,4 @@ class QcTargetABC(ABC):
         return target
 
 
-QcTargetABC.reset_memory()
+TargetABC.reset_memory()
