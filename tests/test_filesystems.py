@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, TemporaryFile
 from time import time_ns
 
 import pytest
@@ -13,6 +13,7 @@ from fs.test import FSTestCases
 from synapseclient import Folder, Synapse
 from synapseclient.core.exceptions import SynapseFileNotFoundError, SynapseHTTPError
 
+from dcqc.filesystems.remote_file import RemoteFile
 from dcqc.filesystems.synapsefs import SynapseFS, synapse_errors
 
 
@@ -28,6 +29,21 @@ def test_for_fs_errors_when_using_synapse_errors_context_manager():
     with pytest.raises(errors.FSError):
         with synapse_errors("foo"):
             raise SynapseHTTPError("does not exist")
+    with pytest.raises(errors.FSError):
+        with synapse_errors("foo"):
+            raise SynapseHTTPError("already exists")
+    with pytest.raises(SynapseHTTPError):
+        with synapse_errors("foo"):
+            raise SynapseHTTPError("something else")
+    with pytest.warns(UserWarning):
+        with synapse_errors("foo"):
+            raise SynapseHTTPError("File size must be at least one byte")
+
+
+def test_that_a_remote_file_without_a_close_on_callable_can_be_closed():
+    with TemporaryFile() as temp_file:
+        remote_file = RemoteFile(temp_file, "foo", "w", on_close=None)
+        remote_file.close()
 
 
 def test_that_staging_a_local_file_creates_a_copy(get_data):
@@ -219,10 +235,18 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
         self.assertEqual(self.fs.getsize("foo"), 3)
 
     def test_getinfo_synapse(self):
+        # Test with file
         self.fs.create("foo")
-        info = self.fs.getinfo("foo", namespaces=["synapse", "annotations"])
-        self.assertIn("synapse", info.namespaces)
-        self.assertIn("annotations", info.namespaces)
+        file_info = self.fs.getinfo("foo", namespaces=["synapse", "annotations"])
+        self.assertIn("synapse", file_info.namespaces)
+        self.assertIn("annotations", file_info.namespaces)
+        self.assertIsNot(file_info.get("synapse", "content_type"), None)
+        # Test with folder
+        self.fs.makedir("bar")
+        folder_info = self.fs.getinfo("bar", namespaces=["synapse", "annotations"])
+        self.assertIn("synapse", folder_info.namespaces)
+        self.assertIn("annotations", folder_info.namespaces)
+        self.assertIs(folder_info.get("synapse", "content_type"), None)
 
     def test_valid_types(self):
         with self.assertRaises(errors.ResourceInvalid):

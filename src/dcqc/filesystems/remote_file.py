@@ -57,7 +57,7 @@ class RemoteFile(io.IOBase, BinaryIO):
         else:
             size = 0
             lines = []
-            for line in iter(self._f.readline, b""):
+            for line in iter(self._f.readline, b""):  # pragma: no cover
                 lines.append(line)
                 size += len(line)
                 if size > hint:
