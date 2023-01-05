@@ -59,6 +59,7 @@ def test_that_staging_a_local_file_creates_a_copy(get_data):
         assert target_path.exists()
 
 
+@pytest.mark.integration
 def test_that_staging_a_synapse_file_creates_a_copy(mocker):
     mocked_synapse = mocker.patch("synapseclient.Synapse")
     synapse_fs = open_fs("syn://syn50545516")
@@ -263,10 +264,14 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
         info = fs.getinfo(".", namespaces=["synapse"])
         assert info.get("synapse", "id") == "syn50545516"
 
-    def test_that_an_fs_can_be_created_with_a_double_period_after_a_file(self):
+    def test_that_the_parent_folder_of_a_file_can_be_opened_using_double_periods(self):
         fs = SynapseFS("syn50555279/..", self.auth_token)
         info = fs.getinfo(".", namespaces=["synapse"])
         assert info.get("synapse", "id") == "syn50545516"
+
+    def test_for_an_error_when_opening_a_synapse_fs_with_a_file_root(self):
+        with pytest.raises(errors.CreateFailed):
+            SynapseFS("syn50555279", self.auth_token)
 
     def test_for_error_when_double_period_reaches_outside_of_sub_fs(self):
         self.fs.makedirs("foo")

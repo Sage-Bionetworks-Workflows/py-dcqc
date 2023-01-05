@@ -4,7 +4,7 @@ import re
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Optional
 
 from fs import open_fs
 
@@ -56,7 +56,7 @@ class File:
     LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
     def __init__(self, url: str, metadata: Mapping[str, Any]):
-        self.url = url
+        self.url = str(url)
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
 
@@ -82,17 +82,30 @@ class File:
     def get_local_path(self):
         if not self.is_local():
             self.stage()
-        local_path = self.url
+        _, _, local_path = self.url.rpartition("://")
         return local_path
 
-    def stage(self):
-        parent_dir, _, file_name = self.url.rpartition("/")
-        if parent_dir == "":
-            parent_dir = f"{file_name}/.."
-        fs = open_fs(parent_dir)
-        with open(file_name, "wb") as staged_file:
-            fs.download(file_name, staged_file)
-        self.url = file_name
+    def stage(self, destination: Optional[str] = None) -> str:
+        # Split off prefix to avoid issues with `rpartition("/")`
+        scheme, separator, path = self.url.rpartition("://")
+        if separator == "":
+            prefix = "osfs://"
+        else:
+            prefix = scheme + separator
+
+        # Check if there is only one part in the file URL
+        # If so, append `../` to open its parent directory
+        parent_path, _, base_name = path.rpartition("/")
+        if parent_path == "":
+            parent_path = f"{base_name}/.."
+
+        parent_url = prefix + parent_path
+        fs = open_fs(parent_url)
+        destination = destination or fs.getinfo(base_name).name
+        with open(destination, "wb") as staged_file:
+            fs.download(base_name, staged_file)
+        self.url = destination
+        return self.url
 
     def to_dict(self):
         return asdict(self)

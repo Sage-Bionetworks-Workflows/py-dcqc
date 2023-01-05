@@ -14,6 +14,7 @@ from warnings import warn
 from fs import ResourceType
 from fs.base import FS
 from fs.errors import (
+    CreateFailed,
     DirectoryExists,
     DirectoryExpected,
     DirectoryNotEmpty,
@@ -136,7 +137,7 @@ class SynapseFS(FS):
             message = f"Root ({root}) is empty."
             raise ValueError(message)
         elif len(root_parts) == 1:
-            return root
+            pass
         elif len(root_parts) > 1:
             first_part = root_parts[0]
             if not self.SYNID_REGEX.fullmatch(first_part):
@@ -145,6 +146,11 @@ class SynapseFS(FS):
             other_parts = root_parts[1:]
             other_path = self.DELIMITER.join(other_parts)
             root = self._path_to_synapse_id(other_path, first_part)
+        # Ensure that the root is not a file
+        root_entity = self.synapse.get(root, downloadFile=False)
+        if not is_container(root_entity):
+            message = f"Resolved Synapse ID ({root}) is not a project/folder."
+            raise CreateFailed(message)
         return root
 
     def _path_to_synapse_id(
@@ -190,11 +196,13 @@ class SynapseFS(FS):
                 current_entity = synapse_entity.parentId
                 continue
             children_list = self._get_children(current_entity)
-            children = {entity["name"]: entity for entity in children_list}
+            if self.SYNID_REGEX.fullmatch(part) is None:
+                children = {entity["name"]: entity for entity in children_list}
+            else:
+                children = {entity["id"]: entity for entity in children_list}
             if part in children:
                 current_entity = children[part]["id"]
             else:
-                delim = self.DELIMITER
                 raise ResourceNotFound(path)
 
         return current_entity
