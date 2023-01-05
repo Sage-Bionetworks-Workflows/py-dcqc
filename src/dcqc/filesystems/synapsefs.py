@@ -108,11 +108,11 @@ class SynapseFS(FS):
         auth_token: Optional[str] = None,
         synapse_args: Optional[dict] = None,
     ) -> None:
-        self.root = root
+        super(SynapseFS, self).__init__()
         self.auth_token = auth_token
         self.synapse_args = synapse_args or self.DEFAULT_SYNAPSE_ARGS
         self._local = threading.local()
-        super(SynapseFS, self).__init__()
+        self.root = self._process_root(root)
 
     @property
     def synapse(self) -> Synapse:
@@ -129,11 +129,33 @@ class SynapseFS(FS):
         self._local.synapse.cache.purge(after_date=0)
         return self._local.synapse
 
-    def _path_to_synapse_id(self, path: str) -> str:
+    def _process_root(self, root: str):
+        root_path = PurePosixPath(root)
+        root_parts = root_path.parts
+        if len(root_parts) < 1:
+            message = f"Root ({root}) is empty."
+            raise ValueError(message)
+        elif len(root_parts) == 1:
+            return root
+        elif len(root_parts) > 1:
+            first_part = root_parts[0]
+            if not self.SYNID_REGEX.fullmatch(first_part):
+                message = f"First part of the root ({root}) is not a Synapse ID."
+                raise ValueError(message)
+            other_parts = root_parts[1:]
+            other_path = self.DELIMITER.join(other_parts)
+            root = self._path_to_synapse_id(other_path, first_part)
+        return root
+
+    def _path_to_synapse_id(
+        self, path: str, starting_entity: Optional[str] = None
+    ) -> str:
         """Convert an FS path to a Synapse ID
 
         Args:
             path (str): Path to a resource on the filesystem
+            starting_entity (str): Synapse ID for where to
+                start the traversal. Defaults to the root.
 
         Returns:
             str: Synapse ID for a file, folder, or project
@@ -143,7 +165,8 @@ class SynapseFS(FS):
             fs.errors.ResourceNotFound: If the ``path`` does
                 not resolve to existing entities.
         """
-        self.validatepath(path)
+        if starting_entity is None:
+            self.validatepath(path)
 
         delim = self.DELIMITER
         if not path.startswith(delim):
@@ -155,25 +178,23 @@ class SynapseFS(FS):
             warn(message)
 
         posix_path = PurePosixPath(path)
-        current_entity = self.root
-        visited_parts = []
+        starting_entity = starting_entity or self.root
+        current_entity = starting_entity
         for part in posix_path.parts:
             if part == self.DELIMITER or part == self.CWD_SYMBOL:
                 continue
             if part == self.PARENT_DIR:
-                visited_parts.pop()
-                current_entity = visited_parts[-1][1]
+                synapse_entity = self.synapse.get(current_entity, downloadFile=False)
+                if not hasattr(synapse_entity, "parentId"):
+                    raise ResourceNotFound(path)
+                current_entity = synapse_entity.parentId
                 continue
             children_list = self._get_children(current_entity)
             children = {entity["name"]: entity for entity in children_list}
             if part in children:
                 current_entity = children[part]["id"]
-                visited_parts.append((part, current_entity))
             else:
-                visited_parts.append((part, None))
                 delim = self.DELIMITER
-                visited_path = delim + delim.join(part for part, _ in visited_parts)
-                message = f"This Synapse entity ({visited_path}) does not exist."
                 raise ResourceNotFound(path)
 
         return current_entity
@@ -532,7 +553,7 @@ class SynapseFS(FS):
 
         if not is_container(entity):
             synapse_id = entity.id
-            type_ = type(entity)
+            type_ = str(type(entity))
             message = f"{synapse_id} ({type_}) is not a folder or project."
             raise DirectoryExpected(message)
 

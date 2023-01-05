@@ -1,8 +1,8 @@
-uri,file_type,md5_checksum
-syn://syn41864974,txt,38b86a456d1f441008986c6f798d5ef9
-syn://syn41864977,txt,a542e9b744bedcfd874129ab0f98c4ff
-syn://syn43716055,tif,38b86a456d1f441008986c6f798d5ef9
-syn://syn43716711,tif,a542e9b744bedcfd874129ab0f98c4ff
-syn://syn26644414,tif,0a3d8f1d2d69f15aeccedea0d54efa6c
-syn://syn26644414,ome.tif,0a3d8f1d2d69f15aeccedea0d54efa6c
-syn://syn26644421,ome.tif,313257a6822ff5b52e7e35a626b6c33f
+url,file_type,md5_checksum
+syn://syn41864974,TXT,38b86a456d1f441008986c6f798d5ef9
+syn://syn41864977,TXT,a542e9b744bedcfd874129ab0f98c4ff
+syn://syn43716055,TIFF,38b86a456d1f441008986c6f798d5ef9
+syn://syn43716711,TIFF,a542e9b744bedcfd874129ab0f98c4ff
+syn://syn26644414,TIFF,0a3d8f1d2d69f15aeccedea0d54efa6c
+syn://syn26644414,OME-TIFF,0a3d8f1d2d69f15aeccedea0d54efa6c
+syn://syn26644421,OME-TIFF,313257a6822ff5b52e7e35a626b6c33f

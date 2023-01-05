@@ -17,7 +17,7 @@ from dcqc.filesystems.remote_file import RemoteFile
 from dcqc.filesystems.synapsefs import SynapseFS, synapse_errors
 
 
-def test_for_error_when_providing_invalid_uri_to_open_fs():
+def test_for_error_when_providing_invalid_url_to_open_fs():
     with pytest.raises(OpenerError):
         open_fs("syn://")
 
@@ -78,7 +78,7 @@ def test_that_staging_a_synapse_file_creates_a_copy(mocker):
 
 
 @pytest.mark.integration
-def test_that_open_fs_will_return_a_sub_fs_when_uri_contains_subdirectory():
+def test_that_open_fs_will_return_a_sub_fs_when_url_contains_subdirectory():
     synapse_fs = open_fs("syn://syn50545516/TestSubDir")
     assert isinstance(synapse_fs, SubFS)
 
@@ -252,8 +252,33 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
         with self.assertRaises(errors.ResourceInvalid):
             self.fs._synapse_id_to_entity("syn50557522")  # TestTable
 
-    def test_double_period_in_path(self):
+    def test_double_period_in_path_while_remaining_in_the_given_path(self):
         self.fs.makedirs("foo/bar/baz")
         synapse_id_1 = self.fs._path_to_synapse_id("foo/bar/baz")
         synapse_id_2 = self.fs._path_to_synapse_id("foo/bar/../bar/baz")
+        self.assertEqual(synapse_id_1, synapse_id_2)
+
+    def test_that_an_fs_can_be_created_with_a_double_period_after_a_folder(self):
+        fs = SynapseFS("syn50557597/..", self.auth_token)
+        info = fs.getinfo(".", namespaces=["synapse"])
+        assert info.get("synapse", "id") == "syn50545516"
+
+    def test_that_an_fs_can_be_created_with_a_double_period_after_a_file(self):
+        fs = SynapseFS("syn50555279/..", self.auth_token)
+        info = fs.getinfo(".", namespaces=["synapse"])
+        assert info.get("synapse", "id") == "syn50545516"
+
+    def test_for_error_when_double_period_reaches_outside_of_sub_fs(self):
+        self.fs.makedirs("foo")
+        sub_fs = self.fs.opendir("foo")
+        with pytest.raises(errors.IllegalBackReference):
+            sub_fs.getinfo("..")
+
+    def test_double_period_after_file_in_path(self):
+        self.fs.makedirs("foo")
+        self.fs.touch("foo/test.txt")
+        info_1 = self.fs.getinfo("foo", namespaces=["synapse"])
+        info_2 = self.fs.getinfo("foo/test.txt/..", namespaces=["synapse"])
+        synapse_id_1 = info_1.get("synapse", "id")
+        synapse_id_2 = info_2.get("synapse", "id")
         self.assertEqual(synapse_id_1, synapse_id_2)

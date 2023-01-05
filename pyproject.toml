@@ -8,8 +8,7 @@ build-backend = "setuptools.build_meta"
 # check out https://github.com/pypa/setuptools_scm
 version_scheme = "no-guess-dev"
 
-[tool.flake8]
-per-file-ignores = [
-    '*/__init__.py:F401',
-]
-max-line-length = 88
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = "synapseclient.*"
+ignore_missing_imports = true

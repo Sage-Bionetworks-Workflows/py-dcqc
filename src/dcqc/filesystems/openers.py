@@ -1,12 +1,13 @@
 import os
 
-from fs.opener import Opener
+from fs.opener import Opener, registry
 from fs.opener.errors import OpenerError
 from fs.subfs import SubFS
 
 from dcqc.filesystems.synapsefs import SynapseFS
 
 
+@registry.install
 class SynapseFSOpener(Opener):
     protocols = ["syn"]
 
