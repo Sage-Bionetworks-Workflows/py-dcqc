@@ -12,6 +12,8 @@ from fs import open_fs
 @dataclass
 class FileType:
     # Class attributes
+    # A type hint is omitted so this attribute isn't
+    # picked up by @dataclass as an instance attribute
     _registry = dict()  # type: ignore
 
     # Instance attributes

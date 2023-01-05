@@ -2,10 +2,12 @@ import hashlib
 
 from dcqc.enums import TestStatus
 from dcqc.file import File
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC
 
 
 class FileExtensionTest(TestABC):
+    only_one_file_targets = False
+
     def compute_status(self):
         status = TestStatus.PASS
         for file in self.target.files:
@@ -18,6 +20,8 @@ class FileExtensionTest(TestABC):
 
 
 class Md5ChecksumTest(TestABC):
+    only_one_file_targets = False
+
     def compute_status(self):
         status = TestStatus.PASS
         for file in self.target.files:
@@ -38,13 +42,50 @@ class Md5ChecksumTest(TestABC):
         return actual_md5
 
 
-class LibTiffInfoTest(TestABC):
-    pass
+class LibTiffInfoTest(ExternalTestMixin, TestABC):
+    def generate_process(self) -> Process:
+        file = self._get_single_target_file()
+        path = file.get_local_path()
+        command_args = ["tiffinfo", path]
+        process = Process(
+            container="autamus/libtiff:4.4.0",
+            command_args=command_args,
+        )
+        return process
 
 
-class OmeXmlSchemaTest(TestABC):
-    pass
+class BioFormatsInfoTest(ExternalTestMixin, TestABC):
+    def generate_process(self) -> Process:
+        file = self._get_single_target_file()
+        path = file.get_local_path()
+        command_args = [
+            'export PATH="$PATH:/opt/bftools"',
+            ";",
+            "showinf",
+            "-nopix",
+            "-novalid",
+            "-nocore",
+            path,
+        ]
+        process = Process(
+            container="openmicroscopy/bftools:latest",
+            command_args=command_args,
+        )
+        return process
 
 
-class BioFormatsInfoTest(TestABC):
-    pass
+class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
+    def generate_process(self) -> Process:
+        file = self._get_single_target_file()
+        path = file.get_local_path()
+        command_args = [
+            'export PATH="$PATH:/opt/bftools"',
+            ";",
+            "xmlvalid",
+            path,
+        ]
+        process = Process(
+            container="openmicroscopy/bftools:latest",
+            command_args=command_args,
+        )
+        return process

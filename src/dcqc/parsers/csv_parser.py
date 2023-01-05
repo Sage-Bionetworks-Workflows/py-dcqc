@@ -1,6 +1,7 @@
 import csv
 from pathlib import Path
 
+from dcqc.file import File
 from dcqc.target import Target
 
 
@@ -19,4 +20,5 @@ class CsvParser:
     def parse_qc_targets(self):
         for _, row in self.iterrows():
             url = row.pop("url")
-            yield Target(url, row)
+            file = File(url, row)
+            yield Target(file)

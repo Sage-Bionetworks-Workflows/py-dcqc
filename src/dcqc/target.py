@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Collection
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Optional
 
 from dcqc.file import File
 from dcqc.utils import validate_from_dict
@@ -14,11 +12,9 @@ class Target:
     type: str
     files: list[File]
 
-    def __init__(self, *file_args: File, files: Optional[Collection[File]] = None):
+    def __init__(self, *files: File):
         self.type = self.__class__.__name__
-        files = files or list()
-        all_files = list(file_args) + list(files)
-        self.files = all_files
+        self.files = list(files)
 
     def to_dict(self):
         return asdict(self)

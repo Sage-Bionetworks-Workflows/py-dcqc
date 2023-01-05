@@ -17,7 +17,7 @@ def test_for_an_error_when_requesting_for_an_unregistered_file_type():
 
 
 def test_for_an_error_when_retrieving_missing_metadata_on_a_file(test_files):
-    test_file, _ = test_files
+    test_file = test_files["good"]
     with pytest.raises(ValueError):
         test_file.get_metadata("foo")
 
@@ -33,7 +33,7 @@ def test_that_a_remote_file_is_staged_when_requesting_a_local_path():
 
 
 def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files):
-    test_file, _ = test_files
+    test_file = test_files["good"]
     url_before = test_file.url
     local_path = test_file.get_local_path()
     url_after = test_file.url
@@ -43,7 +43,7 @@ def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files)
 
 @pytest.mark.integration
 def test_that_a_local_file_is_moved_to_the_cwd_when_staged(test_files):
-    test_file, _ = test_files
+    test_file = test_files["good"]
     with NamedTemporaryFile() as tmp_file:
         url_before = test_file.url
         destination = tmp_file.name
@@ -53,7 +53,7 @@ def test_that_a_local_file_is_moved_to_the_cwd_when_staged(test_files):
 
 
 def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
-    file_1, _ = test_files
+    file_1 = test_files["good"]
     file_1_dict = file_1.to_dict()
     file_2 = File.from_dict(file_1_dict)
     file_2_dict = file_2.to_dict()
