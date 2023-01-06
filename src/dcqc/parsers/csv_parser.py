@@ -17,7 +17,7 @@ class CsvParser:
             for index, row in enumerate(reader, start=1):
                 yield index, row
 
-    def parse_qc_targets(self):
+    def iter_targets(self):
         for _, row in self.iterrows():
             url = row.pop("url")
             file = File(url, row)

@@ -2,11 +2,17 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass
+from typing import Optional
 
 from dcqc.file import File
 from dcqc.utils import validate_from_dict
 
 
+# TODO: Eventually, there might be target-specific metadata
+# TODO: Now that Target is much simpler, it might make sense
+#       to rename the class to FileSet since it currently
+#       really is just a wrapper for a group of files
+# TODO: Maybe the Composite pattern would work here?
 @dataclass
 class Target:
     type: str
@@ -15,6 +21,10 @@ class Target:
     def __init__(self, *files: File):
         self.type = self.__class__.__name__
         self.files = list(files)
+
+    def stage_files(self, destination: Optional[str] = None):
+        for file in self.files:
+            file.stage(destination)
 
     def to_dict(self):
         return asdict(self)

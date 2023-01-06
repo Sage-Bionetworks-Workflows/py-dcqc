@@ -58,7 +58,6 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
 ):
     tiff_file = test_files["tiff"]
     target = Target(tiff_file)
-    test = tests.LibTiffInfoTest(target)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
         path_1 = Path(tmp_dir, "code_1.txt")
@@ -67,10 +66,12 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
         good_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
         bad_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
+        test = tests.LibTiffInfoTest(target)
         mocker.patch.object(test, "_find_process_outputs", return_value=good_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
+        test = tests.LibTiffInfoTest(target)
         mocker.patch.object(test, "_find_process_outputs", return_value=bad_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL

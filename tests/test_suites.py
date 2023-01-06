@@ -1,5 +1,10 @@
-from dcqc.suites.suites import FileSuite, OmeTiffSuite, RedundantFileSuite, TiffSuite
+from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
 from dcqc.tests.test_abc import TestABC
+from dcqc.tests.tests import LibTiffInfoTest
+
+
+class RedundantFileSuite(TiffSuite):
+    del_tests = (LibTiffInfoTest,)
 
 
 def test_that_a_file_suite_results_in_multiple_tests():

@@ -12,6 +12,7 @@ from dcqc.file import File
 from dcqc.target import Target
 
 
+# TODO: Look into the @typing.final decorator
 class TestABC(ABC):
     # Class attributes
     tier: int
@@ -35,7 +36,8 @@ class TestABC(ABC):
             raise ValueError(message)
 
     def get_status(self) -> TestStatus:
-        self._status = self.compute_status()
+        if self._status == TestStatus.NONE:
+            self._status = self.compute_status()
         return self._status
 
     def _get_single_target_file(self) -> File:
@@ -60,6 +62,23 @@ class TestABC(ABC):
     @abstractmethod
     def compute_status(self) -> TestStatus:
         """"""
+
+    def to_dict(self, with_target=True, expanded=False):
+        test_dict = {
+            "type": self.type,
+            "status": self._status.value,
+        }
+        if expanded:
+            test_dict["tier"] = self.tier
+            test_dict["is_external_test"] = self.is_external_test
+        if with_target:
+            test_dict["target"] = self.target.to_dict()
+        return test_dict
+
+    # @classmethod
+    # def from_dict(cls, dictionary: dict):
+    #     # TODO: Restore `_status` if available
+    #     pass
 
 
 @dataclass
@@ -91,7 +110,9 @@ class ExternalTestMixin(TestABC):
         """"""
 
     @classmethod
-    def _find_process_outputs(cls, search_dir: Optional[Path]) -> dict[str, Path]:
+    def _find_process_outputs(
+        cls, search_dir: Optional[Path] = None
+    ) -> dict[str, Path]:
         search_dir = search_dir or Path(".")
         outputs = {
             "std_out": search_dir / cls.STDOUT_PATH,

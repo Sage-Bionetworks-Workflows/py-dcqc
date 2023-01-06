@@ -44,6 +44,7 @@ class FileType:
 
 
 # Instantiated file types are automatically tracked by the FileType class
+FileType("*", ())  # To represent all file types
 FileType("TXT", (".txt",))
 FileType("TIFF", (".tif", ".tiff"))
 FileType("OME-TIFF", (".ome.tif", ".ome.tiff"))
@@ -81,6 +82,8 @@ class File:
     def is_local(self):
         return self.LOCAL_REGEX.fullmatch(self.url) is not None
 
+    # TODO: Create a new instance attribute `self._local_path` for keeping
+    #       track of the local path instead of overwriting `self.url`
     def get_local_path(self):
         if not self.is_local():
             self.stage()

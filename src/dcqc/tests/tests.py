@@ -6,6 +6,7 @@ from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC
 
 
 class FileExtensionTest(TestABC):
+    tier = 1
     only_one_file_targets = False
 
     def compute_status(self):
@@ -20,6 +21,7 @@ class FileExtensionTest(TestABC):
 
 
 class Md5ChecksumTest(TestABC):
+    tier = 1
     only_one_file_targets = False
 
     def compute_status(self):
@@ -43,6 +45,8 @@ class Md5ChecksumTest(TestABC):
 
 
 class LibTiffInfoTest(ExternalTestMixin, TestABC):
+    tier = 2
+
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
         path = file.get_local_path()
@@ -55,6 +59,8 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
 
 
 class BioFormatsInfoTest(ExternalTestMixin, TestABC):
+    tier = 2
+
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
         path = file.get_local_path()
@@ -75,6 +81,8 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
 
 
 class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
+    tier = 2
+
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
         path = file.get_local_path()

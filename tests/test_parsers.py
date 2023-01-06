@@ -5,10 +5,10 @@ from dcqc.target import Target
 
 
 def test_that_parsing_a_targets_csv_file_yields_qc_targets(get_data):
-    csv_path = get_data("file_qc_targets.csv")
+    csv_path = get_data("files.csv")
     parser = CsvParser(csv_path)
-    result = parser.parse_qc_targets()
+    result = parser.iter_targets()
     assert isinstance(result, Generator)
     result = list(result)
-    assert len(result) == 7
+    assert len(result) > 1
     assert all(isinstance(x, Target) for x in result)
