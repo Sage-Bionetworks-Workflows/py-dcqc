@@ -3,7 +3,6 @@ import os
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory, TemporaryFile
-from time import time_ns
 
 import pytest
 from fs import ResourceType, errors, open_fs
@@ -79,7 +78,7 @@ def test_that_staging_a_synapse_file_creates_a_copy(mocker):
 
 @pytest.mark.integration
 class TestSynapseFS(FSTestCases, unittest.TestCase):
-    TEST_ROOT = "syn50555278"
+    TEST_ROOT_PARENT = "syn50555278"
 
     @classmethod
     def setUpClass(cls):
@@ -88,21 +87,18 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
             cls.skipTest(cls, "'SYNAPSE_AUTH_TOKEN' not set in environment.")
         cls.synapse = Synapse()
         cls.synapse.login(authToken=cls.auth_token)
-        cls._empty_project()
+
+        session_name = pytest.UUID  # type: ignore
+        cls.test_root = Folder(session_name, parent=cls.TEST_ROOT_PARENT)
+        cls.test_root = cls.synapse.store(cls.test_root)
 
     @classmethod
     def tearDownClass(cls):
-        cls._empty_project()
-
-    @classmethod
-    def _empty_project(cls):
-        # Empty project before running tests
-        for child in cls.synapse.getChildren(cls.TEST_ROOT):
-            cls.synapse.delete(child["id"])
+        cls.synapse.delete(cls.test_root)
 
     def make_fs(self):
-        folder_name = str(time_ns())
-        self.folder = Folder(folder_name, parent=self.TEST_ROOT)
+        folder_name = self.id()
+        self.folder = Folder(folder_name, parent=self.test_root)
         self.folder = self.synapse.store(self.folder)
         synapse_fs = SynapseFS(self.folder.id, self.auth_token)
         return synapse_fs

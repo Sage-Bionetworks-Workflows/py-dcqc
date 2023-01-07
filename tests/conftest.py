@@ -8,12 +8,19 @@
 """
 
 from pathlib import Path, PurePath, PurePosixPath
+from uuid import uuid4
 
 import pytest
 
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
 DATADIR = TESTDIR / "data"
+
+UUID = str(uuid4())
+
+
+def pytest_configure():
+    pytest.UUID = UUID  # type: ignore
 
 
 @pytest.fixture
