@@ -7,4 +7,23 @@
     - https://docs.pytest.org/en/stable/writing_plugins.html
 """
 
-# import pytest
+from pathlib import Path, PurePath, PurePosixPath
+
+import pytest
+
+CNFPATH = Path(__file__).resolve()
+TESTDIR = CNFPATH.parent
+DATADIR = TESTDIR / "data"
+
+
+@pytest.fixture
+def get_data():
+    def _get_data(filename: str, as_posix: bool = False) -> PurePath:
+        path = DATADIR / filename
+        if not path.exists():
+            raise ValueError(f"Path ({path}) does not exist.")
+        if as_posix:
+            path = PurePosixPath(*path.parts)  # type: ignore
+        return path
+
+    yield _get_data
