@@ -14,6 +14,8 @@ from uuid import uuid4
 
 import pytest
 
+from dcqc.file import File
+
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
 DATADIR = TESTDIR / "data"
@@ -39,3 +41,27 @@ def get_data():
         return path
 
     yield _get_data
+
+
+@pytest.fixture
+def test_files(get_data):
+    txt_path = get_data("test.txt", as_posix=True)
+    tiff_path = get_data("circuit.tif", as_posix=True)
+    good_metadata = {
+        "file_type": "txt",
+        "md5_checksum": "14758f1afd44c09b7992073ccf00b43d",
+    }
+    bad_metadata = {
+        "file_type": "tiff",
+        "md5_checksum": "definitelynottherightmd5checksum",
+    }
+    tiff_metadata = {
+        "file_type": "tiff",
+        "md5_checksum": "c7b08f6decb5e7572efbe6074926a843",
+    }
+    test_files = {
+        "good": File(txt_path, good_metadata),
+        "bad": File(txt_path, bad_metadata),
+        "tiff": File(tiff_path, tiff_metadata),
+    }
+    yield test_files
