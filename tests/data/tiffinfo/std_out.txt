@@ -1,0 +1,12 @@
+=== TIFF directory 0 ===
+TIFF Directory at offset 0x12a70 (76400)
+  Image Width: 272 Image Length: 280
+  Resolution: 72, 72
+  Bits/Sample: 8
+  Compression Scheme: PackBits
+  Photometric Interpretation: min-is-black
+  Orientation: row 0 top, col 0 lhs
+  Samples/Pixel: 1
+  Rows/Strip: 30
+  Planar Configuration: single image plane
+  ImageDescription: Micrograph of 16-bit A/D converter circuit, courtesy of Steve Decker and Shujaat Nadeem, MIT, 1993.
