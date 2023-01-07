@@ -103,6 +103,9 @@ class SynapseFS(FS):
         "virtual": False,
     }
 
+    # TODO: Add option to initialize without root, which allows you
+    #       to open any Synapse ID that you have access to. The only
+    #       requirement is that every path starts with a Synapse ID.
     def __init__(
         self,
         root: str,
