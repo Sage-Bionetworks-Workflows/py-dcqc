@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any, Optional
 
 from dcqc.mixins import SerializableMixin
@@ -59,7 +61,18 @@ class File(SerializableMixin):
 
     LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
-    def __init__(self, url: str, metadata: Mapping[str, Any]):
+    def __init__(
+        self,
+        url: str,
+        metadata: Mapping[str, Any],
+        relative_to: Optional[Path] = None,
+    ):
+        if relative_to is not None and self.is_local(url):
+            scheme, separator, resource = url.rpartition("://")
+            path = Path(resource)
+            if not path.is_absolute():
+                resource = os.path.relpath(relative_to / resource)
+            url = "".join([scheme, separator, resource])
         self.url = str(url)
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
@@ -80,8 +93,9 @@ class File(SerializableMixin):
             raise ValueError(message)
         return self.metadata[key]
 
-    def is_local(self):
-        return self.LOCAL_REGEX.fullmatch(self.url) is not None
+    def is_local(self, url: Optional[str] = None):
+        url = url or self.url
+        return self.LOCAL_REGEX.fullmatch(url) is not None
 
     # TODO: Create a new instance attribute `self._local_path` for keeping
     #       track of the local path instead of overwriting `self.url`
