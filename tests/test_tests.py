@@ -44,7 +44,7 @@ def test_that_the_md5_checksum_test_works_on_incorrect_files(test_files):
 
 
 def test_that_all_external_tests_inherit_from_the_mixin_first():
-    tests = TestABC.get_all_tests()
+    tests = TestABC.list_tests()
     for test in tests:
         if issubclass(test, ExternalTestMixin):
             mro = test.__mro__

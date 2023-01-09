@@ -56,7 +56,7 @@ class TestABC(SerializableMixin, ABC):
         return registry[test]
 
     @classmethod
-    def get_all_tests(cls) -> list[Type[TestABC]]:
+    def list_tests(cls) -> list[Type[TestABC]]:
         test_classes = TestABC.__subclasses__()
         return test_classes
 

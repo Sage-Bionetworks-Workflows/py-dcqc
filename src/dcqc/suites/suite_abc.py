@@ -36,11 +36,14 @@ class SuiteABC(SerializableMixin, ABC):
         self.type = self.__class__.__name__
         self.target = target
 
+        test_classes = self.list_test_classes()
+        test_names = set(test.__name__ for test in test_classes)
+
         required_tests = required_tests or self._default_required_tests()
-        self.required_tests = set(required_tests)
+        self.required_tests = set(required_tests).intersection(test_names)
 
         skipped_tests = skipped_tests or list()
-        self.skipped_tests = set(skipped_tests)
+        self.skipped_tests = set(skipped_tests).intersection(test_names)
 
         self.tests = self.init_test_classes()
         self._status = TestStatus.NONE
@@ -138,7 +141,7 @@ class SuiteABC(SerializableMixin, ABC):
                 message = f"Suite ({self}) is ignoring a skipped test ({test_name})."
                 warn(message)
             else:
-                suite_status = TestStatus.FAIL
+                suite_status = test_status
                 if suite_status == TestStatus.FAIL:
                     break
         return suite_status
