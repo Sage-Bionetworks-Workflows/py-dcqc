@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection
 from itertools import chain
-from typing import Optional, Type
+from typing import Optional, Type, overload
 from warnings import warn
 
 from dcqc.enums import TestStatus
@@ -24,16 +24,24 @@ class SuiteABC(SerializableMixin, ABC):
     # Instance attributes
     type: str
     target: Target
-    required_tests: Collection[str]
+    required_tests: set[str]
+    skipped_tests: set[str]
 
     def __init__(
         self,
         target: Target,
         required_tests: Optional[Collection[str]] = None,
+        skipped_tests: Optional[Collection[str]] = None,
     ):
         self.type = self.__class__.__name__
         self.target = target
-        self.required_tests = required_tests or self._default_required_tests()
+
+        required_tests = required_tests or self._default_required_tests()
+        self.required_tests = set(required_tests)
+
+        skipped_tests = skipped_tests or list()
+        self.skipped_tests = set(skipped_tests)
+
         self.tests = self.init_test_classes()
         self._status = TestStatus.NONE
 
@@ -52,7 +60,7 @@ class SuiteABC(SerializableMixin, ABC):
         return all_tests
 
     @classmethod
-    def _default_required_tests(cls):
+    def _default_required_tests(cls) -> list[str]:
         test_classes = cls.list_test_classes()
         required_tests = filter(lambda test: test.tier <= 2, test_classes)
         required_test_names = [test.__name__ for test in required_tests]
@@ -60,7 +68,12 @@ class SuiteABC(SerializableMixin, ABC):
 
     def init_test_classes(self):
         test_classes = self.list_test_classes()
-        tests = [test_cls(self.target) for test_cls in test_classes]
+        tests = []
+        for test_cls in test_classes:
+            test_name = test_cls.__name__
+            skip = test_name in self.skipped_tests
+            test = test_cls(self.target, skip)
+            tests.append(test)
         return tests
 
     @classmethod
@@ -73,15 +86,30 @@ class SuiteABC(SerializableMixin, ABC):
     @classmethod
     def get_suite_by_name(cls, name: str) -> Type[SuiteABC]:
         subclasses = cls._list_subclasses()
-        registry = {subcls.type: subcls for subcls in subclasses}
+        registry = {subcls.__name__: subcls for subcls in subclasses}
         if name not in registry:
             options = list(registry)
             message = f"Suite ({name}) not available ({options})."
             raise ValueError(message)
         return registry[name]
 
+    @overload
+    @classmethod
+    def get_suite_by_file_type(cls, file_type: str) -> Type[SuiteABC]:
+        """"""
+
+    @overload
     @classmethod
     def get_suite_by_file_type(cls, file_type: FileType) -> Type[SuiteABC]:
+        """"""
+
+    @classmethod
+    def get_suite_by_file_type(cls, file_type) -> Type[SuiteABC]:
+        if isinstance(file_type, str):
+            try:
+                file_type = FileType.get_file_type(file_type)
+            except ValueError:
+                file_type = FileType.get_file_type("*")
         name = file_type.name
         subclasses = cls._list_subclasses()
         registry = {subcls.file_type.name: subcls for subcls in subclasses}
@@ -109,21 +137,26 @@ class SuiteABC(SerializableMixin, ABC):
             elif test_status == TestStatus.SKIP:
                 message = f"Suite ({self}) is ignoring a skipped test ({test_name})."
                 warn(message)
-            elif test_status == TestStatus.FAIL:
+            else:
                 suite_status = TestStatus.FAIL
-                break
-            elif test_status == TestStatus.PASS:
-                suite_status = TestStatus.PASS
+                if suite_status == TestStatus.FAIL:
+                    break
         return suite_status
 
     def to_dict(self):
         suite_status = self.compute_status()
+        test_dicts = []
+        for test in self.tests:
+            test_dict = test.to_dict()
+            test_dict.pop("target", None)  # Remove redundant `target` info
+            test_dicts.append(test_dict)
         suite_dict = {
             "target": self.target.to_dict(),
             "suite_status": {
-                "required_tests": self.required_tests,
+                "required_tests": list(self.required_tests),
+                "skipped_tests": list(self.skipped_tests),
                 "status": suite_status.value,
             },
-            "tests": [test.to_dict(with_target=False) for test in self.tests],
+            "tests": test_dicts,
         }
         return suite_dict

@@ -26,10 +26,10 @@ class TestABC(SerializableMixin, ABC):
     type: str
     target: Target
 
-    def __init__(self, target: Target):
+    def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
         self.target = target
-        self._status = TestStatus.NONE
+        self._status = TestStatus.SKIP if skip else TestStatus.NONE
 
         files = self.target.files
         if self.only_one_file_targets and len(files) > 1:
@@ -64,18 +64,14 @@ class TestABC(SerializableMixin, ABC):
     def compute_status(self) -> TestStatus:
         """"""
 
-    # TODO: Consider removing these arguments and letting the calling
-    #       context take care of removing what it doesn't need
-    def to_dict(self, with_target=True, expanded=False):
+    def to_dict(self):
         test_dict = {
             "type": self.type,
             "status": self._status.value,
+            "target": self.target.to_dict(),
+            # "tier": self.tier,
+            # "is_external_test": self.is_external_test,
         }
-        if expanded:
-            test_dict["tier"] = self.tier
-            test_dict["is_external_test"] = self.is_external_test
-        if with_target:
-            test_dict["target"] = self.target.to_dict()
         return test_dict
 
     # @classmethod
