@@ -2,8 +2,6 @@ import json
 from collections.abc import Iterator
 from typing import Any, Optional
 
-from fs.base import FS
-
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.utils import open_parent_fs
 
@@ -17,9 +15,6 @@ class JsonReport:
         if self._fs.exists(self._path) and not overwrite:
             message = f"URL ({url}) already exists. Set `overwrite=True` to ignore."
             raise FileExistsError(message)
-
-    def _get_fs(self) -> FS:
-        return self._fs
 
     def to_file(self, obj: Any):
         with self._fs.open(self._path, "w") as outfile:

@@ -1,3 +1,6 @@
 url,file_type,md5_checksum
 test.txt,TXT,14758f1afd44c09b7992073ccf00b43d
+test.txt,TIFF,14758f1afd44c09b7992073ccf00b43d
 osfs://test.txt,TXT,definitelynottherightmd5checksum
+syn://syn50555279,TXT,14758f1afd44c09b7992073ccf00b43d
+circuit.tif,TIFF,c7b08f6decb5e7572efbe6074926a843

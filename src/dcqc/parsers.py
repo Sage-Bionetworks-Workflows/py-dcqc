@@ -1,7 +1,7 @@
 import csv
-import os
-from collections.abc import Iterator
+from collections.abc import Collection, Iterator
 from pathlib import Path
+from typing import Optional
 
 from dcqc.file import File
 from dcqc.suites.suite_abc import SuiteABC
@@ -21,33 +21,26 @@ class CsvParser:
                 yield index, row
 
     def _row_to_file(self, row: dict[str, str]) -> File:
-        csv_path = self.path
+        csv_directory = self.path.parent
         url = row.pop("url")
-        if File.LOCAL_REGEX.match(url):
-            scheme, separator, resource = url.rpartition("://")
-            path = Path(resource)
-            if not path.is_absolute():
-                resource = os.path.relpath(csv_path.parent / resource)
-            url = "".join([scheme, separator, resource])
-        file = File(url, row)
+        file = File(url, row, relative_to=csv_directory)
         return file
 
-    def list_targets(self) -> Iterator[Target]:
+    def create_targets(self) -> Iterator[Target]:
         for _, row in self.list_rows():
             file = self._row_to_file(row)
             yield Target(file)
 
-    def list_suites(self) -> Iterator[SuiteABC]:
-        # TODO: Generalize this function to support multi-file targets
-        for target in self.list_targets():
-            if len(target.files) > 1:
-                message = (
-                    f"Target ({target}) is composed of more than one file. "
-                    "`iter_suites()` currently only supports single-file targets."
-                )
-                raise ValueError(message)
+    def create_suites(
+        self,
+        required_tests: Optional[Collection[str]] = None,
+        skipped_tests: Optional[Collection[str]] = None,
+    ) -> Iterator[SuiteABC]:
+        for target in self.create_targets():
+            # This function assumes that there is one file per target,
+            # which is always the case when parsing CSV files (for now)
             first_file = target.files[0]
             file_type = first_file.get_file_type()
             suite_cls = SuiteABC.get_suite_by_file_type(file_type)
-            suite = suite_cls(target)
+            suite = suite_cls(target, required_tests, skipped_tests)
             yield suite
