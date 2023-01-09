@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Optional
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
@@ -22,10 +21,6 @@ class Target(SerializableMixin):
     def __init__(self, *files: File):
         self.type = self.__class__.__name__
         self.files = list(files)
-
-    def stage_files(self, destination: Optional[str] = None):
-        for file in self.files:
-            file.stage(destination)
 
     def to_dict(self):
         return asdict(self)
