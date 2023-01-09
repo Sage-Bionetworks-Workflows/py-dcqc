@@ -6,7 +6,8 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, Optional
 
-from fs import open_fs
+from dcqc.mixins import SerializableMixin
+from dcqc.utils import open_parent_fs
 
 
 @dataclass
@@ -51,7 +52,7 @@ FileType("OME-TIFF", (".ome.tif", ".ome.tiff"))
 
 
 @dataclass
-class File:
+class File(SerializableMixin):
     url: str
     metadata: dict[str, Any]
     type: str
@@ -91,21 +92,7 @@ class File:
         return local_path
 
     def stage(self, destination: Optional[str] = None) -> str:
-        # Split off prefix to avoid issues with `rpartition("/")`
-        scheme, separator, path = self.url.rpartition("://")
-        if separator == "":
-            prefix = "osfs://"
-        else:
-            prefix = scheme + separator
-
-        # Check if there is only one part in the file URL
-        # If so, append `../` to open its parent directory
-        parent_path, _, base_name = path.rpartition("/")
-        if parent_path == "":
-            parent_path = f"{base_name}/.."
-
-        parent_url = prefix + parent_path
-        fs = open_fs(parent_url)
+        fs, base_name = open_parent_fs(self.url)
         destination = destination or fs.getinfo(base_name).name
         with open(destination, "wb") as staged_file:
             fs.download(base_name, staged_file)

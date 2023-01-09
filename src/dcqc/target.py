@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from typing import Optional
 
 from dcqc.file import File
+from dcqc.mixins import SerializableMixin
 from dcqc.utils import validate_from_dict
 
 
@@ -14,7 +15,7 @@ from dcqc.utils import validate_from_dict
 #       really is just a wrapper for a group of files
 # TODO: Maybe the Composite pattern would work here?
 @dataclass
-class Target:
+class Target(SerializableMixin):
     type: str
     files: list[File]
 
