@@ -9,11 +9,12 @@ from typing import Optional, Type
 
 from dcqc.enums import TestStatus
 from dcqc.file import File
+from dcqc.mixins import SerializableMixin
 from dcqc.target import Target
 
 
 # TODO: Look into the @typing.final decorator
-class TestABC(ABC):
+class TestABC(SerializableMixin, ABC):
     # Class attributes
     tier: int
     is_external_test: bool
@@ -63,6 +64,8 @@ class TestABC(ABC):
     def compute_status(self) -> TestStatus:
         """"""
 
+    # TODO: Consider removing these arguments and letting the calling
+    #       context take care of removing what it doesn't need
     def to_dict(self, with_target=True, expanded=False):
         test_dict = {
             "type": self.type,
@@ -134,3 +137,10 @@ class ExternalTestMixin(TestABC):
         else:
             status = TestStatus.FAIL
         return status
+
+    # TODO: Include process in dict (add `to_dict()` to Process class)
+    # def to_dict(self):
+    #     dictionary = super(ExternalTestMixin, self).to_dict()
+    #     process = self.generate_process()
+    #     dictionary["process"] = process
+    #     return dictionary

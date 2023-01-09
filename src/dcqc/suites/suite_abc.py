@@ -8,13 +8,14 @@ from warnings import warn
 
 from dcqc.enums import TestStatus
 from dcqc.file import FileType
+from dcqc.mixins import SerializableMixin
 from dcqc.target import Target
 from dcqc.tests.test_abc import TestABC
 
 
 # TODO: Consider the Composite design pattern once
 #       we have higher-level QC suites
-class SuiteABC(ABC):
+class SuiteABC(SerializableMixin, ABC):
     # Class attributes
     file_type: FileType
     add_tests: tuple[Type[TestABC], ...]
@@ -95,6 +96,7 @@ class SuiteABC(ABC):
             test.get_status()
 
     def compute_status(self) -> TestStatus:
+        self.compute_tests()
         suite_status = TestStatus.NONE
         for test in self.tests:
             test_name = test.type
