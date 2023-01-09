@@ -18,7 +18,8 @@ def test_json_report_generation(get_data, get_output):
     csv_path = get_data("files.csv")
     parser = CsvParser(csv_path)
     suites = parser.create_suites(
-        required_tests=["Md5ChecksumTest"], skipped_tests=external_tests
+        required_tests=["Md5ChecksumTest"],
+        skipped_tests=external_tests,
     )
 
     # WHEN I save those suites as a JSON report
