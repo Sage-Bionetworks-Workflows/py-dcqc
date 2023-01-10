@@ -9,7 +9,7 @@
 
 from datetime import datetime
 from getpass import getuser
-from pathlib import Path, PurePath, PurePosixPath
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -19,6 +19,9 @@ from dcqc.file import File
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
 DATADIR = TESTDIR / "data"
+OUTDIR = TESTDIR / "outputs"
+
+OUTDIR.mkdir(exist_ok=True)
 
 UUID = str(uuid4())
 USER = getuser()
@@ -32,21 +35,35 @@ def pytest_configure():
 
 @pytest.fixture
 def get_data():
-    def _get_data(filename: str, as_posix: bool = False) -> PurePath:
+    def _get_data(filename: str) -> Path:
         path = DATADIR / filename
         if not path.exists():
             raise ValueError(f"Path ({path}) does not exist.")
-        if as_posix:
-            path = PurePosixPath(*path.parts)  # type: ignore
         return path
 
     yield _get_data
 
 
+outputs = set()
+
+
+@pytest.fixture
+def get_output():
+    def _get_output(filename: str) -> Path:
+        output = OUTDIR / filename
+        if output in outputs:
+            message = f"Output ({output}) has already been used in another test."
+            raise ValueError(message)
+        outputs.add(output)
+        return output
+
+    yield _get_output
+
+
 @pytest.fixture
 def test_files(get_data):
-    txt_path = get_data("test.txt", as_posix=True)
-    tiff_path = get_data("circuit.tif", as_posix=True)
+    txt_path = get_data("test.txt").as_posix()
+    tiff_path = get_data("circuit.tif").as_posix()
     good_metadata = {
         "file_type": "txt",
         "md5_checksum": "14758f1afd44c09b7992073ccf00b43d",

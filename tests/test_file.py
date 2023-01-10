@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -59,3 +60,11 @@ def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
     file_2_dict = file_2.to_dict()
     assert file_1 == file_2
     assert file_1_dict == file_2_dict
+
+
+def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(get_data):
+    test_path = get_data("test.txt")
+    test_url = test_path.resolve().as_posix()
+    metadata = {"file_type": "TXT"}
+    file = File(test_url, metadata, relative_to=Path.cwd())
+    assert file.url == test_url
