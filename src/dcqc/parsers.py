@@ -26,9 +26,13 @@ class CsvParser:
         file = File(url, row, relative_to=csv_directory)
         return file
 
-    def create_targets(self) -> Iterator[Target]:
+    def create_files(self) -> Iterator[File]:
         for _, row in self.list_rows():
             file = self._row_to_file(row)
+            yield file
+
+    def create_targets(self) -> Iterator[Target]:
+        for file in self.create_files():
             yield Target(file)
 
     def create_suites(
