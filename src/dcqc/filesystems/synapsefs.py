@@ -108,7 +108,7 @@ class SynapseFS(FS):
     #       requirement is that every path starts with a Synapse ID.
     def __init__(
         self,
-        root: str,
+        root: Optional[str] = None,
         auth_token: Optional[str] = None,
         synapse_args: Optional[dict] = None,
     ) -> None:
@@ -133,27 +133,32 @@ class SynapseFS(FS):
         self._local.synapse.cache.purge(after_date=0)
         return self._local.synapse
 
-    def _process_root(self, root: str):
+    def is_synapse_id(self, text: str):
+        return self.SYNID_REGEX.fullmatch(text) is not None
+
+    def _process_root(self, root: Optional[str]):
+        if root is None or root == "":
+            return None
+
         root_path = PurePosixPath(root)
-        root_parts = root_path.parts
-        if len(root_parts) < 1:
-            message = f"Root ({root}) is empty."
-            raise ValueError(message)
-        elif len(root_parts) == 1:
-            pass
-        elif len(root_parts) > 1:
-            first_part = root_parts[0]
-            if not self.SYNID_REGEX.fullmatch(first_part):
-                message = f"First part of the root ({root}) is not a Synapse ID."
-                raise ValueError(message)
-            other_parts = root_parts[1:]
-            other_path = self.DELIMITER.join(other_parts)
-            root = self._path_to_synapse_id(other_path, first_part)
+        num_root_parts = len(root_path.parts)
+        error_message = f"Root ({root}) must be `None` or start with a Synapse ID."
+
+        if num_root_parts == 1:
+            if not self.is_synapse_id(root):
+                raise CreateFailed(error_message)
+        else:  # num_root_parts > 1
+            starting_entity, _, path = root.partition(self.DELIMITER)
+            if not self.is_synapse_id(starting_entity):
+                raise CreateFailed(error_message)
+            root = self._path_to_synapse_id(path, starting_entity)
+
         # Ensure that the root is not a file
         root_entity = self.synapse.get(root, downloadFile=False)
         if not is_container(root_entity):
-            message = f"Resolved Synapse ID ({root}) is not a project/folder."
+            message = f"Root ({root}) must resolve to a project or folder."
             raise CreateFailed(message)
+
         return root
 
     def _path_to_synapse_id(
@@ -174,35 +179,33 @@ class SynapseFS(FS):
             fs.errors.ResourceNotFound: If the ``path`` does
                 not resolve to existing entities.
         """
-        if starting_entity is None:
-            self.validatepath(path)
-
-        delim = self.DELIMITER
-        if not path.startswith(delim):
-            message = (
-                f"Path ({path}) should be absolute (i.e., starting with a '{delim}'). "
-                f"The leading '{delim}' refers to the root Synapse project or folder. "
-                "Otherwise, the current working directory is assumed to be the root."
-            )
-            warn(message)
-
-        posix_path = PurePosixPath(path)
+        original_path = path
         starting_entity = starting_entity or self.root
+
+        if starting_entity is None:
+            starting_entity, _, path = path.partition(self.DELIMITER)
+            if not self.is_synapse_id(starting_entity):
+                message = (
+                    f"This SynapseFS is rootless, so the 1st part ({starting_entity}) "
+                    f"of every path ({original_path}) must be a Synapse ID."
+                )
+                raise ValueError(message)
+
         current_entity = starting_entity
-        for part in posix_path.parts:
-            if part == self.DELIMITER or part == self.CWD_SYMBOL:
+        for part in path.strip(self.DELIMITER).split(self.DELIMITER):
+            if part in {"", self.DELIMITER, self.CWD_SYMBOL}:
                 continue
+
             if part == self.PARENT_DIR:
-                synapse_entity = self.synapse.get(current_entity, downloadFile=False)
-                if not hasattr(synapse_entity, "parentId"):
-                    raise ResourceNotFound(path)
-                current_entity = synapse_entity.parentId
+                current_entity = self._get_parent_entity(current_entity)
                 continue
+
             children_list = self._get_children(current_entity)
-            if self.SYNID_REGEX.fullmatch(part) is None:
-                children = {entity["name"]: entity for entity in children_list}
-            else:
+            if self.is_synapse_id(part):
                 children = {entity["id"]: entity for entity in children_list}
+            else:
+                children = {entity["name"]: entity for entity in children_list}
+
             if part in children:
                 current_entity = children[part]["id"]
             else:
@@ -248,6 +251,29 @@ class SynapseFS(FS):
             entity = self._synapse_id_to_entity(synapse_id, download_file)
         return entity
 
+    def _path_to_parent_id(self, path: str) -> str:
+        parent_path, _, basename = path.strip(self.DELIMITER).rpartition(self.DELIMITER)
+        if parent_path == "":
+            if self.root is not None:
+                parent_id = self.root
+            elif self.is_synapse_id(basename):
+                parent_id = self._get_parent_entity(basename)
+            else:
+                message = f"Path ({path}) must start with a Synapse ID when rootless."
+                raise ValueError(message)
+        else:
+            parent_id = self._path_to_synapse_id(parent_path)
+        return parent_id
+
+    def _get_parent_entity(self, entity_id: str) -> str:
+        entity = self.synapse.get(entity_id, downloadFile=False)
+        if isinstance(entity, Project):
+            message = f"Project ({entity.id}) has no parent."
+            raise ValueError(message)
+        parent_id = entity.parentId
+        parent = self.synapse.get(parent_id, downloadFile=False)
+        return parent.id
+
     def _get_children(self, entity: str) -> list[dict]:
         """_summary_
 
@@ -279,10 +305,11 @@ class SynapseFS(FS):
         For more information regarding resource information, see :ref:`info`.
 
         """
-        raw_info = dict()
-        namespaces = namespaces or ()
+        self.validatepath(path)
         entity = self._path_to_entity(path)
 
+        raw_info = dict()
+        namespaces = namespaces or ()
         name = entity.name
         is_dir = is_container(entity)
         is_file = not is_dir
@@ -364,6 +391,7 @@ class SynapseFS(FS):
             fs.errors.DirectoryExpected: If ``path`` is not a directory.
             fs.errors.ResourceNotFound: If ``path`` does not exist.
         """
+        self.validatepath(path)
         entity = self._path_to_entity(path)
 
         if not is_container(entity):
@@ -399,6 +427,8 @@ class SynapseFS(FS):
             fs.errors.DirectoryExists: If the path already exists.
             fs.errors.ResourceNotFound: If the path is not found.
         """
+        self.validatepath(path)
+
         if path == self.DELIMITER:
             if recreate:
                 return SubFS(self, path)
@@ -407,9 +437,8 @@ class SynapseFS(FS):
                 raise DirectoryExists(message)
 
         posix_path = PurePosixPath(path)
-        parent_path = str(posix_path.parent)
         folder_name = str(posix_path.name)
-        parent = self._path_to_entity(parent_path)
+        parent = self._path_to_parent_id(path)
 
         folder = Folder(folder_name, parent)
         with synapse_errors(path):
@@ -450,9 +479,7 @@ class SynapseFS(FS):
         mode_obj.validate_bin()
 
         posix_path = PurePosixPath(path)
-        parent_path = str(posix_path.parent)
         file_name = str(posix_path.name)
-        parent = self._path_to_entity(parent_path)
 
         try:
             info = self.getinfo(path)
@@ -468,8 +495,12 @@ class SynapseFS(FS):
         if path_exists and mode_obj.exclusive:
             raise FileExists(path)
 
-        if not path_exists and not mode_obj.create:
-            raise ResourceNotFound(path)
+        if not path_exists:
+            if mode_obj.create:
+                # Make sure the parent exists
+                self._path_to_parent_id(path)
+            else:
+                raise ResourceNotFound(path)
 
         # Create temporary directory for housing files
         temp_dir = TemporaryDirectory()
@@ -484,6 +515,7 @@ class SynapseFS(FS):
                 remote_file.write(self.NULL_BYTE)
             remote_file.raw.close()
             if mode_obj.create or mode_obj.writing:
+                parent = self._path_to_parent_id(path)
                 old_file_path = Path(remote_file.raw.name)
                 new_file_path = old_file_path.parent / file_name
                 shutil.move(old_file_path, new_file_path)
@@ -529,6 +561,7 @@ class SynapseFS(FS):
             fs.errors.FileExpected: If the path is a directory.
             fs.errors.ResourceNotFound: If the path does not exist.
         """
+        self.validatepath(path)
         entity = self._path_to_entity(path)
 
         if is_container(entity):
@@ -560,6 +593,7 @@ class SynapseFS(FS):
             message = f"Cannot remove the root folder ('{self.DELIMITER}')."
             raise RemoveRootError(message)
 
+        self.validatepath(path)
         entity = self._path_to_entity(path)
 
         if not is_container(entity):
@@ -601,5 +635,6 @@ class SynapseFS(FS):
             >>> my_fs.setinfo('file.txt', details_info)
         """
         # A placeholder to raise errors if called with an non-existing path
+        self.validatepath(path)
         self._path_to_entity(path)
         # TODO: Implement some writeable info (e.g., annotations)

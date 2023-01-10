@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory, TemporaryFile
 
 import pytest
 from fs import ResourceType, errors, open_fs
-from fs.opener.errors import OpenerError
+from fs.errors import CreateFailed
 from fs.test import FSTestCases
 from synapseclient import Folder, Synapse
 from synapseclient.core.exceptions import SynapseFileNotFoundError, SynapseHTTPError
@@ -15,9 +15,75 @@ from dcqc.filesystems.remote_file import RemoteFile
 from dcqc.filesystems.synapsefs import SynapseFS, synapse_errors
 
 
-def test_for_error_when_providing_invalid_url_to_open_fs():
-    with pytest.raises(OpenerError):
-        open_fs("syn://")
+@pytest.mark.integration
+def test_that_synapsefs_can_be_initialized_with_different_roots():
+    # Rootless
+    SynapseFS()
+    SynapseFS("")
+
+    # Synapse ID for a project or folder
+    SynapseFS("syn50545516")
+    SynapseFS("syn50557597")
+
+    # Synapse ID and path to a subfolder
+    SynapseFS("syn50545516/TestSubDir")
+
+    # Synapse and path to a file
+    with pytest.raises(CreateFailed):
+        SynapseFS("syn50545516/test.txt")
+
+    # Path with no Synapse ID
+    with pytest.raises(CreateFailed):
+        SynapseFS("DCQC Test Project")
+
+    # Path that doesn't start with a Synapse ID
+    with pytest.raises(CreateFailed):
+        SynapseFS("DCQC Test Project/syn50557597")
+
+
+@pytest.mark.integration
+def test_that_a_rootless_synapsefs_can_open_a_random_file_by_id():
+    fs = SynapseFS()
+    with fs.open("syn50555279") as infile:
+        contents = infile.read()
+    assert contents == "foobar\n"
+
+
+def test_for_an_error_when_open_a_path_without_a_starting_synapse_id_while_rootless():
+    fs = SynapseFS()
+    with pytest.raises(ValueError):
+        fs._path_to_synapse_id("DCQC Test Project/syn50555279")
+
+
+def test_that_a_path_with_multiple_synapse_ids_can_be_traversed():
+    fs = SynapseFS()
+    info = fs.getinfo("syn50545516/syn50557597")
+    assert info.name == "TestSubDir"
+    assert info.is_dir
+
+
+def test_that_retrieving_the_parent_id_for_a_synapse_id_path_works():
+    fs = SynapseFS()
+    actual = fs._path_to_parent_id("syn50555279")
+    assert actual == "syn50545516"
+
+
+def test_for_an_error_when_retrieving_the_parent_id_for_a_non_synapse_id_path():
+    fs = SynapseFS()
+    with pytest.raises(ValueError):
+        fs._path_to_parent_id("test.txt")
+
+
+def test_for_an_error_when_retrieving_the_parent_entity_for_a_project():
+    fs = SynapseFS()
+    with pytest.raises(ValueError):
+        fs._get_parent_entity("syn50545516")
+
+
+def test_that_providing_an_empty_syn_url_to_open_fs_will_create_a_rootless_synapsefs():
+    fs = open_fs("syn://")
+    assert isinstance(fs, SynapseFS)
+    assert fs.root is None
 
 
 def test_for_fs_errors_when_using_synapse_errors_context_manager():
