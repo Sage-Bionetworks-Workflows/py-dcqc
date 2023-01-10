@@ -4,7 +4,6 @@ from abc import ABC
 from collections.abc import Collection
 from itertools import chain
 from typing import Optional, Type, overload
-from warnings import warn
 
 from dcqc.enums import TestStatus
 from dcqc.file import FileType
@@ -134,16 +133,9 @@ class SuiteABC(SerializableMixin, ABC):
             if test_name not in self.required_tests:
                 continue
             test_status = test.get_status()
-            if test_status == TestStatus.NONE:
-                message = f"Suite ({self}) has a test ({test_name}) without a status."
-                raise ValueError(message)
-            elif test_status == TestStatus.SKIP:
-                message = f"Suite ({self}) is ignoring a skipped test ({test_name})."
-                warn(message)
-            else:
-                suite_status = test_status
-                if suite_status == TestStatus.FAIL:
-                    break
+            suite_status = test_status
+            if suite_status == TestStatus.FAIL:
+                break
         return suite_status
 
     def to_dict(self):

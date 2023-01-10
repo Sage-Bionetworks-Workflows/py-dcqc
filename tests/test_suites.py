@@ -1,8 +1,10 @@
 import pytest
 
+from dcqc.enums import TestStatus
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
+from dcqc.target import Target
 from dcqc.tests.test_abc import TestABC
 from dcqc.tests.tests import LibTiffInfoTest
 
@@ -12,6 +14,11 @@ class RedundantFileSuite(TiffSuite):
 
 
 FileType("Unpaired", ())
+
+
+class DummyTest(TestABC):
+    def compute_status(self) -> TestStatus:
+        return TestStatus.NONE
 
 
 def test_that_a_file_suite_results_in_multiple_tests():
@@ -61,3 +68,10 @@ def test_that_the_generic_file_suite_is_retrieved_for_a_random_file_type():
 def test_that_the_generic_file_suite_is_retrieved_for_an_unpaired_file_type():
     actual = SuiteABC.get_suite_by_file_type("Unpaired")
     assert actual is FileSuite
+
+
+def test_that_the_default_required_tests_are_only_tiers_1_and_2(test_files):
+    tiff_file = test_files["tiff"]
+    tiff_target = Target(tiff_file)
+    tiff_suite = TiffSuite(tiff_target)
+    assert all(test.tier <= 2 for test in tiff_suite.tests)
