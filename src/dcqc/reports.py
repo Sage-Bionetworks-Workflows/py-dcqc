@@ -1,6 +1,6 @@
 import json
 from collections.abc import Iterator
-from typing import Any, Optional
+from typing import Any, Union
 
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.utils import open_parent_fs
@@ -22,18 +22,19 @@ class JsonReport:
 
     def generate(
         self,
-        *items_: SerializableMixin,
-        items: Optional[Iterator[SerializableMixin]] = None,
-    ) -> list[SerializedObject]:
-        all_items = items or list(items_)
-        report = [item.to_dict() for item in all_items]
+        items: Union[SerializableMixin, Iterator[SerializableMixin]],
+    ) -> Union[SerializedObject, list[SerializedObject]]:
+        report: Union[SerializedObject, list[SerializedObject]]
+        if isinstance(items, Iterator):
+            report = [item.to_dict() for item in items]
+        else:
+            report = items.to_dict()
         return report
 
     def save(
         self,
-        *items_: SerializableMixin,
-        items: Optional[Iterator[SerializableMixin]] = None,
-    ) -> list[SerializedObject]:
-        report = self.generate(*items_, items=items)
+        items: Union[SerializableMixin, Iterator[SerializableMixin]],
+    ) -> Union[SerializedObject, list[SerializedObject]]:
+        report = self.generate(items)
         self.to_file(report)
         return report
