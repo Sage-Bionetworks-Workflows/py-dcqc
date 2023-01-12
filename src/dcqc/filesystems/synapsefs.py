@@ -7,7 +7,7 @@ import threading
 from collections.abc import Collection
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from tempfile import NamedTemporaryFile, TemporaryDirectory, mkdtemp
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import TYPE_CHECKING, Any, BinaryIO, Optional
 from warnings import warn
 
@@ -126,13 +126,11 @@ class SynapseFS(FS):
             Synapse: Authenticated Synapse client
         """
         if not hasattr(self._local, "synapse"):
-            # Provide an empty cache directory unless given by the user
-            # To avoid unwanted side effects from an existing cache
-            default_cache_dir = mkdtemp()
-            cache_dir = self.synapse_args.pop("cache_root_dir", default_cache_dir)
-            synapse = Synapse(**self.synapse_args, cache_root_dir=cache_dir)
+            synapse = Synapse(**self.synapse_args)
             synapse.login(authToken=self.auth_token)
             self._local.synapse = synapse
+        # Clear the Synapse cache to ensure up-to-date
+        self._local.synapse.cache.purge(after_date=0)
         return self._local.synapse
 
     def is_synapse_id(self, text: str):
