@@ -97,7 +97,7 @@ This often provides additional considerations and avoids unnecessary work.
 3. Clone this copy to your local disk:
 
    ```console
-   git clone git@github.com:sage-bionetworks-workflows/dcqc.git
+   git clone git@github.com:Sage-Bionetworks-Workflows/py-dcqc.git
    cd dcqc
    ```
 
@@ -291,5 +291,5 @@ on [PyPI], the following steps can be used to release a new version for
 [tox]: https://tox.readthedocs.io/en/stable/
 [virtual environment]: https://realpython.com/python-virtual-environments-a-primer/
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
-[repository]: https://github.com/sage-bionetworks-workflows/dcqc
-[issue tracker]: https://github.com/sage-bionetworks-workflows/dcqc/issues
+[repository]: https://github.com/sage-bionetworks-workflows/py-dcqc
+[issue tracker]: https://github.com/sage-bionetworks-workflows/py-dcqc/issues
