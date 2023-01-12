@@ -7,7 +7,7 @@ import threading
 from collections.abc import Collection
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory, mkdtemp
 from typing import TYPE_CHECKING, Any, BinaryIO, Optional, Type
 
 from fs import ResourceType
@@ -80,6 +80,7 @@ class SynapseFS(FS):
         "project": Project,
     }
 
+    DEFAULT_SYNAPSE_ARGS: dict[str, Any]
     DEFAULT_SYNAPSE_ARGS = {
         "silent": True,
     }
@@ -98,7 +99,7 @@ class SynapseFS(FS):
         self,
         root: Optional[str] = None,
         auth_token: Optional[str] = None,
-        synapse_args: Optional[dict] = None,
+        synapse_args: Optional[dict[str, Any]] = None,
     ) -> None:
         super(SynapseFS, self).__init__()
         self.auth_token = auth_token
@@ -114,6 +115,8 @@ class SynapseFS(FS):
             Synapse: Authenticated Synapse client
         """
         if not hasattr(self._local, "synapse"):
+            # Override cache with temporary directory to avoid unwanted side effects
+            self.synapse_args["cache_root_dir"] = mkdtemp()
             synapse = Synapse(**self.synapse_args)
             synapse.login(authToken=self.auth_token)
             self._local.synapse = synapse
