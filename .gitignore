@@ -13,8 +13,11 @@ __pycache__/*
 .*.swp
 */.ipynb_checkpoints/*
 .DS_Store
+/tests/outputs/
+test.txt
 
 # Project files
+.env
 .ropeproject
 .project
 .pydevproject
@@ -37,6 +40,8 @@ htmlcov/*
 junit*.xml
 coverage.xml
 .pytest_cache/
+.hypothesis/
+
 
 # Build and docs folder/files
 build/*

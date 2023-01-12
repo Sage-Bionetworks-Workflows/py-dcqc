@@ -1,30 +1,3 @@
-```{todo} THIS IS SUPPOSED TO BE AN EXAMPLE. MODIFY IT ACCORDING TO YOUR NEEDS!
-
-   The document assumes you are using a source repository service that promotes a
-   contribution model similar to [GitHub's fork and pull request workflow].
-   While this is true for the majority of services (like GitHub, GitLab,
-   BitBucket), it might not be the case for private repositories (e.g., when
-   using Gerrit).
-
-   Also notice that the code examples might refer to GitHub URLs or the text
-   might use GitHub specific terminology (e.g., *Pull Request* instead of *Merge
-   Request*).
-
-   Please make sure to check the document having these assumptions in mind
-   and update things accordingly.
-```
-
-```{todo} Provide the correct links/replacements at the bottom of the document.
-```
-
-```{todo} You might want to have a look on [PyScaffold's contributor's guide],
-
-   especially if your project is open source. The text should be very similar to
-   this template, but there are a few extra contents that you might decide to
-   also include, like mentioning labels of your issue tracker or automated
-   releases.
-```
-
 # Contributing
 
 Welcome to `dcqc` contributor's guide.
@@ -67,29 +40,22 @@ by adding missing information and correcting mistakes.
 `dcqc` documentation uses [Sphinx] as its main documentation compiler.
 This means that the docs are kept in the same repository as the project code, and
 that any documentation update is done in the same way was a code contribution.
+The documentation is written using [CommonMark] with [MyST] extensions.
 
-```{todo} Don't forget to mention which markup language you are using.
+:::{tip}
+   Please notice that the [GitHub web interface] provides a quick way of
+   propose changes in `dcqc`'s files. While this mechanism can
+   be tricky for normal code contributions, it works perfectly fine for
+   contributing to the docs, and can be quite handy.
 
-    e.g.,  [reStructuredText] or [CommonMark] with [MyST] extensions.
-```
-
-```{todo} If your project is hosted on GitHub, you can also mention the following tip:
-
-   :::{tip}
-      Please notice that the [GitHub web interface] provides a quick way of
-      propose changes in `dcqc`'s files. While this mechanism can
-      be tricky for normal code contributions, it works perfectly fine for
-      contributing to the docs, and can be quite handy.
-
-      If you are interested in trying this method out, please navigate to
-      the `docs` folder in the source [repository], find which file you
-      would like to propose changes and click in the little pencil icon at the
-      top, to open [GitHub's code editor]. Once you finish editing the file,
-      please write a message in the form at the bottom of the page describing
-      which changes have you made and what are the motivations behind them and
-      submit your proposal.
-   :::
-```
+   If you are interested in trying this method out, please navigate to
+   the `docs` folder in the source [repository], find which file you
+   would like to propose changes and click in the little pencil icon at the
+   top, to open [GitHub's code editor]. Once you finish editing the file,
+   please write a message in the form at the bottom of the page describing
+   which changes have you made and what are the motivations behind them and
+   submit your proposal.
+:::
 
 When working on documentation changes in your local machine, you can
 compile them using [tox] :
@@ -107,36 +73,19 @@ python3 -m http.server --directory 'docs/_build/html'
 
 ## Code Contributions
 
-```{todo} Please include a reference or explanation about the internals of the project.
+<!---
+#TODO: Include a reference or explanation about the internals of the project.
 
-   An architecture description, design principles or at least a summary of the
-   main concepts will make it easy for potential contributors to get started
-   quickly.
-```
+An architecture description, design principles or at least a summary of the
+main concepts will make it easy for potential contributors to get started
+quickly.
+--->
 
 ### Submit an issue
 
 Before you work on any non-trivial code contribution it's best to first create
 a report in the [issue tracker] to start a discussion on the subject.
 This often provides additional considerations and avoids unnecessary work.
-
-### Create an environment
-
-Before you start coding, we recommend creating an isolated [virtual environment]
-to avoid any problems with your installed Python packages.
-This can easily be done via either [virtualenv]:
-
-```
-virtualenv <PATH TO VENV>
-source <PATH TO VENV>/bin/activate
-```
-
-or [Miniconda]:
-
-```
-conda create -n dcqc python=3 six virtualenv pytest pytest-cov
-conda activate dcqc
-```
 
 ### Clone the repository
 
@@ -147,27 +96,24 @@ conda activate dcqc
 
 3. Clone this copy to your local disk:
 
-   ```
-   git clone git@github.com:YourLogin/dcqc.git
+   ```console
+   git clone git@github.com:Sage-Bionetworks-Workflows/py-dcqc.git
    cd dcqc
    ```
 
 4. You should run:
 
-   ```
-   pip install -U pip setuptools -e .
-   ```
-
-   to be able to import the package under development in the Python REPL.
-
-   ```{todo} if you are not using pre-commit, please remove the following item:
+   ```console
+   pipenv install --dev
    ```
 
-5. Install [pre-commit]:
+   to create an isolated virtual environment containing package dependencies,
+   including those needed for development (*e.g.* testing, documentation).
+
+5. Install [pre-commit] hooks:
 
    ```
-   pip install pre-commit
-   pre-commit install
+   pipenv run pre-commit install
    ```
 
    `dcqc` comes with a lot of hooks configured to automatically help the
@@ -177,7 +123,7 @@ conda activate dcqc
 
 1. Create a branch to hold your changes:
 
-   ```
+   ```console
    git checkout -b my-feature
    ```
 
@@ -186,19 +132,16 @@ conda activate dcqc
 2. Start your work on this branch. Don't forget to add [docstrings] to new
    functions, modules and classes, especially if they are part of public APIs.
 
-3. Add yourself to the list of contributors in `AUTHORS.rst`.
+3. Add yourself to the list of contributors in `AUTHORS.md`.
 
 4. When you’re done editing, do:
 
-   ```
+   ```console
    git add <MODIFIED FILES>
    git commit
    ```
 
    to record your changes in [git].
-
-   ```{todo} if you are not using pre-commit, please remove the following item:
-   ```
 
    Please make sure to see the validation messages from [pre-commit] and fix
    any eventual issues.
@@ -212,7 +155,7 @@ conda activate dcqc
    Moreover, writing a [descriptive commit message] is highly recommended.
    In case of doubt, you can check the commit history with:
 
-   ```
+   ```console
    git log --graph --decorate --pretty=oneline --abbrev-commit --all
    ```
 
@@ -221,11 +164,9 @@ conda activate dcqc
 
 5. Please check that your changes don't break any unit tests with:
 
-   ```
+   ```console
    tox
    ```
-
-   (after having installed [tox] with `pip install tox` or `pipx`).
 
    You can also use [tox] to run several other pre-configured tasks in the
    repository. Try `tox -av` to see a list of the available checks.
@@ -234,20 +175,16 @@ conda activate dcqc
 
 1. If everything works fine, push your local branch to the remote server with:
 
-   ```
+   ```console
    git push -u origin my-feature
    ```
 
 2. Go to the web page of your fork and click "Create pull request"
    to send your changes for review.
 
-   ```{todo} if you are using GitHub, you can uncomment the following paragraph
-
-      Find more detailed information in [creating a PR]. You might also want to open
-      the PR as a draft first and mark it as ready for review after the feedbacks
-      from the continuous integration (CI) system or any required fixes.
-
-   ```
+   Find more detailed information in [creating a PR]. You might also want to open
+   the PR as a draft first and mark it as ready for review after the feedbacks
+   from the continuous integration (CI) system or any required fixes.
 
 ### Troubleshooting
 
@@ -267,20 +204,20 @@ package:
    missing dependencies when running a command with [tox], try to recreate the
    `tox` environment using the `-r` flag. For example, instead of:
 
-   ```
+   ```console
    tox -e docs
    ```
 
    Try running:
 
-   ```
+   ```console
    tox -r -e docs
    ```
 
 3. Make sure to have a reliable [tox] installation that uses the correct
    Python version (e.g., 3.7+). When in doubt you can run:
 
-   ```
+   ```console
    tox --version
    # OR
    which tox
@@ -290,7 +227,7 @@ package:
    also try to create a dedicated [virtual environment] with a [tox] binary
    freshly installed. For example:
 
-   ```
+   ```console
    virtualenv .venv
    source .venv/bin/activate
    .venv/bin/pip install tox
@@ -305,12 +242,6 @@ package:
 ## Maintainer tasks
 
 ### Releases
-
-```{todo} This section assumes you are using PyPI to publicly release your package.
-
-   If instead you are using a different/private package index, please update
-   the instructions accordingly.
-```
 
 If you are part of the group of maintainers and have correct user permissions
 on [PyPI], the following steps can be used to release a new version for
@@ -335,7 +266,6 @@ on [PyPI], the following steps can be used to release a new version for
     to collectively create software are general and can be applied to all sorts
     of environments, including private companies and proprietary code bases.
 
-
 [black]: https://pypi.org/project/black/
 [commonmark]: https://commonmark.org/
 [contribution-guide.org]: http://www.contribution-guide.org/
@@ -357,15 +287,9 @@ on [PyPI], the following steps can be used to release a new version for
 [pyscaffold's contributor's guide]: https://pyscaffold.org/en/stable/contributing.html
 [pytest can drop you]: https://docs.pytest.org/en/stable/usage.html#dropping-to-pdb-python-debugger-at-the-start-of-a-test
 [python software foundation's code of conduct]: https://www.python.org/psf/conduct/
-[restructuredtext]: https://www.sphinx-doc.org/en/master/usage/restructuredtext/
 [sphinx]: https://www.sphinx-doc.org/en/master/
 [tox]: https://tox.readthedocs.io/en/stable/
 [virtual environment]: https://realpython.com/python-virtual-environments-a-primer/
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
-
-
-```{todo} Please review and change the following definitions:
-```
-
-[repository]: https://github.com/<USERNAME>/dcqc
-[issue tracker]: https://github.com/<USERNAME>/dcqc/issues
+[repository]: https://github.com/sage-bionetworks-workflows/py-dcqc
+[issue tracker]: https://github.com/sage-bionetworks-workflows/py-dcqc/issues
