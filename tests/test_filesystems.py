@@ -15,6 +15,11 @@ from dcqc.filesystems.remote_file import RemoteFile
 from dcqc.filesystems.synapsefs import SynapseFS, synapse_errors
 
 
+@pytest.fixture(scope="session")
+def synapse_fs():
+    yield SynapseFS()
+
+
 @pytest.mark.integration
 def test_that_synapsefs_can_be_initialized_with_different_roots():
     # Rootless
@@ -42,42 +47,36 @@ def test_that_synapsefs_can_be_initialized_with_different_roots():
 
 
 @pytest.mark.integration
-def test_that_a_rootless_synapsefs_can_open_a_random_file_by_id():
-    fs = SynapseFS()
-    with fs.open("syn50555279") as infile:
+def test_that_a_rootless_synapsefs_can_open_a_random_file_by_id(synapse_fs):
+    with synapse_fs.open("syn50555279") as infile:
         contents = infile.read()
     assert contents == "foobar\n"
 
 
-def test_for_an_error_when_open_a_path_without_a_starting_synapse_id_while_rootless():
-    fs = SynapseFS()
+def test_for_an_error_with_a_path_that_does_not_start_with_a_synapse_id(synapse_fs):
     with pytest.raises(ValueError):
-        fs._path_to_synapse_id("DCQC Test Project/syn50555279")
+        synapse_fs._path_to_synapse_id("DCQC Test Project/syn50555279")
 
 
-def test_that_a_path_with_multiple_synapse_ids_can_be_traversed():
-    fs = SynapseFS()
-    info = fs.getinfo("syn50545516/syn50557597")
+def test_that_a_path_with_multiple_synapse_ids_can_be_traversed(synapse_fs):
+    info = synapse_fs.getinfo("syn50545516/syn50557597")
     assert info.name == "TestSubDir"
     assert info.is_dir
 
 
-def test_that_retrieving_the_parent_id_for_a_synapse_id_path_works():
-    fs = SynapseFS()
-    actual = fs._path_to_parent_id("syn50555279")
+def test_that_retrieving_the_parent_id_for_a_synapse_id_path_works(synapse_fs):
+    actual = synapse_fs._path_to_parent_id("syn50555279")
     assert actual == "syn50545516"
 
 
-def test_for_an_error_when_retrieving_the_parent_id_for_a_non_synapse_id_path():
-    fs = SynapseFS()
+def test_for_an_error_when_retrieving_the_parent_for_a_non_synapse_id_path(synapse_fs):
     with pytest.raises(ValueError):
-        fs._path_to_parent_id("test.txt")
+        synapse_fs._path_to_parent_id("test.txt")
 
 
-def test_for_an_error_when_retrieving_the_parent_entity_for_a_project():
-    fs = SynapseFS()
+def test_for_an_error_when_retrieving_the_parent_entity_for_a_project(synapse_fs):
     with pytest.raises(ValueError):
-        fs._get_parent_entity("syn50545516")
+        synapse_fs._get_parent_entity("syn50545516")
 
 
 def test_that_providing_an_empty_syn_url_to_open_fs_will_create_a_rootless_synapsefs():
@@ -99,9 +98,6 @@ def test_for_fs_errors_when_using_synapse_errors_context_manager():
     with pytest.raises(SynapseHTTPError):
         with synapse_errors("foo"):
             raise SynapseHTTPError("something else")
-    with pytest.warns(UserWarning):
-        with synapse_errors("foo"):
-            raise SynapseHTTPError("File size must be at least one byte")
 
 
 def test_that_a_remote_file_without_a_close_on_callable_can_be_closed():
@@ -123,6 +119,7 @@ def test_that_staging_a_local_file_creates_a_copy(get_data):
         assert target_path.exists()
 
 
+# Not technically an integration test, but I'm reusing the same mark since it's slow
 @pytest.mark.integration
 def test_that_staging_a_synapse_file_creates_a_copy(mocker):
     mocked_synapse = mocker.patch("synapseclient.Synapse")
