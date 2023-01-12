@@ -76,7 +76,7 @@ def test_for_an_error_when_retrieving_the_parent_for_a_non_synapse_id_path(synap
 
 def test_for_an_error_when_retrieving_the_parent_entity_for_a_project(synapse_fs):
     with pytest.raises(ValueError):
-        synapse_fs._get_parent_entity("syn50545516")
+        synapse_fs._get_parent_id("syn50545516")
 
 
 def test_that_providing_an_empty_syn_url_to_open_fs_will_create_a_rootless_synapsefs():
