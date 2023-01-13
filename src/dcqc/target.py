@@ -5,7 +5,6 @@ from dataclasses import asdict, dataclass
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
-from dcqc.utils import validate_from_dict
 
 
 # TODO: Eventually, there might be target-specific metadata
@@ -15,6 +14,15 @@ from dcqc.utils import validate_from_dict
 # TODO: Maybe the Composite pattern would work here?
 @dataclass
 class Target(SerializableMixin):
+    """Construct a multi-file Target.
+
+    Targets ensure support for both single-file
+    and multi-file tests.
+
+    Args:
+        *files (File): Sequence of files objects.
+    """
+
     type: str
     files: list[File]
 
@@ -28,7 +36,7 @@ class Target(SerializableMixin):
     @classmethod
     def from_dict(cls, dictionary: dict) -> Target:
         dictionary = deepcopy(dictionary)
-        dictionary = validate_from_dict(cls, dictionary)
+        dictionary = cls.from_dict_prepare(dictionary)
         files = [File.from_dict(d) for d in dictionary["files"]]
         target = cls(*files)
         return target

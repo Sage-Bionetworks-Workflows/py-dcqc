@@ -5,7 +5,7 @@ import re
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Optional
 
 from dcqc.mixins import SerializableMixin
@@ -46,6 +46,7 @@ class FileType:
         return cls._registry[file_type]
 
 
+# TODO: These file types could be moved to an external file
 # Instantiated file types are automatically tracked by the FileType class
 FileType("*", ())  # To represent all file types
 FileType("TXT", (".txt",))
@@ -67,7 +68,8 @@ class File(SerializableMixin):
         metadata: Mapping[str, Any],
         relative_to: Optional[Path] = None,
     ):
-        if relative_to is not None and self.is_local(url):
+        relative_to = relative_to or Path.cwd()
+        if self.is_local(url):
             scheme, separator, resource = url.rpartition("://")
             path = Path(resource)
             if not path.is_absolute():
@@ -76,11 +78,28 @@ class File(SerializableMixin):
         self.url = str(url)
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
+        self.file_name = self._get_file_name()
+        self._fs = None
+
+    @property
+    def fs(self):
+        if self._fs is None:
+            fname = self.file_name
+            fs, bname = open_parent_fs(self.url)
+            if bname != fname:
+                message = f"Inconsistent file names: FS ({bname}) and File ({fname})."
+                raise ValueError(message)
+            self._fs = fs
+        return self._fs
 
     def _pop_file_type(self) -> str:
         file_type = self.get_metadata("file_type")
         del self.metadata["file_type"]
         return file_type
+
+    def _get_file_name(self):
+        path = PurePosixPath(self.url)
+        return path.name
 
     def get_file_type(self) -> FileType:
         return FileType.get_file_type(self.type)
@@ -99,17 +118,67 @@ class File(SerializableMixin):
 
     # TODO: Create a new instance attribute `self._local_path` for keeping
     #       track of the local path instead of overwriting `self.url`
-    def get_local_path(self):
+    def get_local_path(self) -> str:
         if not self.is_local():
-            self.stage()
-        _, _, local_path = self.url.rpartition("://")
+            message = f"File ({self.url}) should first be downloaded using stage()."
+            raise FileNotFoundError(message)
+        local_path = self.url
+        if local_path.startswith(("osfs://", "file://")):
+            local_path = self.fs.getsyspath(self.file_name)
         return local_path
 
-    def stage(self, destination: Optional[str] = None) -> str:
-        fs, base_name = open_parent_fs(self.url)
-        destination = destination or fs.getinfo(base_name).name
-        with open(destination, "wb") as staged_file:
-            fs.download(base_name, staged_file)
+    def stage(self, destination: Optional[str] = None, overwrite: bool = False) -> str:
+        """Download remote files and copy local files.
+
+        A destination is required for remote files.
+        Local files aren't moved if a destination is omitted.
+
+        Args:
+            destination (Optional[str]): File or folder path
+                where to store the file. Defaults to None.
+            overwrite (bool): Whether to ignore existing file
+                at the target destination. Defaults to False.
+
+        Raises:
+            ValueError: If a destination is not specified
+                when staging a remote file.
+            ValueError: If the parent directory of the
+                destination does not exist.
+            FileExistsError: If the destination file already
+                exists and ``overwrite`` was not enabled.
+
+        Returns:
+            str: The updated URL (i.e., location) of the file.
+        """
+        if not destination:
+            if self.is_local():
+                return self.url
+            else:
+                message = f"Destination is required for remote files ({self.url})."
+                raise ValueError(message)
+
+        # By this point, destination is defined (not None)
+        file_name = self._get_file_name()
+        destination_path = Path(destination)
+        if destination_path.is_dir():
+            destination_path = destination_path / file_name
+            destination = destination_path.as_posix()
+
+        if not destination_path.parent.exists():
+            message = f"Parent folder of destination ({destination}) does not exist."
+            raise ValueError(message)
+
+        if destination_path.exists() and not overwrite:
+            message = f"Destination ({destination}) already exists. Enable overwrite."
+            raise FileExistsError(message)
+
+        if self.is_local():
+            local_path = self.get_local_path()
+            destination_path.symlink_to(local_path)
+        else:
+            with open(destination, "wb") as dest_file:
+                self.fs.download(self.file_name, dest_file)
+
         self.url = destination
         return self.url
 
