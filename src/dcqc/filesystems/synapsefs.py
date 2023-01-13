@@ -116,12 +116,13 @@ class SynapseFS(FS):
             Synapse: Authenticated Synapse client
         """
         if not hasattr(self._local, "synapse"):
-            # Override cache with temporary directory to avoid unwanted side effects
+            # Override cache with temporary directory
             self.synapse_args["cache_root_dir"] = mkdtemp()
             synapse = Synapse(**self.synapse_args)
             synapse.login(authToken=self.auth_token)
             self._local.synapse = synapse
-        # Clear the Synapse cache to ensure up-to-date
+        # Clear the Synapse cache to avoid unwanted side effects. More info here:
+        # https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/3#discussion_r1068443214
         self._local.synapse.cache.purge(after_date=0)
         return self._local.synapse
 
