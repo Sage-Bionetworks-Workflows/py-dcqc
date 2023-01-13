@@ -20,8 +20,8 @@ DATADIR = TESTDIR / "data"
 
 UUID = str(uuid4())
 USER = getuser()
-UTCTIME = datetime.now().isoformat(" ", "seconds")
-RUNID = f"{USER} - {UTCTIME} - {UUID}"
+UTCTIME = datetime.now().isoformat(" ", "seconds").replace(":", ".")
+RUNID = f"{USER} - {UTCTIME} - {UUID}"  # Valid characters: [A-Za-z0-9 .+'()_-]
 
 
 def pytest_configure():
