@@ -44,7 +44,7 @@ def test_that_the_md5_checksum_test_works_on_incorrect_files(test_files):
 
 
 def test_that_all_external_tests_inherit_from_the_mixin_first():
-    tests = TestABC.list_tests()
+    tests = TestABC.list_subclasses()
     for test in tests:
         if issubclass(test, ExternalTestMixin):
             mro = test.__mro__
@@ -102,13 +102,13 @@ def test_that_the_ome_xml_schema_test_command_is_produced(test_files):
 
 
 def test_that_the_md5_checksum_test_can_be_retrieved_by_name():
-    test = TestABC.get_test("Md5ChecksumTest")
+    test = TestABC.get_subclass_by_name("Md5ChecksumTest")
     assert test is tests.Md5ChecksumTest
 
 
 def test_for_an_error_when_retrieving_a_random_test_by_name():
     with pytest.raises(ValueError):
-        TestABC.get_test("FooBar")
+        TestABC.get_subclass_by_name("FooBar")
 
 
 def test_for_an_error_when_a_libtiff_info_test_is_given_multiple_files(test_files):

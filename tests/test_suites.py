@@ -40,33 +40,33 @@ def test_that_the_ome_tiff_suite_has_a_superset_of_the_tiff_suite_tests():
 
 
 def test_that_a_test_suite_can_be_retrieved_by_name():
-    actual = SuiteABC.get_suite_by_name("OmeTiffSuite")
+    actual = SuiteABC.get_subclass_by_name("OmeTiffSuite")
     assert actual is OmeTiffSuite
 
 
 def test_for_an_error_when_retrieving_a_nonexistent_test_suite_by_name():
     with pytest.raises(ValueError):
-        SuiteABC.get_suite_by_name("FooBarSuite")
+        SuiteABC.get_subclass_by_name("FooBarSuite")
 
 
 def test_that_a_test_suite_can_be_retrieved_by_file_type_class():
     file_type = FileType.get_file_type("OME-TIFF")
-    actual = SuiteABC.get_suite_by_file_type(file_type)
+    actual = SuiteABC.get_subclass_by_file_type(file_type)
     assert actual is OmeTiffSuite
 
 
 def test_that_a_test_suite_can_be_retrieved_by_file_type_str():
-    actual = SuiteABC.get_suite_by_file_type("OME-TIFF")
+    actual = SuiteABC.get_subclass_by_file_type("OME-TIFF")
     assert actual is OmeTiffSuite
 
 
 def test_that_the_generic_file_suite_is_retrieved_for_a_random_file_type():
-    actual = SuiteABC.get_suite_by_file_type("Foo-Bar")
+    actual = SuiteABC.get_subclass_by_file_type("Foo-Bar")
     assert actual is FileSuite
 
 
 def test_that_the_generic_file_suite_is_retrieved_for_an_unpaired_file_type():
-    actual = SuiteABC.get_suite_by_file_type("Unpaired")
+    actual = SuiteABC.get_subclass_by_file_type("Unpaired")
     assert actual is FileSuite
 
 

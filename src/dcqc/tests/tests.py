@@ -9,7 +9,7 @@ class FileExtensionTest(TestABC):
     tier = 1
     only_one_file_targets = False
 
-    def compute_status(self):
+    def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
         for file in self.target.files:
             file_type = file.get_file_type()
@@ -24,7 +24,7 @@ class Md5ChecksumTest(TestABC):
     tier = 1
     only_one_file_targets = False
 
-    def compute_status(self):
+    def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
         for file in self.target.files:
             expected_md5 = file.get_metadata("md5_checksum")
@@ -34,7 +34,7 @@ class Md5ChecksumTest(TestABC):
                 break
         return status
 
-    def _compute_md5_checksum(self, file: File):
+    def _compute_md5_checksum(self, file: File) -> str:
         local_path = file.get_local_path()
         hash_md5 = hashlib.md5()
         with open(local_path, "rb") as f:

@@ -9,12 +9,25 @@ from typing import Optional, Type
 
 from dcqc.enums import TestStatus
 from dcqc.file import File
-from dcqc.mixins import SerializableMixin
+from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.target import Target
 
 
 # TODO: Look into the @typing.final decorator
 class TestABC(SerializableMixin, ABC):
+    """Abstract base class for QC tests.
+
+    Args:
+        target (Target): Single- or multi-file target.
+        skip (bool, optional): Whether to skip this test,
+            resulting in ``TestStatus.SKIP`` as status.
+            Defaults to False.
+
+    Raises:
+        ValueError: If the test expects a single file and
+            the given target features multiple files.
+    """
+
     # Class attributes
     tier: int
     is_external_test: bool
@@ -37,6 +50,7 @@ class TestABC(SerializableMixin, ABC):
             raise ValueError(message)
 
     def get_status(self) -> TestStatus:
+        """Compute (if applicable) and return the test status."""
         if self._status == TestStatus.NONE:
             self._status = self.compute_status()
         return self._status
@@ -46,7 +60,8 @@ class TestABC(SerializableMixin, ABC):
         return files[0]
 
     @classmethod
-    def get_test(cls, test: str) -> Type[TestABC]:
+    def get_subclass_by_name(cls, test: str) -> Type[TestABC]:
+        """Retrieve subclass by name."""
         test_classes = TestABC.__subclasses__()
         registry = {test_class.__name__: test_class for test_class in test_classes}
         if test not in registry:
@@ -56,15 +71,16 @@ class TestABC(SerializableMixin, ABC):
         return registry[test]
 
     @classmethod
-    def list_tests(cls) -> list[Type[TestABC]]:
+    def list_subclasses(cls) -> list[Type[TestABC]]:
+        """List all subclasses."""
         test_classes = TestABC.__subclasses__()
         return test_classes
 
     @abstractmethod
     def compute_status(self) -> TestStatus:
-        """"""
+        """Compute the status of the test."""
 
-    def to_dict(self):
+    def to_dict(self) -> SerializedObject:
         test_dict = {
             "type": self.type,
             "status": self._status.value,
@@ -87,7 +103,7 @@ class Process:
     cpus: int = 1
     memory: int = 2  # In GB
 
-    def get_command(self):
+    def get_command(self) -> str:
         return shlex.join(self.command_args)
 
 
@@ -100,18 +116,20 @@ class ExternalTestMixin(TestABC):
     STDERR_PATH = Path("std_err.txt")
     EXITCODE_PATH = Path("exit_code.txt")
 
-    def compute_status(self):
+    def compute_status(self) -> TestStatus:
+        """Compute the status of the test."""
         outputs = self._find_process_outputs()
         return self._interpret_process_outputs(outputs)
 
     @abstractmethod
     def generate_process(self) -> Process:
-        """"""
+        """Generate the process that needs to be run."""
 
     @classmethod
     def _find_process_outputs(
         cls, search_dir: Optional[Path] = None
     ) -> dict[str, Path]:
+        """Locate the output files from the executed process."""
         search_dir = search_dir or Path(".")
         outputs = {
             "std_out": search_dir / cls.STDOUT_PATH,
@@ -126,6 +144,7 @@ class ExternalTestMixin(TestABC):
         return outputs
 
     def _interpret_process_outputs(self, outputs: dict[str, Path]) -> TestStatus:
+        """Interpret the process output files to yield a test status."""
         exit_code = outputs["exit_code"].read_text()
         exit_code = exit_code.strip()
         if exit_code == "0":

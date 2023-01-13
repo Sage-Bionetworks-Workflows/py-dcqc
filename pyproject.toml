@@ -11,6 +11,13 @@ version_scheme = "no-guess-dev"
 [tool.mypy]
 
 [[tool.mypy.overrides]]
+module = "dcqc"
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
 module = "synapseclient.*"
 ignore_missing_imports = true
 

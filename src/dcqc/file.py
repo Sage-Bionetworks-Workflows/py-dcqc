@@ -8,7 +8,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Optional
 
-from dcqc.mixins import SerializableMixin
+from fs.base import FS
+
+from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.utils import open_parent_fs
 
 
@@ -29,7 +31,7 @@ class FileType:
         self.register_file_type(self)
 
     @classmethod
-    def register_file_type(cls, self):
+    def register_file_type(cls, self: FileType) -> None:
         name = self.name.lower()
         if name in cls._registry:
             message = f"File type ({name}) is already registered ({self._registry})."
@@ -59,6 +61,7 @@ class File(SerializableMixin):
     url: str
     metadata: dict[str, Any]
     type: str
+    _fs: Optional[FS]
 
     LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
@@ -82,7 +85,7 @@ class File(SerializableMixin):
         self._fs = None
 
     @property
-    def fs(self):
+    def fs(self) -> FS:
         if self._fs is None:
             fname = self.file_name
             fs, bname = open_parent_fs(self.url)
@@ -97,7 +100,7 @@ class File(SerializableMixin):
         del self.metadata["file_type"]
         return file_type
 
-    def _get_file_name(self):
+    def _get_file_name(self) -> str:
         path = PurePosixPath(self.url)
         return path.name
 
@@ -112,7 +115,7 @@ class File(SerializableMixin):
             raise ValueError(message)
         return self.metadata[key]
 
-    def is_local(self, url: Optional[str] = None):
+    def is_local(self, url: Optional[str] = None) -> bool:
         url = url or self.url
         return self.LOCAL_REGEX.fullmatch(url) is not None
 
@@ -182,7 +185,7 @@ class File(SerializableMixin):
         self.url = destination
         return self.url
 
-    def to_dict(self):
+    def to_dict(self) -> SerializedObject:
         return asdict(self)
 
     @classmethod
