@@ -155,7 +155,7 @@ class SynapseFS(FS):
             if not self.is_synapse_id(root):
                 raise CreateFailed(error_message)
         else:  # num_root_parts > 1
-            starting_entity, _, path = root.partition("/")
+            starting_entity, _, path = root.strip("/").partition("/")
             if not self.is_synapse_id(starting_entity):
                 raise CreateFailed(error_message)
             root = self._path_to_synapse_id(path, starting_entity)
@@ -199,7 +199,7 @@ class SynapseFS(FS):
         starting_entity = starting_entity or self.root
 
         if starting_entity is None:
-            starting_entity, _, path = path.partition("/")
+            starting_entity, _, path = path.strip("/").partition("/")
             if not self.is_synapse_id(starting_entity):
                 message = (
                     f"This SynapseFS is rootless, so the 1st part ({starting_entity}) "

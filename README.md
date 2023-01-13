@@ -2,8 +2,8 @@
 
 <!--
 [![ReadTheDocs](https://readthedocs.org/projects/dcqc/badge/?version=latest)](https://sage-bionetworks-workflows.github.io/dcqc/)
-[![PyPI-Server](https://img.shields.io/pypi/v/dcqc.svg)](https://pypi.org/project/dcqc/)
 -->
+[![PyPI-Server](https://img.shields.io/pypi/v/dcqc.svg)](https://pypi.org/project/dcqc/)
 [![codecov](https://codecov.io/gh/Sage-Bionetworks-Workflows/py-dcqc/branch/main/graph/badge.svg?token=OCC4MOUG5P)](https://codecov.io/gh/Sage-Bionetworks-Workflows/py-dcqc)
 [![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](#pyscaffold)
 
