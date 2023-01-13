@@ -61,7 +61,8 @@ class SynapseFS(FS):
     `PyFilesystem <https://pyfilesystem.org>`_
 
     Args:
-        root (str): Synapse ID for a project or folder.
+        root (str, optional): Synapse ID for a project or folder.
+            Defaults to None (rootless mode).
         auth_token (str, optional): Synapse personal access token.
             Defaults to None.
         synapse_args (dict, optional): Dictionary of
@@ -132,7 +133,8 @@ class SynapseFS(FS):
         """Resolve the given root path (if not None) to a Synapse entity ID.
 
         Args:
-            root (Optional[str]): _description_
+            root (Optional[str]): Synapse ID for a project or folder.
+                Defaults to None (rootless mode).
 
         Raises:
             CreateFailed: If the root is not or does not start with a Synapse ID.
@@ -300,13 +302,13 @@ class SynapseFS(FS):
         return parent.id
 
     def _get_children(self, entity_id: str) -> list[dict]:
-        """_summary_
+        """Retrieve a list of children for a Synapse entity
 
         Args:
-            entity (str): _description_
+            entity_id (str): The Synapse ID of a project or folder.
 
         Returns:
-            list[dict]: _description_
+            list[dict]: List of children entities.
         """
         include_types = list(self.SUPPORTED_TYPES.keys())
         with synapse_errors(entity_id):

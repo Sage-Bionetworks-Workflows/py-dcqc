@@ -151,7 +151,7 @@ class TestSynapseFS(FSTestCases, unittest.TestCase):
         cls.synapse = Synapse()
         cls.synapse.login(authToken=cls.auth_token)
 
-        session_name = pytest.UUID  # type: ignore
+        session_name = pytest.RUNID  # type: ignore
         cls.test_root = Folder(session_name, parent=cls.TEST_ROOT_PARENT)
         cls.test_root = cls.synapse.store(cls.test_root)
 

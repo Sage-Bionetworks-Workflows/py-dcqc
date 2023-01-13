@@ -7,6 +7,8 @@
     - https://docs.pytest.org/en/stable/writing_plugins.html
 """
 
+from datetime import datetime
+from getpass import getuser
 from pathlib import Path, PurePath, PurePosixPath
 from uuid import uuid4
 
@@ -17,10 +19,13 @@ TESTDIR = CNFPATH.parent
 DATADIR = TESTDIR / "data"
 
 UUID = str(uuid4())
+USER = getuser()
+UTCTIME = datetime.now().isoformat(" ", "seconds")
+RUNID = f"{USER} - {UTCTIME} - {UUID}"
 
 
 def pytest_configure():
-    pytest.UUID = UUID  # type: ignore
+    pytest.RUNID = RUNID  # type: ignore
 
 
 @pytest.fixture
