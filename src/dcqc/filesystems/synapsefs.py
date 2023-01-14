@@ -8,7 +8,7 @@ from collections.abc import Collection
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkdtemp
-from typing import TYPE_CHECKING, Any, BinaryIO, Optional, Type
+from typing import TYPE_CHECKING, Any, BinaryIO, Generator, Optional, Type
 
 from fs import ResourceType
 from fs.base import FS
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 @contextmanager
-def synapse_errors(path):
+def synapse_errors(path: str) -> Generator:
     """A context manager for mapping ``synapseclient`` errors to ``fs`` errors."""
     try:
         yield
@@ -116,12 +116,13 @@ class SynapseFS(FS):
             Synapse: Authenticated Synapse client
         """
         if not hasattr(self._local, "synapse"):
-            # Override cache with temporary directory to avoid unwanted side effects
+            # Override cache with temporary directory
             self.synapse_args["cache_root_dir"] = mkdtemp()
             synapse = Synapse(**self.synapse_args)
             synapse.login(authToken=self.auth_token)
             self._local.synapse = synapse
-        # Clear the Synapse cache to ensure up-to-date
+        # Clear the Synapse cache to avoid unwanted side effects. More info here:
+        # https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/3#discussion_r1068443214
         self._local.synapse.cache.purge(after_date=0)
         return self._local.synapse
 
@@ -237,7 +238,11 @@ class SynapseFS(FS):
 
         return current_entity
 
-    def _synapse_id_to_entity(self, synapse_id: str, download_file=False) -> Entity:
+    def _synapse_id_to_entity(
+        self,
+        synapse_id: str,
+        download_file: bool = False,
+    ) -> Entity:
         """Retrieve and validate (meta)data for a Synapse entity
 
         Args:
@@ -261,7 +266,7 @@ class SynapseFS(FS):
             raise ResourceInvalid(message)
         return entity
 
-    def _path_to_entity(self, path: str, download_file=False) -> Entity:
+    def _path_to_entity(self, path: str, download_file: bool = False) -> Entity:
         """Perform the validation and retrieval steps for a Synapse entity.
 
         Arguments:
@@ -534,7 +539,7 @@ class SynapseFS(FS):
         temp_dir = TemporaryDirectory()
         temp_path = temp_dir.name
 
-        def on_close(remote_file):
+        def on_close(remote_file: RemoteFile) -> None:
             """Called when the S3 file closes, to upload data."""
             # If the file is empty, add a null byte to bypass
             # Synapse restriction on empty files
@@ -579,7 +584,7 @@ class SynapseFS(FS):
 
         return RemoteFile(target_file, file_name, mode_obj, on_close)
 
-    def remove(self, path: str):
+    def remove(self, path: str) -> None:
         """Remove a file from the filesystem.
 
         Arguments:
@@ -600,7 +605,7 @@ class SynapseFS(FS):
 
         self.synapse.delete(entity)
 
-    def removedir(self, path: str):
+    def removedir(self, path: str) -> None:
         """Remove a directory from the filesystem.
 
         Arguments:
@@ -639,7 +644,7 @@ class SynapseFS(FS):
 
         self.synapse.delete(entity)
 
-    def setinfo(self, path: str, info: RawInfo):
+    def setinfo(self, path: str, info: RawInfo) -> None:
         """Set info on a resource.
 
         This method is the complement to `~fs.base.FS.getinfo`

@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 
 from dcqc.file import File
-from dcqc.mixins import SerializableMixin
+from dcqc.mixins import SerializableMixin, SerializedObject
 
 
 # TODO: Eventually, there might be target-specific metadata
@@ -30,7 +30,7 @@ class Target(SerializableMixin):
         self.type = self.__class__.__name__
         self.files = list(files)
 
-    def to_dict(self):
+    def to_dict(self) -> SerializedObject:
         return asdict(self)
 
     @classmethod
