@@ -11,7 +11,7 @@ from dcqc.utils import open_parent_fs
 @pytest.mark.integration
 def test_json_report_generation(get_data):
     # GIVEN a list of external tests to skip (to remain self-contained)
-    all_tests = TestABC.list_tests()
+    all_tests = TestABC.list_subclasses()
     skipped_tests = [test.__name__ for test in all_tests if test.is_external_test]
 
     # AND a subset of internal tests to be required (to verify suite status behavior)
