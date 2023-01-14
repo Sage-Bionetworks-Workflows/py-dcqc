@@ -70,10 +70,10 @@ class SuiteABC(SerializableMixin, ABC):
         for cls in reversed(superclasses):  # Start from the base class
             if hasattr(cls, "add_tests"):
                 add_tests = set(cls.add_tests)  # type: ignore
-                all_tests |= add_tests
+                all_tests.update(add_tests)
             if hasattr(cls, "del_tests"):
                 del_tests = set(cls.del_tests)  # type: ignore
-                all_tests -= del_tests
+                all_tests.difference_update(del_tests)
 
         return tuple(all_tests)
 

@@ -1,3 +1,4 @@
+# isort: skip_file
 from importlib.metadata import PackageNotFoundError, version  # pragma: no cover
 
 try:
@@ -12,16 +13,13 @@ import logging
 
 from fs.opener import registry
 
-# isort: off
-
 # Import suites to ensure that they are defined and thus discoverable
 # It is located here to avoid a circular import
 from dcqc.suites import suite_abc  # isort: skip
 from dcqc.suites import suites  # isort: skip
 
-# isort: on
-
 from dcqc.filesystems.openers import SynapseFSOpener
+from dcqc.filesystems.synapsefs import SynapseFS
 
 # Set default logging handler to avoid "No handler found" warnings
 logging.getLogger(__name__).addHandler(logging.NullHandler())

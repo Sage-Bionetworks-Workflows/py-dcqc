@@ -17,15 +17,10 @@ repos:
   - id: mixed-line-ending
     args: ['--fix=auto']  # replace 'auto' with 'lf' to enforce Linux/Mac line endings or 'crlf' for Windows
 
-- repo: https://github.com/myint/autoflake
-  rev: v1.4
+- repo: https://github.com/PyCQA/autoflake
+  rev: v2.0.0
   hooks:
   - id: autoflake
-    args: [
-      --in-place,
-      --remove-all-unused-imports,
-      --remove-unused-variables,
-    ]
 
 - repo: https://github.com/pycqa/isort
   rev: 5.11.4
@@ -54,3 +49,8 @@ repos:
   rev: 'v0.991'
   hooks:
   - id: mypy
+
+- repo: https://github.com/kynan/nbstripout
+  rev: '0.6.1'
+  hooks:
+    - id: nbstripout
