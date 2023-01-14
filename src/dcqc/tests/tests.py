@@ -37,7 +37,7 @@ class Md5ChecksumTest(TestABC):
     def _compute_md5_checksum(self, file: File) -> str:
         local_path = file.get_local_path()
         hash_md5 = hashlib.md5()
-        with open(local_path, "rb") as f:
+        with local_path.open("rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
         actual_md5 = hash_md5.hexdigest()
@@ -49,7 +49,7 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
 
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
-        path = file.get_local_path()
+        path = file.get_local_path().as_posix()
         command_args = ["tiffinfo", path]
         process = Process(
             container="autamus/libtiff:4.4.0",
@@ -63,7 +63,7 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
 
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
-        path = file.get_local_path()
+        path = file.get_local_path().as_posix()
         command_args = [
             'export PATH="$PATH:/opt/bftools"',
             ";",
@@ -85,7 +85,7 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
 
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
-        path = file.get_local_path()
+        path = file.get_local_path().as_posix()
         command_args = [
             'export PATH="$PATH:/opt/bftools"',
             ";",

@@ -5,7 +5,8 @@ import re
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from tempfile import mkdtemp
 from typing import Any, Optional
 
 from fs.base import FS
@@ -58,9 +59,20 @@ FileType("OME-TIFF", (".ome.tif", ".ome.tiff"))
 
 @dataclass
 class File(SerializableMixin):
+    """Construct a File object.
+
+    Args:
+        url (str): URL indicating the location of the file.
+        metadata (Mapping[str, Any]): File metadata.
+        relative_to (Optional[Path]): Used to update any
+            local URLs if they are relative to a directory
+            other than the current work directory (default).
+    """
+
     url: str
     metadata: dict[str, Any]
     type: str
+    local_path: Optional[str]
 
     LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
@@ -69,40 +81,72 @@ class File(SerializableMixin):
         url: str,
         metadata: Mapping[str, Any],
         relative_to: Optional[Path] = None,
+        local_path: Optional[str] = None,
     ):
+        self.url = self._relativize_url(url, relative_to)
+        self.metadata = dict(metadata)
+        self.type = self._pop_file_type()
+
+        self._fs: Optional[FS]
+        self._fs = None
+        self._fs_path: Optional[str]
+        self._fs_path = None
+        self._name: Optional[str]
+        self._name = None
+
+        self.local_path = local_path or self._init_local_path()
+
+    def _relativize_url(self, url: str, relative_to: Optional[Path]) -> str:
+        """Update local URLs if relative to a directory other than CWD."""
         relative_to = relative_to or Path.cwd()
-        if self.is_local(url):
+        if self.is_url_local(url):
             scheme, separator, resource = url.rpartition("://")
             path = Path(resource)
             if not path.is_absolute():
                 resource = os.path.relpath(relative_to / resource)
-            url = "".join([scheme, separator, resource])
-        self.url = str(url)
-        self.metadata = dict(metadata)
-        self.type = self._pop_file_type()
-        self.file_name = self._get_file_name()
-        self._fs: Optional[FS]
-        self._fs = None
-
-    @property
-    def fs(self) -> FS:
-        if self._fs is None:
-            fname = self.file_name
-            fs, bname = open_parent_fs(self.url)
-            if bname != fname:
-                message = f"Inconsistent file names: FS ({bname}) and File ({fname})."
-                raise ValueError(message)
-            self._fs = fs
-        return self._fs
+            url = f"{scheme}{separator}{resource}"
+        return url
 
     def _pop_file_type(self) -> str:
         file_type = self.get_metadata("file_type")
         del self.metadata["file_type"]
         return file_type
 
-    def _get_file_name(self) -> str:
-        path = PurePosixPath(self.url)
-        return path.name
+    def _init_local_path(self) -> Optional[str]:
+        if self.is_url_local():
+            local_path = self.fs.getsyspath(self.fs_path)
+        else:
+            local_path = None
+        return local_path
+
+    def _initialize_fs(self) -> tuple[FS, str]:
+        """Retrieve and store parent FS and basename."""
+        fs, fs_path = open_parent_fs(self.url)
+        self._fs_path = fs_path
+        self._fs = fs
+        return fs, fs_path
+
+    @property
+    def fs(self) -> FS:
+        fs = self._fs
+        if fs is None:
+            fs, _ = self._initialize_fs()
+        return fs
+
+    @property
+    def fs_path(self) -> str:
+        fs_path = self._fs_path
+        if fs_path is None:
+            _, fs_path = self._initialize_fs()
+        return fs_path
+
+    @property
+    def name(self) -> str:
+        name = self._name
+        if name is None:
+            info = self.fs.getinfo(self.fs_path)
+            name = info.name
+        return name
 
     def get_file_type(self) -> FileType:
         return FileType.get_file_type(self.type)
@@ -115,22 +159,20 @@ class File(SerializableMixin):
             raise ValueError(message)
         return self.metadata[key]
 
-    def is_local(self, url: Optional[str] = None) -> bool:
+    def is_url_local(self, url: Optional[str] = None) -> bool:
         url = url or self.url
         return self.LOCAL_REGEX.fullmatch(url) is not None
 
-    # TODO: Create a new instance attribute `self._local_path` for keeping
-    #       track of the local path instead of overwriting `self.url`
-    def get_local_path(self) -> str:
-        if not self.is_local():
-            message = f"File ({self.url}) should first be downloaded using stage()."
-            raise FileNotFoundError(message)
-        local_path = self.url
-        if local_path.startswith(("osfs://", "file://")):
-            local_path = self.fs.getsyspath(self.file_name)
-        return local_path
+    def is_file_local(self, url: Optional[str] = None) -> bool:
+        return self.local_path is not None
 
-    def stage(self, destination: Optional[str] = None, overwrite: bool = False) -> str:
+    def get_local_path(self) -> Path:
+        if self.local_path is None:
+            message = "Local path is unavailable. Use stage() to create a local copy."
+            raise ValueError(message)
+        return Path(self.local_path)
+
+    def stage(self, destination: Optional[str] = None, overwrite: bool = False) -> Path:
         """Download remote files and copy local files.
 
         A destination is required for remote files.
@@ -143,28 +185,24 @@ class File(SerializableMixin):
                 at the target destination. Defaults to False.
 
         Raises:
-            ValueError: If a destination is not specified
-                when staging a remote file.
             ValueError: If the parent directory of the
                 destination does not exist.
             FileExistsError: If the destination file already
                 exists and ``overwrite`` was not enabled.
 
         Returns:
-            str: The updated URL (i.e., location) of the file.
+            Path: The path of the local copy.
         """
         if not destination:
-            if self.is_local():
-                return self.url
+            if self.local_path is not None:
+                return self.get_local_path()
             else:
-                message = f"Destination is required for remote files ({self.url})."
-                raise ValueError(message)
+                destination = mkdtemp()
 
         # By this point, destination is defined (not None)
-        file_name = self._get_file_name()
         destination_path = Path(destination)
         if destination_path.is_dir():
-            destination_path = destination_path / file_name
+            destination_path = destination_path / self.name
             destination = destination_path.as_posix()
 
         if not destination_path.parent.exists():
@@ -175,15 +213,14 @@ class File(SerializableMixin):
             message = f"Destination ({destination}) already exists. Enable overwrite."
             raise FileExistsError(message)
 
-        if self.is_local():
+        if self.is_url_local():
             local_path = self.get_local_path()
             destination_path.symlink_to(local_path)
         else:
-            with open(destination, "wb") as dest_file:
-                self.fs.download(self.file_name, dest_file)
+            with destination_path.open("wb") as dest_file:
+                self.fs.download(self.fs_path, dest_file)
 
-        self.url = destination
-        return self.url
+        return destination_path
 
     def to_dict(self) -> SerializedObject:
         return asdict(self)

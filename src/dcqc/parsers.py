@@ -13,6 +13,7 @@ class CsvParser:
 
     def __init__(self, path: Path):
         self.path = path
+        self.csv_directory = self.path.parent
 
     def list_rows(self) -> Iterator[tuple[int, dict]]:
         with self.path.open(newline="") as file:
@@ -21,14 +22,17 @@ class CsvParser:
                 yield index, row
 
     def _row_to_file(self, row: dict[str, str]) -> File:
-        csv_directory = self.path.parent
         url = row.pop("url")
-        file = File(url, row, relative_to=csv_directory)
+        file = File(url, row, relative_to=self.csv_directory)
         return file
 
     def create_files(self) -> Iterator[File]:
-        for _, row in self.list_rows():
+        for index, row in self.list_rows():
             file = self._row_to_file(row)
+            if not file.is_file_local():
+                destination = self.csv_directory / "staged_files" / f"index_{index}"
+                destination.mkdir(parents=True, exist_ok=True)
+                file.stage(destination.as_posix(), overwrite=True)
             yield file
 
     def create_targets(self) -> Iterator[Target]:
