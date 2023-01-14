@@ -220,6 +220,7 @@ class File(SerializableMixin):
             with destination_path.open("wb") as dest_file:
                 self.fs.download(self.fs_path, dest_file)
 
+        self.local_path = destination_path.as_posix()
         return destination_path
 
     def to_dict(self) -> SerializedObject:
