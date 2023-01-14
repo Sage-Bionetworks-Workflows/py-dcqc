@@ -61,7 +61,6 @@ class File(SerializableMixin):
     url: str
     metadata: dict[str, Any]
     type: str
-    _fs: Optional[FS]
 
     LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
@@ -82,6 +81,7 @@ class File(SerializableMixin):
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
         self.file_name = self._get_file_name()
+        self._fs: Optional[FS]
         self._fs = None
 
     @property

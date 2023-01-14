@@ -4,16 +4,20 @@ import io
 import os
 from array import array
 from collections.abc import Callable, Iterable
-from ctypes import _CData
 from mmap import mmap
 from pickle import PickleBuffer
-from typing import IO, Any, BinaryIO, Optional, Union
+from typing import IO, TYPE_CHECKING, Any, BinaryIO, Optional, Union
 
 from fs.mode import Mode
 
-LinesType = Iterable[
-    Union[bytes, Union[bytearray, memoryview, array[Any], mmap, _CData, PickleBuffer]]
-]
+if TYPE_CHECKING:
+    from ctypes import _CData
+
+    LinesType = Iterable[
+        Union[
+            bytes, Union[bytearray, memoryview, array[Any], mmap, _CData, PickleBuffer]
+        ]
+    ]
 
 
 class RemoteFile(io.IOBase, BinaryIO):
