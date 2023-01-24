@@ -4,11 +4,11 @@ import os
 import re
 import shutil
 import threading
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from tempfile import NamedTemporaryFile, TemporaryDirectory, mkdtemp
-from typing import TYPE_CHECKING, Any, BinaryIO, Generator, Optional, Type
+from typing import Any, BinaryIO, Generator, Optional, Type
 
 from fs import ResourceType
 from fs.base import FS
@@ -35,8 +35,7 @@ from synapseclient.entity import Entity, File, Folder, Project, is_container
 
 from dcqc.filesystems.remote_file import RemoteFile
 
-if TYPE_CHECKING:
-    from fs.info import RawInfo
+RawInfo = Mapping[str, Mapping[str, object]]
 
 
 @contextmanager
@@ -57,18 +56,7 @@ def synapse_errors(path: str) -> Generator:
 
 
 class SynapseFS(FS):
-    """Construct a Synapse filesystem for
-    `PyFilesystem <https://pyfilesystem.org>`_
-
-    Args:
-        root (str, optional): Synapse ID for a project or folder.
-            Defaults to None (rootless mode).
-        auth_token (str, optional): Synapse personal access token.
-            Defaults to None.
-        synapse_args (dict, optional): Dictionary of
-            arguments to pass to the ``Synapse()`` class.
-            Defaults to None.
-    """
+    """A file system-like interface for Synapse."""
 
     NULL_BYTE = b"\x00"
 
@@ -102,6 +90,17 @@ class SynapseFS(FS):
         auth_token: Optional[str] = None,
         synapse_args: Optional[dict[str, Any]] = None,
     ) -> None:
+        """Construct a Synapse filesystem for
+        `PyFilesystem <https://pyfilesystem.org>`_
+
+        Args:
+            root: Synapse ID for a project or folder.
+                Defaults to None (rootless mode).
+            auth_token: Synapse personal access token.
+                Defaults to None.
+            synapse_args: Dictionary of arguments to pass to
+                the ``Synapse`` class. Defaults to None.
+        """
         super(SynapseFS, self).__init__()
         self.auth_token = auth_token
         self.synapse_args = synapse_args or self.DEFAULT_SYNAPSE_ARGS
@@ -335,7 +334,8 @@ class SynapseFS(FS):
         Raises:
             ResourceNotFound: If ``path`` does not exist.
 
-        For more information regarding resource information, see :ref:`info`.
+        For more information regarding resource information,
+            see :ref:`pyfilesystem:info`.
 
         """
         self.validatepath(path)

@@ -1,13 +1,25 @@
+"""Represent local and remote files and their metadata.
+
+See module dcqc.target for the multi-file target class.
+
+Classes:
+
+    FileType: For collecting file type-specific information.
+    File: For bundling file location and metadata as well as
+    operations for retrieving file contents.
+"""
+
 from __future__ import annotations
 
 import os
 import re
 from collections.abc import Collection, Mapping
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
+from warnings import warn
 
 from fs.base import FS
 
@@ -17,30 +29,52 @@ from dcqc.utils import open_parent_fs
 
 @dataclass
 class FileType:
-    # Class attributes
-    # A type hint is omitted so this attribute isn't
-    # picked up by @dataclass as an instance attribute
-    _registry = dict()  # type: ignore
+    """Bundle information for a given file type."""
 
-    # Instance attributes
+    _registry: ClassVar[dict[str, FileType]]
+    _registry = dict()
+
     name: str
     file_extensions: tuple[str, ...]
 
     def __init__(self, name: str, file_extensions: Collection[str]):
+        """Construct a FileType object.
+
+        Args:
+            name: File type name.
+            file_extensions: Valid file extensions.
+        """
         self.name = name
         self.file_extensions = tuple(file_extensions)
-        self.register_file_type(self)
+        self.register_file_type()
 
-    @classmethod
-    def register_file_type(cls, self: FileType) -> None:
+    def register_file_type(self) -> None:
+        """Register instantiated file type for later retrieval.
+
+        Raises:
+            ValueError: If the file type's name has already
+                been registered previously.
+        """
         name = self.name.lower()
-        if name in cls._registry:
+        if name in self._registry:
             message = f"File type ({name}) is already registered ({self._registry})."
             raise ValueError(message)
-        cls._registry[name] = self
+        self._registry[name] = self
 
     @classmethod
     def get_file_type(cls, file_type: str) -> FileType:
+        """Retrieve file type object based on its name.
+
+        Args:
+            file_type: File type name.
+
+        Raises:
+            ValueError: If the given file type name has
+                not been registered previously.
+
+        Returns:
+            The file type object with the given name.
+        """
         file_type = file_type.lower()
         if file_type not in cls._registry:
             types = list(cls._registry)
@@ -62,26 +96,27 @@ class File(SerializableMixin):
     """Construct a File object.
 
     Args:
-        url (str): URL indicating the location of the file.
-        metadata (Mapping[str, Any]): File metadata.
-        relative_to (Optional[Path]): Used to update any
-            local URLs if they are relative to a directory
-            other than the current work directory (default).
+        url: Local or remote location of a file.
+        metadata: File metadata.
+        relative_to: Used to update any local URLs if they
+            are relative to a directory other than the
+            current work directory (default).
     """
 
     url: str
     metadata: dict[str, Any]
     type: str
-    local_path: Optional[str]
+    local_path: Optional[Path]
 
-    LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
+    _LOCAL_REGEX: ClassVar[re.Pattern]
+    _LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
     def __init__(
         self,
         url: str,
         metadata: Mapping[str, Any],
         relative_to: Optional[Path] = None,
-        local_path: Optional[str] = None,
+        local_path: Optional[Path] = None,
     ):
         self.url = self._relativize_url(url, relative_to)
         self.metadata = dict(metadata)
@@ -96,31 +131,72 @@ class File(SerializableMixin):
 
         self.local_path = local_path or self._init_local_path()
 
+    def __hash__(self):
+        return hash((self.url, self.type, tuple(self.metadata.items())))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
     def _relativize_url(self, url: str, relative_to: Optional[Path]) -> str:
-        """Update local URLs if relative to a directory other than CWD."""
-        relative_to = relative_to or Path.cwd()
+        """Update local URLs if relative to a directory other than CWD.
+
+        Args:
+            url: Local or remote location of a file.
+            relative_to: Used to update any local URLs if they
+                are relative to a directory other than the
+                current work directory (default).
+
+        Returns:
+            The relativized URL.
+        """
         if self.is_url_local(url):
+            relative_to = relative_to or Path.cwd()
             scheme, separator, resource = url.rpartition("://")
             path = Path(resource)
             if not path.is_absolute():
                 resource = os.path.relpath(relative_to / resource)
             url = f"{scheme}{separator}{resource}"
+        elif not self.is_url_local(url) and relative_to is not None:
+            message = f"URL ({url}) is remote. Ignoring relative_to ({relative_to})."
+            warn(message)
         return url
 
     def _pop_file_type(self) -> str:
-        file_type = self.get_metadata("file_type")
-        del self.metadata["file_type"]
+        """Extract and remove file type from metadata.
+
+        This function defaults to the generic file type
+        ("*") if the key is absent from the metadata.
+
+        Returns:
+            The name of the file type in the metadata.
+        """
+        file_type = self.metadata.pop("file_type", "*")
         return file_type
 
-    def _init_local_path(self) -> Optional[str]:
+    def _init_local_path(self) -> Optional[Path]:
+        """Initialize local path depending on URL
+
+        Returns:
+            The local path, if applicable.
+        """
         if self.is_url_local():
-            local_path = self.fs.getsyspath(self.fs_path)
+            local_path_str = self.fs.getsyspath(self.fs_path)
+            local_path = Path(local_path_str)
+            # Use relative paths for portability (e.g., in Nextflow)
+            local_path = local_path.relative_to(Path.cwd())
         else:
             local_path = None
         return local_path
 
-    def _initialize_fs(self) -> tuple[FS, str]:
-        """Retrieve and store parent FS and basename."""
+    def _init_fs(self) -> tuple[FS, str]:
+        """Initialize file system to access URL.
+
+        All queries with this file system should use
+        `self._fs_path` as the path, not `self.url`.
+
+        Returns:
+            A file system + basename pair.
+        """
         fs, fs_path = open_parent_fs(self.url)
         self._fs_path = fs_path
         self._fs = fs
@@ -128,20 +204,23 @@ class File(SerializableMixin):
 
     @property
     def fs(self) -> FS:
+        """The file system that can access the URL."""
         fs = self._fs
         if fs is None:
-            fs, _ = self._initialize_fs()
+            fs, _ = self._init_fs()
         return fs
 
     @property
     def fs_path(self) -> str:
+        """The path that can be used with the file system."""
         fs_path = self._fs_path
         if fs_path is None:
-            _, fs_path = self._initialize_fs()
+            _, fs_path = self._init_fs()
         return fs_path
 
     @property
     def name(self) -> str:
+        """The file name according to the file system."""
         name = self._name
         if name is None:
             info = self.fs.getinfo(self.fs_path)
@@ -149,40 +228,90 @@ class File(SerializableMixin):
         return name
 
     def get_file_type(self) -> FileType:
+        """Retrieve the relevant file type object.
+
+        Returns:
+            FileType: File type object
+        """
         return FileType.get_file_type(self.type)
 
     def get_metadata(self, key: str) -> Any:
+        """Retrieve file metadata using a key.
+
+        Args:
+            key: Metadata key name.
+
+        Raises:
+            KeyError: If the metadata key doesn't exist.
+
+        Returns:
+            The metadata value associated with the given key.
+        """
         if key not in self.metadata:
             url = self.url
             md = self.metadata
             message = f"File ({url}) does not have '{key}' in its metadata ({md})."
-            raise ValueError(message)
+            raise KeyError(message)
         return self.metadata[key]
 
     def is_url_local(self, url: Optional[str] = None) -> bool:
-        url = url or self.url
-        return self.LOCAL_REGEX.fullmatch(url) is not None
+        """Check whether a URL refers to a local location.
 
-    def is_file_local(self, url: Optional[str] = None) -> bool:
+        Args:
+            url: Local or remote location of a file.
+                Defaults to URL associated with file.
+
+        Returns:
+            Whether the URL refers to a local location.
+        """
+        url = url or self.url
+        return self._LOCAL_REGEX.fullmatch(url) is not None
+
+    def is_file_local(self) -> bool:
+        """Check if the file (or a copy) is available locally.
+
+        Unlike :func:`~dcqc.file.File.is_url_local`, this method
+        considers if a locally staged copy is available regardless
+        of whether the URL is local or remote.
+
+        To retrieve the location of the local copy, you can use
+        :func:`~dcqc.file.File.get_local_path`.
+
+        Returns:
+            Whether the file has a copy available locally.
+        """
         return self.local_path is not None
 
     def get_local_path(self) -> Path:
+        """Retrieve the path of a local copy, if applicable.
+
+        Raises:
+            FileNotFoundError: If there is no local copy available.
+
+        Returns:
+            The path to the local copy.
+        """
         if self.local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."
-            raise ValueError(message)
+            raise FileNotFoundError(message)
         return Path(self.local_path)
 
-    def stage(self, destination: Optional[str] = None, overwrite: bool = False) -> Path:
-        """Download remote files and copy local files.
+    def stage(
+        self,
+        destination: Optional[Path] = None,
+        overwrite: bool = False,
+    ) -> Path:
+        """Create local copy of local or remote file.
 
-        A destination is required for remote files.
+        A destination is not required for remote files; it
+        defaults to a temporary directory.
         Local files aren't moved if a destination is omitted.
 
         Args:
-            destination (Optional[str]): File or folder path
-                where to store the file. Defaults to None.
-            overwrite (bool): Whether to ignore existing file
-                at the target destination. Defaults to False.
+            destination: File or folder where to store the file.
+                Defaults to None.
+            overwrite: Whether to ignore existing file at the
+                target destination. Defaults to False.
 
         Raises:
             ValueError: If the parent directory of the
@@ -191,45 +320,58 @@ class File(SerializableMixin):
                 exists and ``overwrite`` was not enabled.
 
         Returns:
-            Path: The path of the local copy.
+            The path of the local copy.
         """
         if not destination:
             if self.local_path is not None:
                 return self.get_local_path()
             else:
-                destination = mkdtemp()
+                destination_str = mkdtemp()
+                destination = Path(destination_str)
 
         # By this point, destination is defined (not None)
-        destination_path = Path(destination)
-        if destination_path.is_dir():
-            destination_path = destination_path / self.name
-            destination = destination_path.as_posix()
+        if destination.is_dir():
+            destination = destination / self.name
 
-        if not destination_path.parent.exists():
-            message = f"Parent folder of destination ({destination}) does not exist."
+        if not destination.parent.exists():
+            dest = str(destination)
+            message = f"Parent folder of destination ({dest}) does not exist."
             raise ValueError(message)
 
-        if destination_path.exists() and not overwrite:
-            message = f"Destination ({destination}) already exists. Enable overwrite."
+        if destination.exists() and not overwrite:
+            dest = str(destination)
+            message = f"Destination ({dest}) already exists. Enable overwrite."
             raise FileExistsError(message)
+
+        # By this point, the file either doesn't exist or overwrite is enabled
+        destination.unlink(missing_ok=True)
 
         if self.is_url_local():
             local_path = self.get_local_path()
-            destination_path.symlink_to(local_path)
+            destination.symlink_to(local_path)
         else:
-            with destination_path.open("wb") as dest_file:
+            with destination.open("wb") as dest_file:
                 self.fs.download(self.fs_path, dest_file)
 
-        self.local_path = destination_path.as_posix()
-        return destination_path
-
-    def to_dict(self) -> SerializedObject:
-        return asdict(self)
+        self.local_path = destination
+        return destination
 
     @classmethod
-    def from_dict(cls, dictionary: dict) -> File:
+    def from_dict(cls, dictionary: SerializedObject) -> File:
+        """Deserialize a dictionary into a file.
+
+        Args:
+            dictionary: A serialized file object.
+
+        Returns:
+            The reconstructed file object.
+        """
         dictionary = deepcopy(dictionary)
+
         file_type = dictionary.pop("type")
         dictionary["metadata"]["file_type"] = file_type
-        file = cls(**dictionary)
-        return file
+
+        if dictionary["local_path"] is not None:
+            dictionary["local_path"] = Path(dictionary["local_path"])
+
+        return cls(**dictionary)

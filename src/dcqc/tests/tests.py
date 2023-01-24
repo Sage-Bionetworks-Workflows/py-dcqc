@@ -1,8 +1,7 @@
 import hashlib
 
-from dcqc.enums import TestStatus
 from dcqc.file import File
-from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC
+from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC, TestStatus
 
 
 class FileExtensionTest(TestABC):

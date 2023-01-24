@@ -34,7 +34,15 @@ class Target(SerializableMixin):
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, dictionary: dict) -> Target:
+    def from_dict(cls, dictionary: SerializedObject) -> Target:
+        """Deserialize a dictionary into a target.
+
+        Args:
+            dictionary: A serialized target object.
+
+        Returns:
+            The reconstructed target object.
+        """
         dictionary = deepcopy(dictionary)
         dictionary = cls.from_dict_prepare(dictionary)
         files = [File.from_dict(d) for d in dictionary["files"]]

@@ -9,6 +9,7 @@ build-backend = "setuptools.build_meta"
 version_scheme = "no-guess-dev"
 
 [tool.mypy]
+disable_error_code = "type-abstract"
 
 [[tool.mypy.overrides]]
 module = "dcqc"
@@ -24,3 +25,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "dcqc.suites.suites"
 disable_error_code = "assignment"
+
+[tool.interrogate]
+ignore-init-method = true

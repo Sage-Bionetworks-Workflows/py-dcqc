@@ -4,13 +4,20 @@ import shlex
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
-from typing import Optional, Type
+from typing import ClassVar, Optional, Type
 
-from dcqc.enums import TestStatus
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.target import Target
+
+
+class TestStatus(Enum):
+    NONE = "pending"
+    FAIL = "failed"
+    PASS = "passed"
+    SKIP = "skipped"
 
 
 # TODO: Look into the @typing.final decorator
@@ -29,10 +36,10 @@ class TestABC(SerializableMixin, ABC):
     """
 
     # Class attributes
-    tier: int
-    is_external_test: bool
+    tier: ClassVar[int]
+    is_external_test: ClassVar[bool]
     is_external_test = False
-    only_one_file_targets: bool
+    only_one_file_targets: ClassVar[bool]
     only_one_file_targets = True
 
     # Instance attributes
@@ -112,8 +119,11 @@ class ExternalTestMixin(TestABC):
     is_external_test = True
 
     # Class constants
+    STDOUT_PATH: ClassVar[Path]
     STDOUT_PATH = Path("std_out.txt")
+    STDERR_PATH: ClassVar[Path]
     STDERR_PATH = Path("std_err.txt")
+    EXITCODE_PATH: ClassVar[Path]
     EXITCODE_PATH = Path("exit_code.txt")
 
     def compute_status(self) -> TestStatus:

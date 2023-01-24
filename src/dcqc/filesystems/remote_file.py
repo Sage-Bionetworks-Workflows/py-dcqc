@@ -2,22 +2,10 @@ from __future__ import annotations
 
 import io
 import os
-from array import array
 from collections.abc import Callable, Iterable
-from mmap import mmap
-from pickle import PickleBuffer
-from typing import IO, TYPE_CHECKING, Any, BinaryIO, Optional, Union
+from typing import IO, BinaryIO, Optional
 
 from fs.mode import Mode
-
-if TYPE_CHECKING:
-    from ctypes import _CData
-
-    LinesType = Iterable[
-        Union[
-            bytes, Union[bytearray, memoryview, array[Any], mmap, _CData, PickleBuffer]
-        ]
-    ]
 
 
 class RemoteFile(io.IOBase, BinaryIO):
@@ -101,7 +89,7 @@ class RemoteFile(io.IOBase, BinaryIO):
     def writable(self) -> bool:
         return self.__mode.writing
 
-    def writelines(self, lines: LinesType) -> None:
+    def writelines(self, lines: Iterable[bytes]) -> None:  # type: ignore
         return self._f.writelines(lines)
 
     def read(self, n: int = -1) -> bytes:
