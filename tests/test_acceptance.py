@@ -28,8 +28,8 @@ def test_json_report_generation(get_data):
     suites = parser.create_suites(required_tests, skipped_tests)
 
     # AND those suites are used to generate a JSON report
-    report = JsonReport(report_url, overwrite=True)
-    report.save(suites)
+    report = JsonReport()
+    report.save(suites, report_url, overwrite=True)
 
     # THEN the file exists
     fs, basename = open_parent_fs(report_url)

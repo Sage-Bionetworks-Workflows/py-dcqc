@@ -1,40 +1,96 @@
 import json
-from collections.abc import Iterator
-from typing import Any, Union
+from collections.abc import Iterable, Mapping
+from typing import Any, Optional, overload
+
+from fs.base import FS
+from fs.errors import ResourceNotFound
 
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.utils import open_parent_fs
 
 
+# TODO: Refactor instance methods to class methods
 class JsonReport:
-    url: str
+    def __init__(self) -> None:
+        self._url: Optional[str] = None
+        self._fs: Optional[FS] = None
+        self._fs_path: Optional[str] = None
 
-    def __init__(self, url: str, overwrite: bool = False) -> None:
-        self.url = url
-        self._fs, self._path = open_parent_fs(url)
-        if self._fs.exists(self._path) and not overwrite:
-            message = f"URL ({url}) already exists. Set `overwrite=True` to ignore."
+    def _init_fs(self, url) -> tuple[FS, str]:
+        if self._url != url or self._fs is None or self._fs_path is None:
+            self._url = url
+            self._fs, self._fs_path = open_parent_fs(url)
+        return self._fs, self._fs_path
+
+    def _create_parent_directories(self, url: str):
+        scheme, separator, resource = url.rpartition("://")
+        parent_resource, _, _ = resource.rpartition("/")
+        parent_url = f"{scheme}{separator}{parent_resource}"
+        fs, fs_path = self._init_fs(parent_url)
+        try:
+            info = fs.getinfo(fs_path)
+        except ResourceNotFound:
+            fs.makedirs(fs_path, recreate=True)
+            info = fs.getinfo(fs_path)
+        if not info.is_dir:
+            message = f"Parent URL ({url}) does not refer to a directory."
+            raise NotADirectoryError(message)
+
+    def to_file(self, obj: Any, url: str, overwrite: bool):
+        fs, fs_path = self._init_fs(url)
+        self._create_parent_directories(url)
+        if fs.exists(fs_path) and not overwrite:
+            message = f"URL ({url}) already exists. Enable `overwrite` to ignore."
             raise FileExistsError(message)
-
-    def to_file(self, obj: Any):
-        with self._fs.open(self._path, "w") as outfile:
+        # TODO: Implement custom serializer that handles Paths
+        #       (e.g., relativize them based on output JSON path)
+        with fs.open(fs_path, "w") as outfile:
             json.dump(obj, outfile, indent=2)
 
-    def generate(
-        self,
-        items: Union[SerializableMixin, Iterator[SerializableMixin]],
-    ) -> Union[SerializedObject, list[SerializedObject]]:
-        report: Union[SerializedObject, list[SerializedObject]]
-        if isinstance(items, Iterator):
+    # The overloads are necessary to convey the relationship between
+    # the inputs and outputs: single to single, and many to many.
+    @overload
+    def generate(self, items: SerializableMixin) -> SerializedObject:
+        ...
+
+    @overload
+    def generate(self, items: Iterable[SerializableMixin]) -> list[SerializedObject]:
+        ...
+
+    def generate(self, items):
+        if isinstance(items, Iterable):
             report = [item.to_dict() for item in items]
         else:
             report = items.to_dict()
         return report
 
+    @overload
     def save(
-        self,
-        items: Union[SerializableMixin, Iterator[SerializableMixin]],
-    ) -> Union[SerializedObject, list[SerializedObject]]:
+        self, items: SerializableMixin, url: str, overwrite: bool = False
+    ) -> SerializedObject:
+        ...
+
+    @overload
+    def save(
+        self, items: Iterable[SerializableMixin], url: str, overwrite: bool = False
+    ) -> list[SerializedObject]:
+        ...
+
+    def save(self, items, url: str, overwrite: bool = False):
         report = self.generate(items)
-        self.to_file(report)
+        self.to_file(report, url, overwrite)
         return report
+
+    def save_many(
+        self,
+        named_items: Mapping[str, SerializableMixin],
+        parent_url: str,
+        overwrite: bool = False,
+    ) -> dict[str, SerializedObject]:
+        reports = dict()
+        for name, item in named_items.items():
+            report = self.generate(item)
+            reports[name] = report
+            report_url = f"{parent_url}/{name}"
+            self.to_file(report, report_url, overwrite)
+        return reports

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import wraps
+from pathlib import Path
+from typing import Iterator, Optional
 
-from dcqc.file import File
+from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
 
 
@@ -29,6 +32,43 @@ class Target(SerializableMixin):
     def __init__(self, *files: File):
         self.type = self.__class__.__name__
         self.files = list(files)
+
+    def __hash__(self):
+        return hash(tuple(self.files))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def get_file_type(self) -> FileType:
+        """Retrieve the file type for the target.
+
+        This function currently only supports targets
+        composed of a single file.
+
+        Raises:
+            NotImplementedError: If the target has
+                more or less than one file.
+
+        Returns:
+            The file type object.
+        """
+        num_files = len(self.files)
+        if num_files == 1:
+            file = self.files[0]
+            file_type = file.get_file_type()
+        else:
+            message = f"Target has {num_files} files, which isn't supported yet."
+            raise NotImplementedError(message)
+        return file_type
+
+    @wraps(File.stage)
+    def stage(
+        self,
+        destination: Optional[Path] = None,
+        overwrite: bool = False,
+    ) -> Iterator[Path]:
+        for file in self.files:
+            yield file.stage(destination, overwrite)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Target:

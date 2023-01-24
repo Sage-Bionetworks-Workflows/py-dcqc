@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
+from copy import deepcopy
 from itertools import chain
 from typing import ClassVar, Optional, Type, Union
 
@@ -58,6 +59,64 @@ class SuiteABC(SerializableMixin, ABC):
 
         self.tests = self.init_test_classes()
         self._status = TestStatus.NONE
+
+    @classmethod
+    def from_target(
+        cls,
+        target: Target,
+        required_tests: Optional[Collection[str]] = None,
+        skipped_tests: Optional[Collection[str]] = None,
+    ) -> SuiteABC:
+        """Generate a suite from a target.
+
+        The suite is selected based on the target file type.
+
+        Args:
+            target: A QC target.
+            required_tests: List of requires tests.
+                Defaults to None, which requires tier-1
+                and tier-2 tests.
+            skipped_tests: List of skipped tests.
+                Defaults to None.
+
+        Returns:
+            SuiteABC: An initialized test suite.
+        """
+        file_type = target.get_file_type()
+        suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
+        suite = suite_cls(target, required_tests, skipped_tests)
+        return suite
+
+    @classmethod
+    def from_tests(
+        cls,
+        tests: Sequence[TestABC],
+        required_tests: Optional[Collection[str]] = None,
+        skipped_tests: Optional[Collection[str]] = None,
+    ) -> SuiteABC:
+        """Generate a suite from a set of tests.
+
+        The tests must all have the same target.
+
+        Args:
+            tests: Set of tests with the same target.
+            required_tests: List of requires tests.
+                Defaults to None, which requires tier-1
+                and tier-2 tests.
+            skipped_tests: List of skipped tests.
+                Defaults to None.
+
+        Returns:
+            SuiteABC: An initialized test suite.
+        """
+        targets = [test.target for test in tests]
+        representative_target = targets[0]
+        if not all(representative_target == target for target in targets):
+            message = f"Not all tests refer to the same target ({targets})."
+            raise ValueError(message)
+        suite = cls.from_target(representative_target, required_tests, skipped_tests)
+        suite.tests = list(tests)
+        return suite
 
     @classmethod
     def list_test_classes(cls) -> tuple[Type[TestABC], ...]:
@@ -143,16 +202,17 @@ class SuiteABC(SerializableMixin, ABC):
     def compute_status(self) -> TestStatus:
         """Compute the overall suite status."""
         self.compute_tests()
-        suite_status = TestStatus.NONE
+        if self._status is not TestStatus.NONE:
+            return self._status
         for test in self.tests:
             test_name = test.type
             if test_name not in self.required_tests:
                 continue
             test_status = test.get_status()
-            suite_status = test_status
-            if suite_status == TestStatus.FAIL:
+            self._status = test_status
+            if self._status == TestStatus.FAIL:
                 break
-        return suite_status
+        return self._status
 
     def to_dict(self) -> SerializedObject:
         suite_status = self.compute_status()
@@ -162,6 +222,7 @@ class SuiteABC(SerializableMixin, ABC):
             test_dict.pop("target", None)  # Remove redundant `target` info
             test_dicts.append(test_dict)
         suite_dict = {
+            "type": self.type,
             "target": self.target.to_dict(),
             "suite_status": {
                 "required_tests": list(self.required_tests),
@@ -171,3 +232,37 @@ class SuiteABC(SerializableMixin, ABC):
             "tests": test_dicts,
         }
         return suite_dict
+
+    @classmethod
+    def from_dict(cls, dictionary: SerializedObject) -> SuiteABC:
+        """Deserialize a dictionary into a suite.
+
+        Args:
+            dictionary: A serialized suite object.
+
+        Returns:
+            The reconstructed suite object.
+        """
+        dictionary = deepcopy(dictionary)
+
+        suite_cls_name = dictionary["type"]
+        suite_cls = SuiteABC.get_subclass_by_name(suite_cls_name)
+
+        target_dict = dictionary["target"]
+        target = Target.from_dict(target_dict)
+
+        required_tests = dictionary["suite_status"]["required_tests"]
+        skipped_tests = dictionary["suite_status"]["skipped_tests"]
+        suite = suite_cls(target, required_tests, skipped_tests)
+
+        suite_status = TestStatus(dictionary["suite_status"]["status"])
+        suite._status = suite_status
+
+        tests = list()
+        for test_dict in dictionary["tests"]:
+            test_dict["target"] = target_dict
+            test = TestABC.from_dict(test_dict)
+            tests.append(test)
+        suite.tests = tests
+
+        return suite
