@@ -2,7 +2,7 @@ import csv
 import json
 from collections.abc import Collection, Iterator
 from pathlib import Path
-from typing import Any, Optional, Type, TypeVar
+from typing import Any, Optional, Type, TypeVar, cast
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
@@ -10,6 +10,8 @@ from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
 from dcqc.tests.test_abc import TestABC
 
+# For context on TypeVar, check out this GitHub PR comment:
+# https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/8#discussion_r1087141497
 T = TypeVar("T", bound=SerializableMixin)
 
 
@@ -65,35 +67,21 @@ class JsonParser:
     def __init__(self, path: Path):
         self.path = path
 
-    @classmethod
-    def parse_expected(cls, path: Path, expected_cls: Type[T]) -> T:
-        """Generate expected object from JSON file.
-
-        Args:
-            json_path: JSON file describine the expected object.
-
-        Raises:
-            ValueError: If the JSON file does not
-                describe a expected object.
-
-        Returns:
-            The reconstructed object.
-        """
-        parser = JsonParser(path)
-        object_ = parser.parse_object()
-
-        if not isinstance(object_, expected_cls):
-            message = f"Parsed JSON file ({path!s}) does not describe a {expected_cls}."
-            raise ValueError(message)
-
-        return object_
-
     def load_json(self) -> Any:
         with self.path.open("r") as infile:
             contents = json.load(infile)
         return contents
 
-    def get_class(self, cls_name: str) -> Type[SerializableMixin]:
+    def check_expected_cls(self, instance: Any, expected_cls: Type[T]) -> T:
+        if not isinstance(instance, expected_cls):
+            cls_name = expected_cls.__name__
+            message = f"JSON file ({self.path!s}) is not expected type ({cls_name})."
+            raise ValueError(message)
+        instance = cast(T, instance)
+        return instance
+
+    @classmethod
+    def get_class(cls, cls_name: str) -> Type[SerializableMixin]:
         test_classes = TestABC.list_subclasses()
         test_cls_map = {cls.__name__: cls for cls in test_classes}
 
@@ -112,27 +100,38 @@ class JsonParser:
             message = f"Type ({cls_name}) is not recognized."
             raise ValueError(message)
 
-    def from_dict(self, dictionary) -> SerializableMixin:
+    @classmethod
+    def from_dict(cls, dictionary) -> SerializableMixin:
         if "type" not in dictionary:
             message = f"Cannot parse JSON object due to missing type ({dictionary})."
             raise ValueError(message)
-        cls_name = dictionary["type"]
-        cls = self.get_class(cls_name)
-        object_ = cls.from_dict(dictionary)
+        type_name = dictionary["type"]
+        type_class = cls.get_class(type_name)
+        object_ = type_class.from_dict(dictionary)
         return object_
 
-    def parse_object(self) -> SerializableMixin:
-        contents = self.load_json()
+    @classmethod
+    def parse_object(cls, path: Path, expected_cls: Type[T]) -> T:
+        parser = cls(path)
+        contents = parser.load_json()
+
         if isinstance(contents, list):
-            message = f"JSON file ({self.path}) contains a list of objects."
+            message = f"JSON file ({parser.path}) contains a list of objects."
             raise ValueError(message)
-        object_ = self.from_dict(contents)
-        return object_
 
-    def parse_objects(self) -> list[SerializableMixin]:
-        contents = self.load_json()
+        object_ = cls.from_dict(contents)
+        expected = parser.check_expected_cls(object_, expected_cls)
+        return expected
+
+    @classmethod
+    def parse_objects(cls, path: Path, expected_cls: Type[T]) -> list[T]:
+        parser = cls(path)
+        contents = parser.load_json()
+
         if not isinstance(contents, list):
-            message = f"JSON file ({self.path}) does not contain a list of objects."
+            message = f"JSON file ({cls.path}) does not contain a list of objects."
             raise ValueError(message)
-        objects = [self.from_dict(object_) for object_ in contents]
-        return objects
+
+        objects = [cls.from_dict(dictionary) for dictionary in contents]
+        expected = [parser.check_expected_cls(obj, expected_cls) for obj in objects]
+        return expected
