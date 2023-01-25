@@ -3,9 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import asdict
 from pathlib import PurePath
-from typing import Any
+from typing import Any, TypeVar, cast
 
 SerializedObject = dict[str, Any]
+
+T = TypeVar("T", bound="SerializableMixin")
 
 
 class SerializableMixin(ABC):
@@ -62,3 +64,16 @@ class SerializableMixin(ABC):
         Returns:
             The reconstructed object.
         """
+
+    def copy(self: T) -> T:
+        """Create a copy of a serializable object.
+
+        Returns:
+            A copied object.
+        """
+        dictionary = self.to_dict()
+        copy = self.from_dict(dictionary)
+        # Required to prevent this mypy error:
+        # Incompatible return value type (got "SerializableMixin", expected "T")
+        copy = cast(T, copy)
+        return copy

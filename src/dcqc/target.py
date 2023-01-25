@@ -23,15 +23,19 @@ class Target(SerializableMixin):
     and multi-file tests.
 
     Args:
-        *files (File): Sequence of files objects.
+        *files: Sequence of files objects.
+        id: A unique identifier for the target.
+            Defaults to None.
     """
 
     type: str
+    id: Optional[str]
     files: list[File]
 
-    def __init__(self, *files: File):
+    def __init__(self, *files: File, id: Optional[str] = None):
         self.type = self.__class__.__name__
         self.files = list(files)
+        self.id = id
 
     def __hash__(self):
         return hash(tuple(self.files))
@@ -83,5 +87,6 @@ class Target(SerializableMixin):
         dictionary = deepcopy(dictionary)
         dictionary = cls.from_dict_prepare(dictionary)
         files = [File.from_dict(d) for d in dictionary["files"]]
-        target = cls(*files)
+        id = dictionary["id"]
+        target = cls(*files, id=id)
         return target

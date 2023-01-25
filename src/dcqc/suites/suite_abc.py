@@ -109,13 +109,24 @@ class SuiteABC(SerializableMixin, ABC):
         Returns:
             SuiteABC: An initialized test suite.
         """
-        targets = [test.target for test in tests]
+        targets = list()
+        suite_tests = list()
+        skipped_tests = skipped_tests or list()
+        skipped_tests = set(skipped_tests)
+        for test in tests:
+            test_copy = test.copy()
+            if test_copy.type in skipped_tests:
+                test_copy.skip()
+            targets.append(test_copy.target)
+            suite_tests.append(test_copy)
+
         representative_target = targets[0]
         if not all(representative_target == target for target in targets):
             message = f"Not all tests refer to the same target ({targets})."
             raise ValueError(message)
         suite = cls.from_target(representative_target, required_tests, skipped_tests)
-        suite.tests = list(tests)
+        suite.tests = suite_tests
+
         return suite
 
     @classmethod

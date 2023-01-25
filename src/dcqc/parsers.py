@@ -17,6 +17,7 @@ T = TypeVar("T", bound=SerializableMixin)
 # TODO: Add support for a `unique_id` column
 class CsvParser:
     path: Path
+    stage_files: bool
 
     def __init__(self, path: Path, stage_files: bool = False):
         self.path = path
@@ -33,20 +34,20 @@ class CsvParser:
         file = File(url, row, relative_to=self.path.parent)
         return file
 
-    def create_files(self) -> Iterator[File]:
+    def create_files(self) -> Iterator[tuple[int, File]]:
         for index, row in self.list_rows():
             file = self._row_to_file(row)
             if not file.is_file_local() and self.stage_files:
                 destination = self.path.parent / "staged_files" / f"index_{index}"
                 destination.mkdir(parents=True, exist_ok=True)
                 file.stage(destination, overwrite=True)
-            yield file
+            yield index, file
 
     def create_targets(self, stage_files: bool = True) -> Iterator[Target]:
-        for file in self.create_files():
+        for index, file in self.create_files():
             if stage_files:
                 file.stage()
-            yield Target(file)
+            yield Target(file, id=f"{index:04}")
 
     def create_suites(
         self,

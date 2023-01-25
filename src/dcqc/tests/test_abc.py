@@ -56,6 +56,10 @@ class TestABC(SerializableMixin, ABC):
             message = f"Test ({self.type}) expected one file, not multiple ({files})."
             raise ValueError(message)
 
+    def skip(self):
+        """Force the test to be skipped."""
+        self._status = TestStatus.SKIP
+
     def get_status(self) -> TestStatus:
         """Compute (if applicable) and return the test status."""
         if self._status == TestStatus.NONE:
