@@ -5,11 +5,10 @@ from collections.abc import Collection
 from itertools import chain
 from typing import ClassVar, Optional, Type, Union
 
-from dcqc.enums import TestStatus
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.target import Target
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.test_abc import TestABC, TestStatus
 
 
 # TODO: Consider the Composite design pattern once
