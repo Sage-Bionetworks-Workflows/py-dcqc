@@ -35,16 +35,24 @@ class FileType:
 
     name: str
     file_extensions: tuple[str, ...]
+    edam_iri: Optional[str]
 
-    def __init__(self, name: str, file_extensions: Collection[str]):
+    def __init__(
+        self,
+        name: str,
+        file_extensions: Collection[str],
+        edam_iri: Optional[str] = None,
+    ):
         """Construct a FileType object.
 
         Args:
             name: File type name.
             file_extensions: Valid file extensions.
+            edam_iri: EDAM format ontology identifier.
         """
         self.name = name
         self.file_extensions = tuple(file_extensions)
+        self.edam_iri = edam_iri
         self.register_file_type()
 
     def register_file_type(self) -> None:
@@ -85,9 +93,9 @@ class FileType:
 # TODO: These file types could be moved to an external file
 # Instantiated file types are automatically tracked by the FileType class
 FileType("*", ())  # To represent all file types
-FileType("TXT", (".txt",))
-FileType("TIFF", (".tif", ".tiff"))
-FileType("OME-TIFF", (".ome.tif", ".ome.tiff"))
+FileType("TXT", (".txt",), "format_1964")
+FileType("TIFF", (".tif", ".tiff"), "format_3591")
+FileType("OME-TIFF", (".ome.tif", ".ome.tiff"), "format_3727")
 
 
 @dataclass

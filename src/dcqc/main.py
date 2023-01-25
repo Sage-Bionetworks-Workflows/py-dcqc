@@ -5,6 +5,7 @@ from typing import List
 
 from typer import Argument, Option, Typer
 
+from dcqc.file import FileType
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
@@ -150,10 +151,12 @@ def list_tests():
     test_classes_by_file_type = SuiteABC.list_test_classes_by_file_type()
 
     rows = list()
-    for file_type, test_classes in test_classes_by_file_type.items():
+    for file_type_name, test_classes in test_classes_by_file_type.items():
+        file_type = FileType.get_file_type(file_type_name)
         for test_cls in test_classes:
             test_dict = {
-                "file_type": file_type,
+                "file_type": file_type_name,
+                "edam_iri": file_type.edam_iri,
                 "test_name": test_cls.__name__,
                 "test_tier": test_cls.tier,
                 "test_type": "external" if test_cls.is_external_test else "internal",
