@@ -42,16 +42,19 @@ class CsvParser:
                 file.stage(destination, overwrite=True)
             yield file
 
-    def create_targets(self) -> Iterator[Target]:
+    def create_targets(self, stage_files: bool = True) -> Iterator[Target]:
         for file in self.create_files():
+            if stage_files:
+                file.stage()
             yield Target(file)
 
     def create_suites(
         self,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
+        stage_files: bool = True,
     ) -> Iterator[SuiteABC]:
-        for target in self.create_targets():
+        for target in self.create_targets(stage_files):
             yield SuiteABC.from_target(target, required_tests, skipped_tests)
 
 

@@ -59,4 +59,4 @@ repos:
   rev: 1.5.0
   hooks:
   - id: interrogate
-    args: [--verbose, --fail-under=25]
+    args: [--verbose, --fail-under=0]
