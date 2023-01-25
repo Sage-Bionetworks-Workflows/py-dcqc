@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin, SerializedObject
@@ -29,9 +29,6 @@ class Target(SerializableMixin):
     def __init__(self, *files: File):
         self.type = self.__class__.__name__
         self.files = list(files)
-
-    def to_dict(self) -> SerializedObject:
-        return asdict(self)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Target:

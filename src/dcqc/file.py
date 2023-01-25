@@ -348,7 +348,7 @@ class File(SerializableMixin):
 
         if self.is_url_local():
             local_path = self.get_local_path()
-            destination.symlink_to(local_path)
+            destination.symlink_to(local_path.resolve())
         else:
             with destination.open("wb") as dest_file:
                 self.fs.download(self.fs_path, dest_file)

@@ -52,7 +52,8 @@ def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(test_file
     test_file = test_files["good"]
     with TemporaryDirectory() as tmp_dir:
         original_path = Path(test_file.get_local_path())
-        test_file.stage(tmp_dir)
+        tmp_dir_path = Path(tmp_dir)
+        test_file.stage(tmp_dir_path)
         staged_path = Path(test_file.get_local_path())
         assert staged_path.is_symlink()
         assert staged_path.resolve() == original_path.resolve()
@@ -69,7 +70,8 @@ def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_
 def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files):
     test_file = test_files["synapse"]
     with TemporaryDirectory() as tmp_dir:
-        test_file.stage(tmp_dir)
+        tmp_dir_path = Path(tmp_dir)
+        test_file.stage(tmp_dir_path)
         local_path = test_file.get_local_path()
         assert local_path.exists()
         assert not local_path.is_symlink()
