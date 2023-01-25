@@ -3,8 +3,9 @@ from csv import DictWriter
 from pathlib import Path
 from typing import List
 
-from typer import Argument, Option, Typer
+from typer import Argument, Exit, Option, Typer
 
+from dcqc import __version__
 from dcqc.file import FileType
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
@@ -12,22 +13,31 @@ from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
 from dcqc.tests.test_abc import ExternalTestMixin, TestABC
 
-app = Typer()
+# Make commands optional to allow for `dcqc --version`
+app = Typer(invoke_without_command=True)
 
 
 # Common arguments
 # Distinguishing between path and path/url arguments until I/O is consistent
 input_path_arg = Argument(..., help="Input file")
 input_path_list_arg = Argument(..., help="List of input files")
-output_arg = Argument(..., help="Path or (remote) URL for output file.")
-output_dir_arg = Argument(..., help="Directory path or (remote) URL for output files.")
-output_path_arg = Argument(..., help="Path for output file.")
-output_dir_path_arg = Argument(..., help="Directory path for output files.")
+output_arg = Argument(..., help="Path or (remote) URL for output file")
+output_dir_arg = Argument(..., help="Directory path or (remote) URL for output files")
+output_path_arg = Argument(..., help="Path for output file")
+output_dir_path_arg = Argument(..., help="Directory path for output files")
 
 # Common options
-overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files.")
-required_tests_opt = Option(None, "--required-tests", "-r", help="Required tests.")
-skipped_tests_opt = Option(None, "--skipped-tests", "-s", help="Skipped tests.")
+overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
+required_tests_opt = Option(None, "--required-tests", "-r", help="Required tests")
+skipped_tests_opt = Option(None, "--skipped-tests", "-s", help="Skipped tests")
+
+
+@app.callback()
+def main(version: bool = False):
+    """DCQC Python Package"""
+    if version:
+        print(f"DCQC Python Package Version: {__version__}")
+        raise Exit()
 
 
 @app.command()
@@ -36,7 +46,7 @@ def create_targets(
     output_dir: str = output_dir_arg,
     overwrite: bool = overwrite_opt,
 ):
-    """Create target JSON files from a targets CSV file."""
+    """Create target JSON files from a targets CSV file"""
     parser = CsvParser(input_csv)
     targets = parser.create_targets()
 
@@ -55,7 +65,7 @@ def stage_target(
     output_dir: Path = output_dir_path_arg,
     overwrite: bool = overwrite_opt,
 ):
-    """Create local file copies from a target JSON file."""
+    """Create local file copies from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     target = JsonParser.parse_expected(input_json, Target)
@@ -71,7 +81,7 @@ def create_tests(
     skipped_tests: List[str] = skipped_tests_opt,
     overwrite: bool = overwrite_opt,
 ):
-    """Create test JSON files from a target JSON file."""
+    """Create test JSON files from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     target = JsonParser.parse_expected(input_json, Target)
@@ -90,7 +100,7 @@ def create_process(
     output_path: Path = output_path_arg,
     overwrite: bool = overwrite_opt,
 ):
-    """Create external process JSON file from a test JSON file."""
+    """Create external process JSON file from a test JSON file"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     test = JsonParser.parse_expected(input_json, ExternalTestMixin)
@@ -107,7 +117,7 @@ def compute_test(
     output_path: Path = output_path_arg,
     overwrite: bool = overwrite_opt,
 ):
-    """Compute the test status from a test JSON file."""
+    """Compute the test status from a test JSON file"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     test = JsonParser.parse_expected(input_json, TestABC)
@@ -126,7 +136,7 @@ def create_suite(
     skipped_tests: List[str] = skipped_tests_opt,
     overwrite: bool = overwrite_opt,
 ):
-    """Create a suite from a set of test JSON files sharing the same target."""
+    """Create a suite from a set of test JSON files sharing the same target"""
     tests = [JsonParser.parse_expected(test_json, TestABC) for test_json in input_jsons]
     suite = SuiteABC.from_tests(tests, required_tests, skipped_tests)
     report = JsonReport()
@@ -139,7 +149,7 @@ def combine_suites(
     input_jsons: List[Path] = input_path_list_arg,
     overwrite: bool = overwrite_opt,
 ):
-    """Combine several suite JSON files into a single JSON report."""
+    """Combine several suite JSON files into a single JSON report"""
     suites = [JsonParser.parse_expected(json_, SuiteABC) for json_ in input_jsons]
     report = JsonReport()
     report.save(suites, output, overwrite)
@@ -147,7 +157,7 @@ def combine_suites(
 
 @app.command()
 def list_tests():
-    """List the tests available for each file type."""
+    """List the tests available for each file type"""
     test_classes_by_file_type = SuiteABC.list_test_classes_by_file_type()
 
     rows = list()

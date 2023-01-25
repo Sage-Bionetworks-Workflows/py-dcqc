@@ -1,5 +1,6 @@
 {
   "type": "Target",
+  "id": "001",
   "files": [
     {
       "url": "tests/data/test.txt",

@@ -3,13 +3,14 @@
   "status": "pending",
   "target": {
     "type": "Target",
+    "id": "001",
     "files": [
       {
         "url": "tests/data/test.txt",
         "metadata": {
           "md5_checksum": "14758f1afd44c09b7992073ccf00b43d"
         },
-        "type": "TXT",
+        "type": "TIFF",
         "local_path": "tests/data/test.txt"
       }
     ]
