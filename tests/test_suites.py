@@ -1,11 +1,10 @@
 import pytest
 
-from dcqc.enums import TestStatus
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
 from dcqc.target import Target
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.test_abc import TestABC, TestStatus
 from dcqc.tests.tests import LibTiffInfoTest
 
 

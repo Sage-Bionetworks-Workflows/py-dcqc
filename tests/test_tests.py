@@ -3,10 +3,9 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from dcqc.enums import TestStatus
 from dcqc.target import Target
 from dcqc.tests import tests
-from dcqc.tests.test_abc import ExternalTestMixin, TestABC
+from dcqc.tests.test_abc import ExternalTestMixin, TestABC, TestStatus
 
 
 def test_that_the_file_extension_test_works_on_correct_files(test_files):

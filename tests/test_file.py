@@ -19,7 +19,7 @@ def test_for_an_error_when_requesting_for_an_unregistered_file_type():
 
 def test_for_an_error_when_retrieving_missing_metadata_on_a_file(test_files):
     test_file = test_files["good"]
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         test_file.get_metadata("foo")
 
 
@@ -35,7 +35,7 @@ def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files)
 @pytest.mark.integration
 def test_for_an_error_when_getting_local_path_for_an_unstaged_remote_file(test_files):
     file = test_files["synapse"]
-    with pytest.raises(ValueError):
+    with pytest.raises(FileNotFoundError):
         file.get_local_path()
 
 
@@ -52,7 +52,8 @@ def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(test_file
     test_file = test_files["good"]
     with TemporaryDirectory() as tmp_dir:
         original_path = Path(test_file.get_local_path())
-        test_file.stage(tmp_dir)
+        tmp_dir_path = Path(tmp_dir)
+        test_file.stage(tmp_dir_path)
         staged_path = Path(test_file.get_local_path())
         assert staged_path.is_symlink()
         assert staged_path.resolve() == original_path.resolve()
@@ -69,7 +70,8 @@ def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_
 def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files):
     test_file = test_files["synapse"]
     with TemporaryDirectory() as tmp_dir:
-        test_file.stage(tmp_dir)
+        tmp_dir_path = Path(tmp_dir)
+        test_file.stage(tmp_dir_path)
         local_path = test_file.get_local_path()
         assert local_path.exists()
         assert not local_path.is_symlink()

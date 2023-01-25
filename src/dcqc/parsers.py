@@ -32,7 +32,7 @@ class CsvParser:
             if not file.is_file_local():
                 destination = self.csv_directory / "staged_files" / f"index_{index}"
                 destination.mkdir(parents=True, exist_ok=True)
-                file.stage(destination.as_posix(), overwrite=True)
+                file.stage(destination, overwrite=True)
             yield file
 
     def create_targets(self) -> Iterator[Target]:

@@ -3,13 +3,12 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection
 from itertools import chain
-from typing import Optional, Type, Union
+from typing import ClassVar, Optional, Type, Union
 
-from dcqc.enums import TestStatus
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.target import Target
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.test_abc import TestABC, TestStatus
 
 
 # TODO: Consider the Composite design pattern once
@@ -29,9 +28,9 @@ class SuiteABC(SerializableMixin, ABC):
     """
 
     # Class attributes
-    file_type: FileType
-    add_tests: tuple[Type[TestABC], ...]
-    del_tests: tuple[Type[TestABC], ...]
+    file_type: ClassVar[FileType]
+    add_tests: ClassVar[tuple[Type[TestABC], ...]]
+    del_tests: ClassVar[tuple[Type[TestABC], ...]]
 
     # Instance attributes
     type: str
