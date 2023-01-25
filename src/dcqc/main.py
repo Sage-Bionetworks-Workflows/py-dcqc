@@ -1,3 +1,5 @@
+import sys
+from csv import DictWriter
 from pathlib import Path
 from typing import List
 
@@ -140,3 +142,25 @@ def combine_suites(
     suites = [JsonParser.parse_expected(json_, SuiteABC) for json_ in input_jsons]
     report = JsonReport()
     report.save(suites, output, overwrite)
+
+
+@app.command()
+def list_tests():
+    """List the tests available for each file type."""
+    test_classes_by_file_type = SuiteABC.list_test_classes_by_file_type()
+
+    rows = list()
+    for file_type, test_classes in test_classes_by_file_type.items():
+        for test_cls in test_classes:
+            test_dict = {
+                "file_type": file_type,
+                "test_name": test_cls.__name__,
+                "test_tier": test_cls.tier,
+                "test_type": "external" if test_cls.is_external_test else "internal",
+            }
+            rows.append(test_dict)
+
+    fieldnames = list(rows[0])
+    writer = DictWriter(sys.stdout, fieldnames)
+    writer.writeheader()
+    writer.writerows(rows)

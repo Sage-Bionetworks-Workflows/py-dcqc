@@ -1,6 +1,5 @@
 import shutil
-from pathlib import Path
-from typing import Union
+from typing import Any
 
 import pytest
 from typer.testing import CliRunner
@@ -11,7 +10,7 @@ from dcqc.main import app
 # Using a test class to mark all tests as "integration"
 @pytest.mark.integration
 class TestCLI:
-    def run_command(self, arguments: list[Union[str, Path]]):
+    def run_command(self, arguments: list[Any]):
         runner = CliRunner()
         str_arguments = [str(arg) for arg in arguments]
         result = runner.invoke(app, str_arguments)
@@ -85,3 +84,7 @@ class TestCLI:
         args = ["combine-suites", output_path, input_json, input_json, input_json]
         self.run_command(args)
         assert output_path.exists()
+
+    def test_list_tests(self):
+        args = ["list-tests"]
+        self.run_command(args)

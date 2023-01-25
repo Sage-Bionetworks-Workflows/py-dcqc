@@ -147,6 +147,17 @@ class SuiteABC(SerializableMixin, ABC):
         return tuple(all_tests)
 
     @classmethod
+    def list_test_classes_by_file_type(cls) -> dict[str, list[Type[TestABC]]]:
+        """List test classes by file type."""
+        result = dict()
+        suite_classes = cls.list_subclasses()
+        for suite_cls in suite_classes:
+            file_type = suite_cls.file_type.name
+            test_classes = suite_cls.list_test_classes()
+            result[file_type] = list(test_classes)
+        return result
+
+    @classmethod
     def _default_required_tests(cls) -> list[str]:
         test_classes = cls.list_test_classes()
         required_tests = filter(lambda test: test.tier <= 2, test_classes)
@@ -167,13 +178,13 @@ class SuiteABC(SerializableMixin, ABC):
     @classmethod
     def list_subclasses(cls) -> tuple[Type[SuiteABC], ...]:
         """List all subclasses."""
-        subclasses: set[Type[SuiteABC]]
-        subclasses = set(cls.__subclasses__())
+        subclasses: list[Type[SuiteABC]]
+        subclasses = cls.__subclasses__()
 
         subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
-        subsubclasses = chain(*subsubclasses_list)
-        all_subclasses = subclasses.union(subsubclasses)
-        return tuple(all_subclasses)
+        subclasses_chain = chain(subclasses, *subsubclasses_list)
+        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
+        return all_subclasses
 
     @classmethod
     def get_subclass_by_name(cls, name: str) -> Type[SuiteABC]:
