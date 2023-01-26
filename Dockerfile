@@ -10,6 +10,6 @@ COPY setup.* Pipfile* ./
 COPY src ./src/
 
 RUN SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SAGETASKS=${PKG_VERSION} \
-    pipenv install --system
+    python -m pip install .
 
 CMD [ "python", "-c", "import dcqc" ]
