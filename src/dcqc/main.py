@@ -1,3 +1,4 @@
+import os
 import sys
 from csv import DictWriter
 from pathlib import Path
@@ -12,6 +13,7 @@ from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
 from dcqc.tests.test_abc import ExternalTestMixin, TestABC
+from dcqc.utils import is_url_local
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)
@@ -47,12 +49,15 @@ def create_targets(
     overwrite: bool = overwrite_opt,
 ):
     """Create target JSON files from a targets CSV file"""
+    if is_url_local(output_dir):
+        _, _, resource = output_dir.rpartition("://")
+        os.makedirs(resource)
+
     parser = CsvParser(input_csv)
     targets = parser.create_targets()
 
     # Naming the targets by index to ensure no clashes
-    indexed_targets = enumerate(targets, start=1)
-    named_targets = {f"{index}.json": target for index, target in indexed_targets}
+    named_targets = {f"target-{target.id}.json": target for target in targets}
 
     report = JsonReport()
     report.save_many(named_targets, output_dir, overwrite)
@@ -68,7 +73,7 @@ def stage_target(
     """Create local file copies from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    target = JsonParser.parse_expected(input_json, Target)
+    target = JsonParser.parse_object(input_json, Target)
     for path in target.stage(output_dir, overwrite):
         print(f"Finished staging {path!s}...")
 
@@ -84,12 +89,12 @@ def create_tests(
     """Create test JSON files from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    target = JsonParser.parse_expected(input_json, Target)
+    target = JsonParser.parse_object(input_json, Target)
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)
 
     report = JsonReport()
     for test in suite.tests:
-        output_path = output_dir / f"{input_json.stem}-{test.type}.json"
+        output_path = output_dir / f"{input_json.stem}.{test.type}.json"
         output_url = output_path.as_posix()
         report.save(test, output_url, overwrite)
 
@@ -103,7 +108,7 @@ def create_process(
     """Create external process JSON file from a test JSON file"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    test = JsonParser.parse_expected(input_json, ExternalTestMixin)
+    test = JsonParser.parse_object(input_json, ExternalTestMixin)
     process = test.generate_process()
     output_url = output_path.as_posix()
 
@@ -120,7 +125,7 @@ def compute_test(
     """Compute the test status from a test JSON file"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    test = JsonParser.parse_expected(input_json, TestABC)
+    test = JsonParser.parse_object(input_json, TestABC)
     test.get_status()
     output_url = output_path.as_posix()
 
@@ -137,7 +142,7 @@ def create_suite(
     overwrite: bool = overwrite_opt,
 ):
     """Create a suite from a set of test JSON files sharing the same target"""
-    tests = [JsonParser.parse_expected(test_json, TestABC) for test_json in input_jsons]
+    tests = [JsonParser.parse_object(test_json, TestABC) for test_json in input_jsons]
     suite = SuiteABC.from_tests(tests, required_tests, skipped_tests)
     report = JsonReport()
     report.save(suite, output, overwrite)
@@ -150,7 +155,7 @@ def combine_suites(
     overwrite: bool = overwrite_opt,
 ):
     """Combine several suite JSON files into a single JSON report"""
-    suites = [JsonParser.parse_expected(json_, SuiteABC) for json_ in input_jsons]
+    suites = [JsonParser.parse_object(json_, SuiteABC) for json_ in input_jsons]
     report = JsonReport()
     report.save(suites, output, overwrite)
 
