@@ -56,6 +56,10 @@ class TestABC(SerializableMixin, ABC):
             message = f"Test ({self.type}) expected one file, not multiple ({files})."
             raise ValueError(message)
 
+    def skip(self):
+        """Force the test to be skipped."""
+        self._status = TestStatus.SKIP
+
     def get_status(self) -> TestStatus:
         """Compute (if applicable) and return the test status."""
         if self._status == TestStatus.NONE:
@@ -92,19 +96,37 @@ class TestABC(SerializableMixin, ABC):
             "type": self.type,
             "status": self._status.value,
             "target": self.target.to_dict(),
-            # "tier": self.tier,
-            # "is_external_test": self.is_external_test,
+            "tier": self.tier,
+            "is_external_test": self.is_external_test,
         }
         return test_dict
 
-    # @classmethod
-    # def from_dict(cls, dictionary: dict):
-    #     # TODO: Restore `_status` if available
-    #     pass
+    @classmethod
+    def from_dict(cls, dictionary: SerializedObject) -> TestABC:
+        """Deserialize a dictionary into a test.
+
+        Args:
+            dictionary: A serialized test object.
+
+        Returns:
+            The reconstructed test object.
+        """
+        test_cls_name = dictionary.pop("type")
+        test_cls = cls.get_subclass_by_name(test_cls_name)
+
+        target_dict = dictionary["target"]
+        target = Target.from_dict(target_dict)
+
+        test = test_cls(target)
+
+        status = TestStatus(dictionary["status"])
+        test._status = status
+
+        return test
 
 
 @dataclass
-class Process:
+class Process(SerializableMixin):
     container: str
     command_args: Sequence[str]
     cpus: int = 1
@@ -112,6 +134,28 @@ class Process:
 
     def get_command(self) -> str:
         return shlex.join(self.command_args)
+
+    def to_dict(self):
+        dictionary = super(Process, self).to_dict()
+        del dictionary["command_args"]
+        dictionary["command"] = self.get_command()
+        return dictionary
+
+    @classmethod
+    def from_dict(cls, dictionary: SerializedObject) -> Process:
+        """Deserialize a dictionary into a process.
+
+        Args:
+            dictionary: A serialized proces object.
+
+        Returns:
+            The reconstructed process object.
+        """
+        command = dictionary.pop("command")
+        command_args = shlex.split(command)
+        dictionary["command_args"] = command_args
+        process = cls(**dictionary)
+        return process
 
 
 class ExternalTestMixin(TestABC):

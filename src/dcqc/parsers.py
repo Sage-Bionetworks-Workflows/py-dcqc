@@ -1,19 +1,29 @@
 import csv
+import json
 from collections.abc import Collection, Iterator
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, Type, TypeVar, cast
 
 from dcqc.file import File
+from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
+from dcqc.tests.test_abc import TestABC
+
+# For context on TypeVar, check out this GitHub PR comment:
+# https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/8#discussion_r1087141497
+T = TypeVar("T", bound=SerializableMixin)
 
 
+# TODO: Add support for URLs instead of paths
+# TODO: Add support for a `unique_id` column
 class CsvParser:
     path: Path
+    stage_files: bool
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, stage_files: bool = False):
         self.path = path
-        self.csv_directory = self.path.parent
+        self.stage_files = stage_files
 
     def list_rows(self) -> Iterator[tuple[int, dict]]:
         with self.path.open(newline="") as file:
@@ -23,32 +33,105 @@ class CsvParser:
 
     def _row_to_file(self, row: dict[str, str]) -> File:
         url = row.pop("url")
-        file = File(url, row, relative_to=self.csv_directory)
+        file = File(url, row, relative_to=self.path.parent)
         return file
 
-    def create_files(self) -> Iterator[File]:
+    def create_files(self) -> Iterator[tuple[int, File]]:
         for index, row in self.list_rows():
             file = self._row_to_file(row)
-            if not file.is_file_local():
-                destination = self.csv_directory / "staged_files" / f"index_{index}"
+            if not file.is_file_local() and self.stage_files:
+                destination = self.path.parent / "staged_files" / f"index_{index}"
                 destination.mkdir(parents=True, exist_ok=True)
                 file.stage(destination, overwrite=True)
-            yield file
+            yield index, file
 
-    def create_targets(self) -> Iterator[Target]:
-        for file in self.create_files():
-            yield Target(file)
+    def create_targets(self, stage_files: bool = True) -> Iterator[Target]:
+        for index, file in self.create_files():
+            if stage_files:
+                file.stage()
+            yield Target(file, id=f"{index:04}")
 
     def create_suites(
         self,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
+        stage_files: bool = True,
     ) -> Iterator[SuiteABC]:
-        for target in self.create_targets():
-            # This function assumes that there is one file per target,
-            # which is always the case when parsing CSV files (for now)
-            first_file = target.files[0]
-            file_type = first_file.get_file_type()
-            suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
-            suite = suite_cls(target, required_tests, skipped_tests)
-            yield suite
+        for target in self.create_targets(stage_files):
+            yield SuiteABC.from_target(target, required_tests, skipped_tests)
+
+
+class JsonParser:
+    path: Path
+
+    def __init__(self, path: Path):
+        self.path = path
+
+    def load_json(self) -> Any:
+        with self.path.open("r") as infile:
+            contents = json.load(infile)
+        return contents
+
+    def check_expected_cls(self, instance: Any, expected_cls: Type[T]) -> T:
+        if not isinstance(instance, expected_cls):
+            cls_name = expected_cls.__name__
+            message = f"JSON file ({self.path!s}) is not expected type ({cls_name})."
+            raise ValueError(message)
+        instance = cast(T, instance)
+        return instance
+
+    @classmethod
+    def get_class(cls, cls_name: str) -> Type[SerializableMixin]:
+        test_classes = TestABC.list_subclasses()
+        test_cls_map = {cls.__name__: cls for cls in test_classes}
+
+        suite_classes = SuiteABC.list_subclasses()
+        suite_cls_map = {cls.__name__: cls for cls in suite_classes}
+
+        if cls_name == "File":
+            return File
+        elif cls_name == "Target":
+            return Target
+        elif cls_name in test_cls_map:
+            return test_cls_map[cls_name]
+        elif cls_name in suite_cls_map:
+            return suite_cls_map[cls_name]
+        else:
+            message = f"Type ({cls_name}) is not recognized."
+            raise ValueError(message)
+
+    @classmethod
+    def from_dict(cls, dictionary) -> SerializableMixin:
+        if "type" not in dictionary:
+            message = f"Cannot parse JSON object due to missing type ({dictionary})."
+            raise ValueError(message)
+        type_name = dictionary["type"]
+        type_class = cls.get_class(type_name)
+        object_ = type_class.from_dict(dictionary)
+        return object_
+
+    @classmethod
+    def parse_object(cls, path: Path, expected_cls: Type[T]) -> T:
+        parser = cls(path)
+        contents = parser.load_json()
+
+        if isinstance(contents, list):
+            message = f"JSON file ({parser.path}) contains a list of objects."
+            raise ValueError(message)
+
+        object_ = cls.from_dict(contents)
+        expected = parser.check_expected_cls(object_, expected_cls)
+        return expected
+
+    @classmethod
+    def parse_objects(cls, path: Path, expected_cls: Type[T]) -> list[T]:
+        parser = cls(path)
+        contents = parser.load_json()
+
+        if not isinstance(contents, list):
+            message = f"JSON file ({cls.path}) does not contain a list of objects."
+            raise ValueError(message)
+
+        objects = [cls.from_dict(dictionary) for dictionary in contents]
+        expected = [parser.check_expected_cls(obj, expected_cls) for obj in objects]
+        return expected

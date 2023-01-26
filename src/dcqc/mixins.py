@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import asdict
 from pathlib import PurePath
-from typing import Any
+from typing import Any, TypeVar, cast
 
 SerializedObject = dict[str, Any]
 
+T = TypeVar("T", bound="SerializableMixin")
 
-# class SerializableMixin(ABC):
-class SerializableMixin:
+
+class SerializableMixin(ABC):
     @classmethod
     def from_dict_prepare(cls, dictionary: SerializedObject) -> SerializedObject:
         """Validate and prepare dictionary for deserialization."""
@@ -51,14 +53,27 @@ class SerializableMixin:
         """
         return asdict(self, dict_factory=self.dict_factory)
 
-    # @classmethod
-    # @abstractmethod
-    # def from_dict(cls, dictionary: SerializedObject) -> SerializableMixin:
-    #     """Deserialize a dictionary into a SerializableMixin object.
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, dictionary: SerializedObject) -> SerializableMixin:
+        """Deserialize a dictionary into a SerializableMixin object.
 
-    #     Args:
-    #         dictionary: A serialized object.
+        Args:
+            dictionary: A serialized object.
 
-    #     Returns:
-    #         The reconstructed object.
-    #     """
+        Returns:
+            The reconstructed object.
+        """
+
+    def copy(self: T) -> T:
+        """Create a copy of a serializable object.
+
+        Returns:
+            A copied object.
+        """
+        dictionary = self.to_dict()
+        copy = self.from_dict(dictionary)
+        # Required to prevent this mypy error:
+        # Incompatible return value type (got "SerializableMixin", expected "T")
+        copy = cast(T, copy)
+        return copy

@@ -12,7 +12,6 @@ Classes:
 from __future__ import annotations
 
 import os
-import re
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
@@ -24,7 +23,7 @@ from warnings import warn
 from fs.base import FS
 
 from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.utils import open_parent_fs
+from dcqc.utils import is_url_local, open_parent_fs
 
 
 @dataclass
@@ -107,9 +106,6 @@ class File(SerializableMixin):
     metadata: dict[str, Any]
     type: str
     local_path: Optional[Path]
-
-    _LOCAL_REGEX: ClassVar[re.Pattern]
-    _LOCAL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
 
     def __init__(
         self,
@@ -265,7 +261,7 @@ class File(SerializableMixin):
             Whether the URL refers to a local location.
         """
         url = url or self.url
-        return self._LOCAL_REGEX.fullmatch(url) is not None
+        return is_url_local(url)
 
     def is_file_local(self) -> bool:
         """Check if the file (or a copy) is available locally.
