@@ -78,8 +78,7 @@ def stage_target(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     target = JsonParser.parse_object(input_json, Target)
-    for path in target.stage(output_dir, overwrite):
-        print(f"Finished staging {path!s}...")
+    target.stage(output_dir, overwrite)
 
     paths_relative_to = Path.cwd() if cwd_relative else None
     report = JsonReport(paths_relative_to)
