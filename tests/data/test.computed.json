@@ -1,5 +1,7 @@
 {
   "type": "Md5ChecksumTest",
+  "tier": 1,
+  "is_external_test": false,
   "status": "passed",
   "target": {
     "type": "Target",

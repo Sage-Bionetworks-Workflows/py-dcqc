@@ -33,6 +33,7 @@ overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
 required_tests_opt = Option(None, "--required-tests", "-rt", help="Required tests")
 skipped_tests_opt = Option(None, "--skipped-tests", "-st", help="Skipped tests")
 stage_files_opt = Option(False, "--stage-files", "-sf", help="Stage remote files.")
+cwd_relative_opt = Option(False, "--cwd-relative", "-cr", help=".")
 
 
 @app.callback()
@@ -65,12 +66,13 @@ def create_targets(
     report.save_many(named_targets, output_dir, overwrite)
 
 
-# TODO: Add `--absolute-paths` option to avoid relative paths in JSON files
 @app.command()
 def stage_target(
     input_json: Path = input_path_arg,
+    output_json: str = output_arg,
     output_dir: Path = output_dir_path_arg,
     overwrite: bool = overwrite_opt,
+    cwd_relative: bool = cwd_relative_opt,
 ):
     """Create local file copies from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -78,6 +80,10 @@ def stage_target(
     target = JsonParser.parse_object(input_json, Target)
     for path in target.stage(output_dir, overwrite):
         print(f"Finished staging {path!s}...")
+
+    paths_relative_to = Path.cwd() if cwd_relative else None
+    report = JsonReport(paths_relative_to)
+    report.save(target, output_json, overwrite)
 
 
 @app.command()
@@ -104,15 +110,15 @@ def create_tests(
 @app.command()
 def create_process(
     input_json: Path = input_path_arg,
-    output_path: Path = output_path_arg,
+    output_json: Path = output_path_arg,
     overwrite: bool = overwrite_opt,
 ):
     """Create external process JSON file from a test JSON file"""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_json.parent.mkdir(parents=True, exist_ok=True)
 
     test = JsonParser.parse_object(input_json, ExternalTestMixin)
     process = test.generate_process()
-    output_url = output_path.as_posix()
+    output_url = output_json.as_posix()
 
     report = JsonReport()
     report.save(process, output_url, overwrite)
@@ -121,15 +127,15 @@ def create_process(
 @app.command()
 def compute_test(
     input_json: Path = input_path_arg,
-    output_path: Path = output_path_arg,
+    output_json: Path = output_path_arg,
     overwrite: bool = overwrite_opt,
 ):
     """Compute the test status from a test JSON file"""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_json.parent.mkdir(parents=True, exist_ok=True)
 
     test = JsonParser.parse_object(input_json, TestABC)
     test.get_status()
-    output_url = output_path.as_posix()
+    output_url = output_json.as_posix()
 
     report = JsonReport()
     report.save(test, output_url, overwrite)
@@ -137,7 +143,7 @@ def compute_test(
 
 @app.command()
 def create_suite(
-    output: str = output_arg,
+    output_json: str = output_arg,
     input_jsons: List[Path] = input_path_list_arg,
     required_tests: List[str] = required_tests_opt,
     skipped_tests: List[str] = skipped_tests_opt,
@@ -147,19 +153,19 @@ def create_suite(
     tests = [JsonParser.parse_object(test_json, TestABC) for test_json in input_jsons]
     suite = SuiteABC.from_tests(tests, required_tests, skipped_tests)
     report = JsonReport()
-    report.save(suite, output, overwrite)
+    report.save(suite, output_json, overwrite)
 
 
 @app.command()
 def combine_suites(
-    output: str = output_arg,
+    output_json: str = output_arg,
     input_jsons: List[Path] = input_path_list_arg,
     overwrite: bool = overwrite_opt,
 ):
     """Combine several suite JSON files into a single JSON report"""
     suites = [JsonParser.parse_object(json_, SuiteABC) for json_ in input_jsons]
     report = JsonReport()
-    report.save(suites, output, overwrite)
+    report.save(suites, output_json, overwrite)
 
 
 @app.command()

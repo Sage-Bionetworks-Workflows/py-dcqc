@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 from abc import ABC, abstractmethod
 from dataclasses import asdict
-from pathlib import PurePath
-from typing import Any, TypeVar, cast
+from pathlib import Path, PurePath
+from typing import Any, Optional, TypeVar, cast
 
 SerializedObject = dict[str, Any]
 
@@ -20,8 +21,21 @@ class SerializableMixin(ABC):
             raise ValueError(message)
         return dictionary
 
-    @staticmethod
-    def dict_factory(iterable: list[tuple[str, Any]]) -> dict[str, Any]:
+    def serialize_paths_relative_to(self, location: Optional[Path]):
+        if location is not None and not location.exists() and location.is_dir():
+            message = f"Location ({location}) is not an existing directory."
+            raise ValueError(message)
+        self._serialize_paths_relative_to = location
+
+    def serialize_path(self, path: PurePath) -> str:
+        # This is useful for portability between steps in Nextflow
+        if getattr(self, "_serialize_paths_relative_to", None):
+            path_str = os.path.relpath(path, self._serialize_paths_relative_to)
+        else:
+            path_str = str(path)
+        return path_str
+
+    def dict_factory(self, iterable: list[tuple[str, Any]]) -> dict[str, Any]:
         """Generate dictionary from dataclass.
 
         Unlike the built-in version, this function will
@@ -39,7 +53,7 @@ class SerializableMixin(ABC):
         kwargs = {}
         for key, value in iterable:
             if isinstance(value, PurePath):
-                kwargs[key] = str(value)
+                kwargs[key] = self.serialize_path(value)
             else:
                 kwargs[key] = value
 

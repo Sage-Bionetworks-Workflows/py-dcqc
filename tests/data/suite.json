@@ -26,10 +26,14 @@
   "tests": [
     {
       "type": "Md5ChecksumTest",
+      "tier": 1,
+      "is_external_test": false,
       "status": "passed"
     },
     {
       "type": "LibTiffInfoTest",
+      "tier": 2,
+      "is_external_test": true,
       "status": "skipped"
     }
   ]

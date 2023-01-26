@@ -1,5 +1,7 @@
 {
   "type": "LibTiffInfoTest",
+  "tier": 2,
+  "is_external_test": true,
   "status": "pending",
   "target": {
     "type": "Target",

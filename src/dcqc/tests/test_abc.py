@@ -94,10 +94,10 @@ class TestABC(SerializableMixin, ABC):
     def to_dict(self) -> SerializedObject:
         test_dict = {
             "type": self.type,
-            "status": self._status.value,
-            "target": self.target.to_dict(),
             "tier": self.tier,
             "is_external_test": self.is_external_test,
+            "status": self._status.value,
+            "target": self.target.to_dict(),
         }
         return test_dict
 
