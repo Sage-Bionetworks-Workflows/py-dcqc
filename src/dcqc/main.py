@@ -2,7 +2,7 @@ import os
 import sys
 from csv import DictWriter
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from typer import Argument, Exit, Option, Typer
 
@@ -33,7 +33,8 @@ overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
 required_tests_opt = Option(None, "--required-tests", "-rt", help="Required tests")
 skipped_tests_opt = Option(None, "--skipped-tests", "-st", help="Skipped tests")
 stage_files_opt = Option(False, "--stage-files", "-sf", help="Stage remote files.")
-cwd_relative_opt = Option(False, "--cwd-relative", "-cr", help=".")
+prt_help = "Update paths to be relative to given directory upon serialization."
+paths_relative_to_opt = Option(None, "--paths-relative-to", "-prt", help=prt_help)
 
 
 @app.callback()
@@ -72,7 +73,7 @@ def stage_target(
     output_json: str = output_arg,
     output_dir: Path = output_dir_path_arg,
     overwrite: bool = overwrite_opt,
-    cwd_relative: bool = cwd_relative_opt,
+    paths_relative_to: Optional[Path] = paths_relative_to_opt,
 ):
     """Create local file copies from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -80,7 +81,6 @@ def stage_target(
     target = JsonParser.parse_object(input_json, Target)
     target.stage(output_dir, overwrite)
 
-    paths_relative_to = Path.cwd() if cwd_relative else None
     report = JsonReport(paths_relative_to)
     report.save(target, output_json, overwrite)
 

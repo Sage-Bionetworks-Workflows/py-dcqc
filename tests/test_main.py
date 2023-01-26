@@ -39,7 +39,7 @@ class TestCLI:
         shutil.rmtree(output_dir, ignore_errors=True)
 
         assert not output_dir.exists()
-        args = ["stage-target", "-cr", input_json, output_json, output_dir]
+        args = ["stage-target", "-prt", ".", input_json, output_json, output_dir]
         result = self.run_command(args)
         self.check_command_result(result)
         assert len(list(output_dir.iterdir())) > 0
