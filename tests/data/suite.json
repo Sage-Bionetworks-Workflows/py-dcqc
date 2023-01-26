@@ -1,0 +1,36 @@
+{
+  "type": "TiffSuite",
+  "target": {
+    "type": "Target",
+    "id": "001",
+    "files": [
+      {
+        "url": "tests/data/test.txt",
+        "metadata": {
+          "md5_checksum": "14758f1afd44c09b7992073ccf00b43d"
+        },
+        "type": "TIFF",
+        "local_path": "tests/data/test.txt"
+      }
+    ]
+  },
+  "suite_status": {
+    "required_tests": [
+      "Md5ChecksumTest"
+    ],
+    "skipped_tests": [
+      "LibTiffInfoTest"
+    ],
+    "status": "passed"
+  },
+  "tests": [
+    {
+      "type": "Md5ChecksumTest",
+      "status": "passed"
+    },
+    {
+      "type": "LibTiffInfoTest",
+      "status": "skipped"
+    }
+  ]
+}

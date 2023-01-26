@@ -19,11 +19,18 @@ from dcqc.file import File
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
 DATADIR = TESTDIR / "data"
+OUTDIR = TESTDIR / "outputs"
+
+OUTDIR.mkdir(exist_ok=True)
 
 UUID = str(uuid4())
 USER = getuser()
 UTCTIME = datetime.now().isoformat(" ", "seconds").replace(":", ".")
 RUNID = f"{USER} - {UTCTIME} - {UUID}"  # Valid characters: [A-Za-z0-9 .+'()_-]
+
+
+# Track the list of output files to avoid clashes between tests
+outputs = set()
 
 
 def pytest_configure():
@@ -65,3 +72,16 @@ def test_files(get_data):
         "synapse": File(syn_path, good_metadata),
     }
     yield test_files
+
+
+@pytest.fixture
+def get_output():
+    def _get_output(filename: str) -> Path:
+        output = OUTDIR / filename
+        if output in outputs:
+            message = f"Output ({output}) has already been used in another test."
+            raise ValueError(message)
+        outputs.add(output)
+        return output
+
+    yield _get_output

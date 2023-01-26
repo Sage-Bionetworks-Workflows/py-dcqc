@@ -1,4 +1,4 @@
-# dcqc
+# py-dcqc
 
 <!--
 [![ReadTheDocs](https://readthedocs.org/projects/dcqc/badge/?version=latest)](https://sage-bionetworks-workflows.github.io/dcqc/)
@@ -10,6 +10,8 @@
 > Python package for performing quality control (QC) for data coordination (DC)
 
 This Python package provides a framework for performing quality control (QC) on data files. Quality control can range from low-level integrity checks (_e.g._ MD5 checksum, file extension) to high-level checks such as conformance to a format specification and consistency with associated metadata.
+
+Early versions of this package were developed to be used by its sibling, the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) Nextflow workflow. You can see examples of how to leverage py-dcqc there. Note that the initial command-line interface (CLI) was developed with nf-dcqc in mind, so smaller steps were favored to enable parallelism in Nextflow. Future iterations of this package will include user-friendly, high-level CLI commands.
 
 # PyScaffold
 
