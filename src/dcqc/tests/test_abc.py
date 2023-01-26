@@ -96,8 +96,8 @@ class TestABC(SerializableMixin, ABC):
             "type": self.type,
             "status": self._status.value,
             "target": self.target.to_dict(),
-            # "tier": self.tier,
-            # "is_external_test": self.is_external_test,
+            "tier": self.tier,
+            "is_external_test": self.is_external_test,
         }
         return test_dict
 

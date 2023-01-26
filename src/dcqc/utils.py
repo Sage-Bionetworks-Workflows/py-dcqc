@@ -1,5 +1,21 @@
+import re
+
 from fs import open_fs
 from fs.base import FS
+
+LOCAL_URL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
+
+
+def is_url_local(url: str) -> bool:
+    """Check whether a URL refers to a local location.
+
+    Args:
+        url: Local or remote location of a file.
+
+    Returns:
+        Whether the URL refers to a local location.
+    """
+    return LOCAL_URL_REGEX.fullmatch(url) is not None
 
 
 def open_parent_fs(url: str) -> tuple[FS, str]:
