@@ -43,7 +43,7 @@ class TestCLI:
         shutil.rmtree(output_dir, ignore_errors=True)
 
         assert not output_dir.exists()
-        args = ["create-tests", "-r", "Md5ChecksumTest", input_json, output_dir]
+        args = ["create-tests", "-rt", "Md5ChecksumTest", input_json, output_dir]
         self.run_command(args)
         assert len(list(output_dir.iterdir())) > 0
 

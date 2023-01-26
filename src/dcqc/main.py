@@ -30,8 +30,9 @@ output_dir_path_arg = Argument(..., help="Directory path for output files")
 
 # Common options
 overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
-required_tests_opt = Option(None, "--required-tests", "-r", help="Required tests")
-skipped_tests_opt = Option(None, "--skipped-tests", "-s", help="Skipped tests")
+required_tests_opt = Option(None, "--required-tests", "-rt", help="Required tests")
+skipped_tests_opt = Option(None, "--skipped-tests", "-st", help="Skipped tests")
+stage_files_opt = Option(False, "--stage-files", "-sf", help="Stage remote files.")
 
 
 @app.callback()
@@ -47,13 +48,14 @@ def create_targets(
     input_csv: Path = input_path_arg,
     output_dir: str = output_dir_arg,
     overwrite: bool = overwrite_opt,
+    stage_files: bool = stage_files_opt,
 ):
     """Create target JSON files from a targets CSV file"""
     if is_url_local(output_dir):
         _, _, resource = output_dir.rpartition("://")
-        os.makedirs(resource)
+        os.makedirs(resource, exist_ok=True)
 
-    parser = CsvParser(input_csv)
+    parser = CsvParser(input_csv, stage_files)
     targets = parser.create_targets()
 
     # Naming the targets by index to ensure no clashes
