@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-dcqc = {editable = true, path = "."}
+dcqc = {editable = true, path = ".", extras = ["qc"]}
 
 [dev-packages]
 dcqc = {editable = true, path = ".", extras = ["testing", "dev"]}
