@@ -49,9 +49,9 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
         path = file.get_local_path().as_posix()
-        command_args = ["tiffinfo", path]
+        command_args = ["apk", "add", "tiff-tools", ";", "tiffinfo", path]
         process = Process(
-            container="autamus/libtiff:4.4.0",
+            container="alpine:3.17.1",
             command_args=command_args,
         )
         return process
