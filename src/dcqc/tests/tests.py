@@ -1,8 +1,6 @@
 import hashlib
 import json
 
-from rdflib import Graph
-
 from dcqc.file import File
 from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC, TestStatus
 
@@ -82,10 +80,12 @@ class JsonLdLoadTest(TestABC):
         return status
 
     def _can_be_loaded(self, file: File) -> bool:
+        rdflib = self.import_module("rdflib")
+        graph = rdflib.Graph()
+
         success = True
         local_path = file.get_local_path()
         with local_path.open("r") as infile:
-            graph = Graph()
             try:
                 graph.parse(infile, format="json-ld")
             except Exception:
