@@ -6,7 +6,7 @@ name: Build and publish container to Docker Hub
 on:
   push:
     tags: ['v[0-9]*', '[0-9]+.[0-9]+*']  # Match tags that resemble a version
-  workflow_dispatch:
+    branches:
 
 jobs:
   build:
@@ -33,26 +33,29 @@ jobs:
       -
         name: Compute short commit SHA ID
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          # Ensure that a tag/branch name is a valid container tag value
+          echo "container_tag_name=$( \
+              echo ${{ github.ref_name }} | sed -E -e 's:/:-:g' -e 's:[^A-z0-9_.-]:_:g' \
+          )" >> $GITHUB_OUTPUT
       -
-        name: Build and push (tagged release)
+        name: Build and push (all tags and branches)
         uses: docker/build-push-action@v3
-        if: ${{ github.event_name == 'push' }}
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          push: true
+          tags: |
+            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:${{ steps.vars.outputs.container_tag_name }}
+            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:commit-${{ steps.vars.outputs.sha_short }}
+      -
+        name: Build and push (only tagged releases)
+        uses: docker/build-push-action@v3
+        if: ${{ github.ref_type == 'tag' }}
         with:
           platforms: linux/amd64,linux/arm64
           context: .
           push: true
           tags: |
             ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:latest
-            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:${{ github.ref_name }}
-            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:commit-${{ steps.vars.outputs.sha_short }}
-      -
-        name: Build and push (manual release)
-        uses: docker/build-push-action@v3
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: .
-          push: true
-          tags: |
-            ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:commit-${{ steps.vars.outputs.sha_short }}
