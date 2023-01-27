@@ -15,6 +15,7 @@ import os
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import wraps
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any, ClassVar, Optional
@@ -360,6 +361,12 @@ class File(SerializableMixin):
         self.local_path = destination
         return destination
 
+    @wraps(SerializableMixin.to_dict)
+    def to_dict(self) -> SerializedObject:
+        dictionary = super(File, self).to_dict()
+        dictionary["name"] = self.name
+        return dictionary
+
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> File:
         """Deserialize a dictionary into a file.
@@ -377,5 +384,8 @@ class File(SerializableMixin):
 
         if dictionary["local_path"] is not None:
             dictionary["local_path"] = Path(dictionary["local_path"])
+
+        # Ignore serialized name since it's a dynamically-computed property
+        dictionary.pop("name", None)
 
         return cls(**dictionary)
