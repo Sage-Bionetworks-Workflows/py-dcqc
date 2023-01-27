@@ -119,11 +119,12 @@ class File(SerializableMixin):
     def __init__(
         self,
         url: str,
-        metadata: Mapping[str, Any],
+        metadata: Optional[Mapping[str, Any]] = None,
         relative_to: Optional[Path] = None,
         local_path: Optional[Path] = None,
     ):
         self.url = self._relativize_url(url, relative_to)
+        metadata = metadata or dict()
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
 

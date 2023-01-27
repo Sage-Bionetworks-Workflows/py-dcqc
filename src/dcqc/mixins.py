@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
-from dataclasses import asdict
+from collections.abc import Iterable, Mapping
+from dataclasses import fields
 from pathlib import Path, PurePath
 from typing import Any, Optional, TypeVar, cast
 
@@ -21,6 +22,7 @@ class SerializableMixin(ABC):
             raise ValueError(message)
         return dictionary
 
+    # TODO: Move this logic to JsonReport as a JSONEncoder subclass
     def serialize_paths_relative_to(self, location: Optional[Path]):
         if location is not None and not location.exists() and location.is_dir():
             message = f"Location ({location}) is not an existing directory."
@@ -34,6 +36,30 @@ class SerializableMixin(ABC):
         else:
             path_str = str(path)
         return path_str
+
+    def serialize_value(self, value: Any) -> Any:
+        """Ensure that all values are JSON-serializable.
+
+        Args:
+            value: Any value.
+
+        Returns:
+            An equivalent JSON-serializable value.
+        """
+        result: Any
+        if isinstance(value, (str, bytes)):
+            result = value
+        elif isinstance(value, PurePath):
+            result = self.serialize_path(value)
+        elif isinstance(value, SerializableMixin):
+            result = value.to_dict()
+        elif isinstance(value, Mapping):
+            result = {key: self.serialize_value(val) for key, val in value.items()}
+        elif isinstance(value, Iterable):
+            result = [self.serialize_value(item) for item in value]
+        else:
+            result = value
+        return result
 
     def dict_factory(self, iterable: list[tuple[str, Any]]) -> dict[str, Any]:
         """Generate dictionary from dataclass.
@@ -49,23 +75,24 @@ class SerializableMixin(ABC):
         Returns:
             Dictionary of JSON-serializable attributes.
         """
-        # Ensure that all values are JSON-serializable
         kwargs = {}
         for key, value in iterable:
-            if isinstance(value, PurePath):
-                kwargs[key] = self.serialize_path(value)
-            else:
-                kwargs[key] = value
-
+            kwargs[key] = self.serialize_value(value)
         return dict(**kwargs)
 
     def to_dict(self) -> SerializedObject:
         """Serialize the file to a dictionary.
 
+        Inspired by dataclasses.asdict().
+
         Returns:
             A file serialized as a dictionary.
         """
-        return asdict(self, dict_factory=self.dict_factory)
+        result = []
+        for f in fields(self):
+            value = self.serialize_value(getattr(self, f.name))
+            result.append((f.name, value))
+        return self.dict_factory(result)
 
     @classmethod
     @abstractmethod
