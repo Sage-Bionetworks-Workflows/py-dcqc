@@ -13,7 +13,7 @@ class FileExtensionTest(TestABC):
         for file in self.target.files:
             file_type = file.get_file_type()
             file_extensions = file_type.file_extensions
-            if not file.url.endswith(file_extensions):
+            if not file.name.endswith(file_extensions):
                 status = TestStatus.FAIL
                 break
         return status
