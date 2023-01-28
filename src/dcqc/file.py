@@ -365,6 +365,8 @@ class File(SerializableMixin):
     @wraps(SerializableMixin.to_dict)
     def to_dict(self) -> SerializedObject:
         dictionary = super(File, self).to_dict()
+        # Including the file name in the output for better readability for
+        # unstaged remote files with cryptic URLs (e.g., syn://syn98765432)
         dictionary["name"] = self.name
         return dictionary
 
