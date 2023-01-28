@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 
 from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
@@ -67,12 +67,13 @@ class Target(SerializableMixin):
 
     @wraps(File.stage)
     def stage(
-        self,
-        destination: Optional[Path] = None,
-        overwrite: bool = False,
-    ) -> Iterator[Path]:
+        self, destination: Optional[Path] = None, overwrite: bool = False
+    ) -> list[Path]:
+        paths = list()
         for file in self.files:
-            yield file.stage(destination, overwrite)
+            path = file.stage(destination, overwrite)
+            paths.append(path)
+        return paths
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Target:

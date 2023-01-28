@@ -1,5 +1,6 @@
 import json
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any, Optional, overload
 
 from fs.base import FS
@@ -11,7 +12,10 @@ from dcqc.utils import open_parent_fs
 
 # TODO: Refactor instance methods to class methods
 class JsonReport:
-    def __init__(self) -> None:
+    paths_relative_to: Optional[Path]
+
+    def __init__(self, paths_relative_to: Optional[Path] = None) -> None:
+        self.paths_relative_to = paths_relative_to
         self._url: Optional[str] = None
         self._fs: Optional[FS] = None
         self._fs_path: Optional[str] = None
@@ -46,6 +50,12 @@ class JsonReport:
         #       (e.g., relativize them based on output JSON path)
         with fs.open(fs_path, "w") as outfile:
             json.dump(obj, outfile, indent=2)
+            outfile.write("\n")
+
+    def _generate_single(self, item: SerializableMixin) -> SerializedObject:
+        item.serialize_paths_relative_to(self.paths_relative_to)
+        report = item.to_dict()
+        return report
 
     # The overloads are necessary to convey the relationship between
     # the inputs and outputs: single to single, and many to many.
@@ -59,9 +69,10 @@ class JsonReport:
 
     def generate(self, items):
         if isinstance(items, Iterable):
-            report = [item.to_dict() for item in items]
+            report = [self._generate_single(item) for item in items]
         else:
-            report = items.to_dict()
+            # In this else branch, `items` is actually a single item
+            report = self._generate_single(items)
         return report
 
     @overload

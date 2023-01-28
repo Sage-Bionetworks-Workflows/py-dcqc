@@ -13,7 +13,7 @@ class FileExtensionTest(TestABC):
         for file in self.target.files:
             file_type = file.get_file_type()
             file_extensions = file_type.file_extensions
-            if not file.url.endswith(file_extensions):
+            if not file.name.endswith(file_extensions):
                 status = TestStatus.FAIL
                 break
         return status
@@ -51,7 +51,7 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
         path = file.get_local_path().as_posix()
         command_args = ["tiffinfo", path]
         process = Process(
-            container="autamus/libtiff:4.4.0",
+            container="quay.io/brunograndephd/libtiff:2.0",
             command_args=command_args,
         )
         return process
@@ -64,9 +64,7 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
         file = self._get_single_target_file()
         path = file.get_local_path().as_posix()
         command_args = [
-            'export PATH="$PATH:/opt/bftools"',
-            ";",
-            "showinf",
+            "/opt/bftools/showinf",
             "-nopix",
             "-novalid",
             "-nocore",
@@ -86,9 +84,7 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
         file = self._get_single_target_file()
         path = file.get_local_path().as_posix()
         command_args = [
-            'export PATH="$PATH:/opt/bftools"',
-            ";",
-            "xmlvalid",
+            "/opt/bftools/xmlvalid",
             path,
         ]
         process = Process(

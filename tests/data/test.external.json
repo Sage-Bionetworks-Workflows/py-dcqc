@@ -1,5 +1,7 @@
 {
   "type": "LibTiffInfoTest",
+  "tier": 2,
+  "is_external_test": true,
   "status": "pending",
   "target": {
     "type": "Target",
@@ -11,7 +13,8 @@
           "md5_checksum": "14758f1afd44c09b7992073ccf00b43d"
         },
         "type": "TIFF",
-        "local_path": "tests/data/test.txt"
+        "local_path": "tests/data/test.txt",
+        "name": "test.txt"
       }
     ]
   }

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 from abc import ABC, abstractmethod
-from dataclasses import asdict
-from pathlib import PurePath
-from typing import Any, TypeVar, cast
+from collections.abc import Iterable, Mapping
+from dataclasses import asdict, fields, is_dataclass
+from pathlib import Path, PurePath
+from typing import Any, Optional, TypeVar, cast
 
 SerializedObject = dict[str, Any]
 
@@ -20,8 +22,48 @@ class SerializableMixin(ABC):
             raise ValueError(message)
         return dictionary
 
-    @staticmethod
-    def dict_factory(iterable: list[tuple[str, Any]]) -> dict[str, Any]:
+    # TODO: Move this logic to JsonReport as a JSONEncoder subclass
+    def serialize_paths_relative_to(self, location: Optional[Path]):
+        if location is not None and not location.exists() and location.is_dir():
+            message = f"Location ({location}) is not an existing directory."
+            raise ValueError(message)
+        self._serialize_paths_relative_to = location
+
+    def serialize_path(self, path: PurePath) -> str:
+        # This is useful for portability between steps in Nextflow
+        if getattr(self, "_serialize_paths_relative_to", None):
+            path_str = os.path.relpath(path, self._serialize_paths_relative_to)
+        else:
+            path_str = str(path)
+        return path_str
+
+    def serialize_value(self, value: Any) -> Any:
+        """Ensure that all values are JSON-serializable.
+
+        Args:
+            value: Any value.
+
+        Returns:
+            An equivalent JSON-serializable value.
+        """
+        result: Any
+        if isinstance(value, (str, bytes)):
+            result = value
+        elif isinstance(value, PurePath):
+            result = self.serialize_path(value)
+        elif isinstance(value, SerializableMixin):
+            result = value.to_dict()
+        elif is_dataclass(value):
+            result = asdict(value)
+        elif isinstance(value, Mapping):
+            result = {key: self.serialize_value(val) for key, val in value.items()}
+        elif isinstance(value, Iterable):
+            result = [self.serialize_value(item) for item in value]
+        else:
+            result = value
+        return result
+
+    def dict_factory(self, iterable: list[tuple[str, Any]]) -> dict[str, Any]:
         """Generate dictionary from dataclass.
 
         Unlike the built-in version, this function will
@@ -35,23 +77,24 @@ class SerializableMixin(ABC):
         Returns:
             Dictionary of JSON-serializable attributes.
         """
-        # Ensure that all values are JSON-serializable
         kwargs = {}
         for key, value in iterable:
-            if isinstance(value, PurePath):
-                kwargs[key] = str(value)
-            else:
-                kwargs[key] = value
-
+            kwargs[key] = self.serialize_value(value)
         return dict(**kwargs)
 
     def to_dict(self) -> SerializedObject:
         """Serialize the file to a dictionary.
 
+        Inspired by dataclasses.asdict().
+
         Returns:
             A file serialized as a dictionary.
         """
-        return asdict(self, dict_factory=self.dict_factory)
+        result = []
+        for f in fields(self):
+            value = self.serialize_value(getattr(self, f.name))
+            result.append((f.name, value))
+        return self.dict_factory(result)
 
     @classmethod
     @abstractmethod

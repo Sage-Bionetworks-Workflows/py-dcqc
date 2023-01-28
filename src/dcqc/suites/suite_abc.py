@@ -218,6 +218,7 @@ class SuiteABC(SerializableMixin, ABC):
 
     def compute_tests(self) -> None:
         """Compute the status for each initialized test."""
+        self.target.stage()
         for test in self.tests:
             test.get_status()
 

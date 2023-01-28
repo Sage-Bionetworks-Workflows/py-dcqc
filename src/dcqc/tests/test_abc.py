@@ -94,10 +94,10 @@ class TestABC(SerializableMixin, ABC):
     def to_dict(self) -> SerializedObject:
         test_dict = {
             "type": self.type,
-            "status": self._status.value,
-            "target": self.target.to_dict(),
             "tier": self.tier,
             "is_external_test": self.is_external_test,
+            "status": self._status.value,
+            "target": self.target.to_dict(),
         }
         return test_dict
 
@@ -207,9 +207,9 @@ class ExternalTestMixin(TestABC):
             status = TestStatus.FAIL
         return status
 
-    # TODO: Include process in dict (add `to_dict()` to Process class)
+    # TODO: Include process in serialized test dictionary
     # def to_dict(self):
     #     dictionary = super(ExternalTestMixin, self).to_dict()
     #     process = self.generate_process()
-    #     dictionary["process"] = process
+    #     dictionary["process"] = process.to_dict()
     #     return dictionary
