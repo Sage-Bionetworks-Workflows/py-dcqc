@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from dataclasses import fields
+from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path, PurePath
 from typing import Any, Optional, TypeVar, cast
 
@@ -53,6 +53,8 @@ class SerializableMixin(ABC):
             result = self.serialize_path(value)
         elif isinstance(value, SerializableMixin):
             result = value.to_dict()
+        elif is_dataclass(value):
+            result = asdict(value)
         elif isinstance(value, Mapping):
             result = {key: self.serialize_value(val) for key, val in value.items()}
         elif isinstance(value, Iterable):

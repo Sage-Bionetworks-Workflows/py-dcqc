@@ -64,10 +64,7 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
         file = self._get_single_target_file()
         path = file.get_local_path().as_posix()
         command_args = [
-            "export",
-            'PATH="$PATH:/opt/bftools"',
-            ";",
-            "showinf",
+            "/opt/bftools/showinf",
             "-nopix",
             "-novalid",
             "-nocore",
@@ -87,10 +84,7 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
         file = self._get_single_target_file()
         path = file.get_local_path().as_posix()
         command_args = [
-            "export",
-            'PATH="$PATH:/opt/bftools"',
-            ";",
-            "xmlvalid",
+            "/opt/bftools/xmlvalid",
             path,
         ]
         process = Process(
