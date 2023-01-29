@@ -5,7 +5,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
+from importlib import import_module
 from pathlib import Path
+from types import ModuleType
 from typing import ClassVar, Optional, Type
 
 from dcqc.file import File
@@ -123,6 +125,17 @@ class TestABC(SerializableMixin, ABC):
         test._status = status
 
         return test
+
+    def import_module(self, name: str) -> ModuleType:
+        try:
+            module = import_module(name)
+        except ModuleNotFoundError:
+            message = (
+                f"{self.type} cannot be computed without the '{name}' package. ",
+                "Re-install `dcqc` with the `all` extra: pip install dcqc[all].",
+            )
+            raise ModuleNotFoundError(message)
+        return module
 
 
 @dataclass

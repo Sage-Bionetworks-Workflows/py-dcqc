@@ -1,4 +1,5 @@
 import hashlib
+import json
 
 from dcqc.file import File
 from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC, TestStatus
@@ -36,11 +37,60 @@ class Md5ChecksumTest(TestABC):
     def _compute_md5_checksum(self, file: File) -> str:
         local_path = file.get_local_path()
         hash_md5 = hashlib.md5()
-        with local_path.open("rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
+        with local_path.open("rb") as infile:
+            for chunk in iter(lambda: infile.read(4096), b""):
                 hash_md5.update(chunk)
         actual_md5 = hash_md5.hexdigest()
         return actual_md5
+
+
+class JsonLoadTest(TestABC):
+    tier = 2
+    only_one_file_targets = False
+
+    def compute_status(self) -> TestStatus:
+        status = TestStatus.PASS
+        for file in self.target.files:
+            if not self._can_be_loaded(file):
+                status = TestStatus.FAIL
+                break
+        return status
+
+    def _can_be_loaded(self, file: File) -> bool:
+        success = True
+        local_path = file.get_local_path()
+        with local_path.open("r") as infile:
+            try:
+                json.load(infile)
+            except Exception:
+                success = False
+        return success
+
+
+class JsonLdLoadTest(TestABC):
+    tier = 2
+    only_one_file_targets = False
+
+    def compute_status(self) -> TestStatus:
+        status = TestStatus.PASS
+        for file in self.target.files:
+            if not self._can_be_loaded(file):
+                status = TestStatus.FAIL
+                break
+        return status
+
+    def _can_be_loaded(self, file: File) -> bool:
+        rdflib = self.import_module("rdflib")
+        graph = rdflib.Graph()
+
+        success = True
+        local_path = file.get_local_path()
+        with local_path.open("r") as infile:
+            try:
+                graph.parse(infile, format="json-ld")
+            except Exception:
+                success = False
+        return success
 
 
 class LibTiffInfoTest(ExternalTestMixin, TestABC):
