@@ -101,7 +101,7 @@ jobs:
           fail_ci_if_error: false
 
   pypi-publish:
-    needs: test
+    needs: [prepare, test]
     if: ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     steps:
@@ -118,7 +118,7 @@ jobs:
         run: pipx run --spec 'tox!=3.0' tox -e publish
 
   docker-publish:
-    needs: test
+    needs: [prepare, test]
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
