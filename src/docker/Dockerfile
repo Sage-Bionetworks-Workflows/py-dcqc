@@ -2,10 +2,10 @@ FROM python:3.11.1
 
 WORKDIR /usr/src/app
 
-ARG PKG_VERSION=1
+COPY dist/ dist/
 
-COPY dist/*.tar.gz ./
+ARG TARBALL_PATH
 
-RUN python -m pip install $(echo *.tar.gz)[all]
+RUN python -m pip install ${TARBALL_PATH}[all]
 
 CMD [ "python", "-c", "import dcqc" ]
