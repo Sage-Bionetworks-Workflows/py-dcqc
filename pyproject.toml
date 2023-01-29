@@ -19,10 +19,6 @@ disallow_incomplete_defs = true
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = "synapseclient.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
 module = "dcqc.suites.suites"
 disable_error_code = "assignment"
 
