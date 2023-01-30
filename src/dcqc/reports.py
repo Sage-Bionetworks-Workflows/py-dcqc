@@ -20,10 +20,10 @@ class JsonReport:
         self._fs: Optional[FS] = None
         self._fs_path: Optional[str] = None
 
+    # TODO: Move towards an FS mixin for these functions
     def _init_fs(self, url) -> tuple[FS, str]:
-        if self._url != url or self._fs is None or self._fs_path is None:
-            self._url = url
-            self._fs, self._fs_path = open_parent_fs(url)
+        self._url = url
+        self._fs, self._fs_path = open_parent_fs(url)
         return self._fs, self._fs_path
 
     def _create_parent_directories(self, url: str):
@@ -61,11 +61,11 @@ class JsonReport:
     # the inputs and outputs: single to single, and many to many.
     @overload
     def generate(self, items: SerializableMixin) -> SerializedObject:
-        ...
+        """"""
 
     @overload
     def generate(self, items: Iterable[SerializableMixin]) -> list[SerializedObject]:
-        ...
+        """"""
 
     def generate(self, items):
         if isinstance(items, Iterable):
@@ -79,13 +79,13 @@ class JsonReport:
     def save(
         self, items: SerializableMixin, url: str, overwrite: bool = False
     ) -> SerializedObject:
-        ...
+        """"""
 
     @overload
     def save(
         self, items: Iterable[SerializableMixin], url: str, overwrite: bool = False
     ) -> list[SerializedObject]:
-        ...
+        """"""
 
     def save(self, items, url: str, overwrite: bool = False):
         report = self.generate(items)
