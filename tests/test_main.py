@@ -87,6 +87,8 @@ def test_create_process(get_data, get_output):
 
 def test_compute_test(get_data, get_output):
     input_json = get_data("test.internal.json")
+    print(list(input_json.parent.iterdir()))
+    assert input_json.exists()
     output_path = get_output("compute_test") / "test.json"
     output_path.unlink(missing_ok=True)
 
