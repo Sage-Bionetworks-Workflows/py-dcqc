@@ -155,6 +155,14 @@
             ],
             "version": "==2.4.16"
         },
+        "fs-synapse": {
+            "hashes": [
+                "sha256:1c8fb5b1da3220d21d13a6e48642d8b75a913a9b4779b99d6de9fc6074167898",
+                "sha256:8d95badbd14a052eac06875bcefec4570d336bbe318f0aa7878c469a70dfd35f"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==1.0.0"
+        },
         "idna": {
             "hashes": [
                 "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4",
@@ -700,6 +708,14 @@
                 "sha256:ae97c7d51213f4b70b6a958292530289090de3a7e15841e108fbe144f069d313"
             ],
             "version": "==2.4.16"
+        },
+        "fs-synapse": {
+            "hashes": [
+                "sha256:1c8fb5b1da3220d21d13a6e48642d8b75a913a9b4779b99d6de9fc6074167898",
+                "sha256:8d95badbd14a052eac06875bcefec4570d336bbe318f0aa7878c469a70dfd35f"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==1.0.0"
         },
         "hypothesis": {
             "hashes": [
