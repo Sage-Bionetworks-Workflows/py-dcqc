@@ -216,6 +216,10 @@ class SuiteABC(SerializableMixin, ABC):
             return registry["*"]
         return registry[name]
 
+    @property
+    def tests_by_name(self):
+        return {test.type: test for test in self.tests}
+
     def compute_tests(self) -> None:
         """Compute the status for each initialized test."""
         self.target.stage()

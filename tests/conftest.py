@@ -15,6 +15,8 @@ from uuid import uuid4
 import pytest
 
 from dcqc.file import File
+from dcqc.suites.suite_abc import SuiteABC
+from dcqc.target import Target
 
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
@@ -79,6 +81,22 @@ def test_files(get_data):
     test_files["remote"] = remote_file
 
     yield test_files
+
+
+@pytest.fixture
+def test_targets(test_files):
+    test_targets = dict()
+    for name, file in test_files.items():
+        test_targets[name] = Target(file)
+    yield test_targets
+
+
+@pytest.fixture
+def test_suites(test_targets):
+    test_suites = dict()
+    for name, target in test_targets.items():
+        test_suites[name] = SuiteABC.from_target(target)
+    yield test_suites
 
 
 @pytest.fixture
