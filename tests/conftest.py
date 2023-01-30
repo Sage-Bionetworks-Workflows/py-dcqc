@@ -50,8 +50,8 @@ def get_data():
 
 @pytest.fixture
 def test_files(get_data):
-    txt_path = get_data("test.txt").as_posix()
-    tiff_path = get_data("circuit.tif").as_posix()
+    txt_path = get_data("test.txt")
+    tiff_path = get_data("circuit.tif")
     syn_path = "syn://syn50555279"
     good_metadata = {
         "file_type": "txt",
@@ -66,11 +66,17 @@ def test_files(get_data):
         "md5_checksum": "c7b08f6decb5e7572efbe6074926a843",
     }
     test_files = {
-        "good": File(txt_path, good_metadata),
-        "bad": File(txt_path, bad_metadata),
-        "tiff": File(tiff_path, tiff_metadata),
+        "good": File(txt_path.as_posix(), good_metadata),
+        "bad": File(txt_path.as_posix(), bad_metadata),
+        "tiff": File(tiff_path.as_posix(), tiff_metadata),
         "synapse": File(syn_path, good_metadata),
     }
+
+    # Create an in-memory remote file based on the good file
+    remote_file = File(f"mem://{txt_path.name}", good_metadata)
+    remote_file.fs.writetext(remote_file.fs_path, txt_path.read_text())
+    test_files["remote"] = remote_file
+
     yield test_files
 
 
