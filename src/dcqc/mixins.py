@@ -4,8 +4,9 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, fields, is_dataclass
+from itertools import chain
 from pathlib import Path, PurePath
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, ClassVar, Optional, TypeVar, cast
 
 SerializedObject = dict[str, Any]
 
@@ -13,6 +14,11 @@ T = TypeVar("T", bound="SerializableMixin")
 
 
 class SerializableMixin(ABC):
+
+    # Used to serialize properties in addition to dataclass attributes
+    _serialized_properties: ClassVar[list[str]]
+    _serialized_properties = list()
+
     @classmethod
     def from_dict_prepare(cls, dictionary: SerializedObject) -> SerializedObject:
         """Validate and prepare dictionary for deserialization."""
@@ -91,11 +97,19 @@ class SerializableMixin(ABC):
             A file serialized as a dictionary.
         """
         result = []
-        for f in fields(self):
-            value = self.serialize_value(getattr(self, f.name))
-            result.append((f.name, value))
+        official_fields = [field.name for field in fields(self)]
+        serialized_properties = getattr(self, "_serialized_properties", [])
+        for field in chain(official_fields, serialized_properties):
+            # TODO: Code smell indicating that some restructuring is in order
+            try:
+                value_raw = getattr(self, field)
+            except Exception:
+                value_raw = None
+            value = self.serialize_value(value_raw)
+            result.append((field, value))
         return self.dict_factory(result)
 
+    # TODO: Use template method to handle `_serialized_properties`
     @classmethod
     @abstractmethod
     def from_dict(cls, dictionary: SerializedObject) -> SerializableMixin:

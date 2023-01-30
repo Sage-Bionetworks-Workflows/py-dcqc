@@ -15,7 +15,6 @@ import os
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import wraps
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Any, ClassVar, Optional
@@ -101,6 +100,7 @@ FileType("TIFF", (".tif", ".tiff"), "format_3591")
 FileType("OME-TIFF", (".ome.tif", ".ome.tiff"), "format_3727")
 
 
+# TODO: Leverage post-init function in dataclasses
 @dataclass
 class File(SerializableMixin):
     """Construct a File object.
@@ -113,10 +113,11 @@ class File(SerializableMixin):
             current work directory (default).
     """
 
+    _serialized_properties = ["name", "local_path"]
+
     url: str
     metadata: dict[str, Any]
     type: str
-    local_path: Optional[Path]
 
     def __init__(
         self,
@@ -136,8 +137,8 @@ class File(SerializableMixin):
         self._fs_path = None
         self._name: Optional[str]
         self._name = None
-
-        self.local_path = local_path or self._init_local_path()
+        self._local_path: Optional[Path]
+        self._local_path = local_path
 
     def __hash__(self):
         return hash((self.url, self.type, tuple(self.metadata.items())))
@@ -181,21 +182,6 @@ class File(SerializableMixin):
         file_type = self.metadata.pop("file_type", "*")
         return file_type
 
-    def _init_local_path(self) -> Optional[Path]:
-        """Initialize local path depending on URL
-
-        Returns:
-            The local path, if applicable.
-        """
-        if self.is_url_local():
-            local_path_str = self.fs.getsyspath(self.fs_path)
-            local_path = Path(local_path_str)
-            # Use relative paths for portability (e.g., in Nextflow)
-            local_path = local_path.relative_to(Path.cwd())
-        else:
-            local_path = None
-        return local_path
-
     def _init_fs(self) -> tuple[FS, str]:
         """Initialize file system to access URL.
 
@@ -209,6 +195,25 @@ class File(SerializableMixin):
         self._fs_path = fs_path
         self._fs = fs
         return fs, fs_path
+
+    @property
+    def local_path(self) -> Path:
+        """Retrieve the path to a local copy if available.
+
+        Raises:
+            FileNotFoundError: If a remote file has not been
+                staged yet and thus has no local copy.
+
+        Returns:
+            The path to the local copy or `None` if unavailable.
+        """
+        if self._local_path is None and self.is_url_local():
+            _local_path = self.fs.getsyspath(self.fs_path)
+            self._local_path = Path(_local_path)
+        if self._local_path is None:
+            message = "Local path is unavailable. Use stage() to create a local copy."
+            raise FileNotFoundError(message)
+        return self._local_path
 
     @property
     def fs(self) -> FS:
@@ -229,11 +234,10 @@ class File(SerializableMixin):
     @property
     def name(self) -> str:
         """The file name according to the file system."""
-        name = self._name
-        if name is None:
+        if self._name is None:
             info = self.fs.getinfo(self.fs_path)
-            name = info.name
-        return name
+            self._name = info.name
+        return self._name
 
     def get_file_type(self) -> FileType:
         """Retrieve the relevant file type object.
@@ -283,26 +287,12 @@ class File(SerializableMixin):
         of whether the URL is local or remote.
 
         To retrieve the location of the local copy, you can use
-        :func:`~dcqc.file.File.get_local_path`.
+        :attr:`~dcqc.file.File.local_path
 
         Returns:
             Whether the file has a copy available locally.
         """
-        return self.local_path is not None
-
-    def get_local_path(self) -> Path:
-        """Retrieve the path of a local copy, if applicable.
-
-        Raises:
-            FileNotFoundError: If there is no local copy available.
-
-        Returns:
-            The path to the local copy.
-        """
-        if self.local_path is None:
-            message = "Local path is unavailable. Use stage() to create a local copy."
-            raise FileNotFoundError(message)
-        return Path(self.local_path)
+        return self._local_path is not None
 
     def stage(
         self,
@@ -331,8 +321,8 @@ class File(SerializableMixin):
             The path of the local copy.
         """
         if not destination:
-            if self.local_path is not None:
-                return self.get_local_path()
+            if self._local_path is not None:
+                return self._local_path
             else:
                 destination_str = mkdtemp()
                 destination = Path(destination_str)
@@ -354,23 +344,14 @@ class File(SerializableMixin):
         # By this point, the file either doesn't exist or overwrite is enabled
         destination.unlink(missing_ok=True)
 
-        if self.is_url_local():
-            local_path = self.get_local_path()
-            destination.symlink_to(local_path.resolve())
+        if self._local_path and self.is_url_local():
+            destination.symlink_to(self._local_path.resolve())
         else:
             with destination.open("wb") as dest_file:
                 self.fs.download(self.fs_path, dest_file)
 
-        self.local_path = destination
+        self._local_path = destination
         return destination
-
-    @wraps(SerializableMixin.to_dict)
-    def to_dict(self) -> SerializedObject:
-        dictionary = super(File, self).to_dict()
-        # Including the file name in the output for better readability for
-        # unstaged remote files with cryptic URLs (e.g., syn://syn98765432)
-        dictionary["name"] = self.name
-        return dictionary
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> File:

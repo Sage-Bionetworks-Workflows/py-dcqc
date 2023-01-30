@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -26,55 +25,51 @@ def test_for_an_error_when_retrieving_missing_metadata_on_a_file(test_files):
 def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files):
     test_file = test_files["good"]
     url_before = test_file.url
-    local_path = test_file.get_local_path()
+    local_path = test_file.local_path
     url_after = test_file.url
     assert url_before == url_after
-    assert os.path.exists(local_path)
+    assert local_path.exists()
 
 
-@pytest.mark.integration
-def test_for_an_error_when_getting_local_path_for_an_unstaged_remote_file(test_files):
-    file = test_files["synapse"]
+def test_for_an_error_when_accessing_local_path_of_an_unstaged_remote_file(test_files):
+    remote_file = test_files["remote"]
     with pytest.raises(FileNotFoundError):
-        file.get_local_path()
+        remote_file.local_path
 
 
-@pytest.mark.integration
 def test_that_a_local_file_is_not_moved_when_staged_without_a_destination(test_files):
     test_file = test_files["good"]
-    path_before = test_file.get_local_path()
+    path_before = test_file.local_path
     path_after = test_file.stage()
     assert path_before == path_after
 
 
-@pytest.mark.integration
 def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(test_files):
     test_file = test_files["good"]
     with TemporaryDirectory() as tmp_dir:
-        original_path = Path(test_file.get_local_path())
+        original_path = Path(test_file.local_path)
         tmp_dir_path = Path(tmp_dir)
         test_file.stage(tmp_dir_path)
-        staged_path = Path(test_file.get_local_path())
+        staged_path = Path(test_file.local_path)
         assert staged_path.is_symlink()
         assert staged_path.resolve() == original_path.resolve()
 
 
-@pytest.mark.integration
 def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_files):
-    file = test_files["synapse"]
-    file.stage()
-    assert file.get_local_path() is not None
+    remote_file = test_files["remote"]
+    staged_path = remote_file.stage()
+    assert staged_path.exists()
+    assert remote_file.local_path == staged_path
 
 
-@pytest.mark.integration
 def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files):
-    test_file = test_files["synapse"]
+    remote_file = test_files["remote"]
     with TemporaryDirectory() as tmp_dir:
-        tmp_dir_path = Path(tmp_dir)
-        test_file.stage(tmp_dir_path)
-        local_path = test_file.get_local_path()
-        assert local_path.exists()
-        assert not local_path.is_symlink()
+        tmp_path = Path(tmp_dir) / "test.txt"
+        staged_path = remote_file.stage(tmp_path)
+        assert staged_path.exists()
+        assert staged_path == tmp_path
+        assert remote_file.local_path == staged_path
 
 
 def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
@@ -92,3 +87,42 @@ def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(get_data
     metadata = {"file_type": "TXT"}
     file = File(test_url, metadata, relative_to=Path.cwd())
     assert file.url == test_url
+
+
+def test_that_an_fs_is_created_when_an_fs_path_is_requested(test_files):
+    file = test_files["good"]
+    assert file._fs_path is None
+    file.fs_path
+    assert file._fs_path is not None
+    assert file._fs is not None
+
+
+def test_that_file_name_is_cached(test_files):
+    file = test_files["remote"]
+    assert file._name is None
+    attempt_1 = file.name
+    assert file._name is not None
+    attempt_2 = file.name
+    assert attempt_1 is attempt_2
+
+
+def test_for_an_error_when_staging_a_file_where_one_already_exists(test_files):
+    remote_file = test_files["remote"]
+    existing_file = test_files["good"]
+    with pytest.raises(FileExistsError):
+        remote_file.stage(existing_file.local_path)
+
+
+def test_for_an_error_when_staging_a_file_under_a_nonexistent_directory(test_files):
+    remote_file = test_files["remote"]
+    invalid_destination = Path("./nonexistent_dir/test.txt")
+    with pytest.raises(ValueError):
+        remote_file.stage(invalid_destination)
+
+
+def test_that_an_unset_local_path_is_ignored_during_deserialization(test_files):
+    file = test_files["remote"]
+    dictionary = file.to_dict()
+    file_from_dict = File.from_dict(dictionary)
+    with pytest.raises(FileNotFoundError):
+        file_from_dict.local_path
