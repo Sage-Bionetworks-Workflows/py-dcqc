@@ -20,3 +20,10 @@ def test_for_an_error_when_restoring_a_target_with_a_discordant_type(test_files)
     target_1_dict["type"] = "UnexpectedQcTarget"
     with pytest.raises(ValueError):
         Target.from_dict(target_1_dict)
+
+
+def test_for_an_error_when_accessing_the_file_type_for_a_multifile_target(test_files):
+    file = test_files["good"]
+    target = Target(file, file)
+    with pytest.raises(NotImplementedError):
+        target.get_file_type()

@@ -126,3 +126,35 @@ def test_that_an_unset_local_path_is_ignored_during_deserialization(test_files):
     file_from_dict = File.from_dict(dictionary)
     with pytest.raises(FileNotFoundError):
         file_from_dict.local_path
+
+
+def test_that_a_file_cannot_be_made_relative_to_a_nonexistent_directory(test_files):
+    file = test_files["good"]
+    nonexistent_dir = Path("foobar")
+    with pytest.raises(ValueError):
+        file.serialize_paths_relative_to(nonexistent_dir)
+
+
+def test_that_a_file_cannot_be_made_relative_to_a_another_file(test_files):
+    file = test_files["good"]
+    another_file = test_files["bad"]
+    another_file_path = another_file.local_path
+    with pytest.raises(ValueError):
+        file.serialize_paths_relative_to(another_file_path)
+
+
+def test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to():
+    path = Path("foobar")
+    file = File("test.txt", local_path=path)
+    file_dict = file.to_dict()
+    assert file_dict["local_path"] == str(path)
+
+
+def test_that_paths_change_when_using_serialize_paths_relative_to(get_output):
+    path = Path("foo")
+    relative_to = get_output("relative-to")
+    relative_to.mkdir(parents=True, exist_ok=True)
+    file = File("test.txt", local_path=path)
+    file.serialize_paths_relative_to(relative_to)
+    file_dict = file.to_dict()
+    assert file_dict["local_path"] != str(path)
