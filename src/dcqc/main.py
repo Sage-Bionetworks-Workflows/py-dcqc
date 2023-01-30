@@ -1,4 +1,3 @@
-import os
 import sys
 from csv import DictWriter
 from pathlib import Path
@@ -13,7 +12,6 @@ from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
 from dcqc.tests.test_abc import ExternalTestMixin, TestABC
-from dcqc.utils import is_url_local
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)
@@ -48,14 +46,12 @@ def main(version: bool = False):
 @app.command()
 def create_targets(
     input_csv: Path = input_path_arg,
-    output_dir: str = output_dir_arg,
+    output_dir: Path = output_dir_path_arg,
     overwrite: bool = overwrite_opt,
     stage_files: bool = stage_files_opt,
 ):
     """Create target JSON files from a targets CSV file"""
-    if is_url_local(output_dir):
-        _, _, resource = output_dir.rpartition("://")
-        os.makedirs(resource, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     parser = CsvParser(input_csv, stage_files)
     targets = parser.create_targets()
@@ -64,7 +60,7 @@ def create_targets(
     named_targets = {f"target-{target.id}.json": target for target in targets}
 
     report = JsonReport()
-    report.save_many(named_targets, output_dir, overwrite)
+    report.save_many(named_targets, output_dir.as_posix(), overwrite)
 
 
 @app.command()

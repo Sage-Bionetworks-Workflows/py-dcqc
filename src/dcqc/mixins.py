@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from dataclasses import asdict, fields, is_dataclass
+from dataclasses import fields
 from itertools import chain
 from pathlib import Path, PurePath
 from typing import Any, ClassVar, Optional, TypeVar, cast
@@ -30,7 +30,7 @@ class SerializableMixin(ABC):
 
     # TODO: Move this logic to JsonReport as a JSONEncoder subclass
     def serialize_paths_relative_to(self, location: Optional[Path]):
-        if location is not None and not location.exists() and location.is_dir():
+        if location is not None and not (location.exists() and location.is_dir()):
             message = f"Location ({location}) is not an existing directory."
             raise ValueError(message)
         self._serialize_paths_relative_to = location
@@ -59,8 +59,6 @@ class SerializableMixin(ABC):
             result = self.serialize_path(value)
         elif isinstance(value, SerializableMixin):
             result = value.to_dict()
-        elif is_dataclass(value):
-            result = asdict(value)
         elif isinstance(value, Mapping):
             result = {key: self.serialize_value(val) for key, val in value.items()}
         elif isinstance(value, Iterable):

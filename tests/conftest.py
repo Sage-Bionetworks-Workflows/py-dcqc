@@ -26,15 +26,16 @@ OUTDIR.mkdir(exist_ok=True)
 UUID = str(uuid4())
 USER = getuser()
 UTCTIME = datetime.now().isoformat(" ", "seconds").replace(":", ".")
-RUNID = f"{USER} - {UTCTIME} - {UUID}"  # Valid characters: [A-Za-z0-9 .+'()_-]
+RUN_ID = f"{USER} - {UTCTIME} - {UUID}"  # Valid characters: [A-Za-z0-9 .+'()_-]
 
 
 # Track the list of output files to avoid clashes between tests
 outputs = set()
 
 
-def pytest_configure():
-    pytest.RUNID = RUNID  # type: ignore
+@pytest.fixture
+def run_id():
+    return RUN_ID
 
 
 @pytest.fixture

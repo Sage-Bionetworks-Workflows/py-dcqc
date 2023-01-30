@@ -6,6 +6,7 @@ import pytest
 from click.testing import Result
 from typer.testing import CliRunner
 
+import dcqc
 from dcqc.main import app
 
 
@@ -25,6 +26,13 @@ def test_that_the_module_cli_behaves_the_same_as_the_plain_cli():
     module_cli = check_output(["python", "-m", "dcqc", "--help"])
     plain_cli = check_output(["dcqc", "--help"])
     assert module_cli == plain_cli
+
+
+def test_that_the_package_version_can_be_printed():
+    args = ["--version"]
+    result = run_command(args)
+    check_command_result(result)
+    assert dcqc.__version__ in result.output
 
 
 def test_create_targets(get_data, get_output):

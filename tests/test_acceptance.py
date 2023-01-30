@@ -1,15 +1,30 @@
 import json
 
 import pytest
+from fs import open_fs
 
 from dcqc.parsers import CsvParser
 from dcqc.reports import JsonReport
 from dcqc.tests.test_abc import TestABC
 from dcqc.utils import open_parent_fs
 
+PARENT_FOLDER_URL = "syn://syn50696607"
+
+
+@pytest.fixture
+def acceptance_test_folder_url(run_id):
+    """Create a run-specific subfolder under parent folder.
+
+    This is done to avoid clashes between concurrent tests.
+    """
+    fs = open_fs(PARENT_FOLDER_URL)
+    fs.makedir(run_id)
+    yield f"{PARENT_FOLDER_URL}/{run_id}"
+    fs.removetree(run_id)
+
 
 @pytest.mark.slow
-def test_json_report_generation(get_data):
+def test_json_report_generation(get_data, acceptance_test_folder_url):
     # GIVEN a list of external tests to skip (to remain self-contained)
     all_tests = TestABC.list_subclasses()
     skipped_tests = [test.__name__ for test in all_tests if test.is_external_test]
@@ -21,7 +36,7 @@ def test_json_report_generation(get_data):
     csv_path = get_data("files.csv")
 
     # AND a remote destination for the JSON report
-    report_url = "syn://syn50696607/report.json"
+    report_url = f"{acceptance_test_folder_url}/report.json"
 
     # WHEN the CSV file is parsed to generate the relevant QC suites
     parser = CsvParser(csv_path)
