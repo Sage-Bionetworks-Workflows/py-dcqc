@@ -16,21 +16,19 @@ def test_that_the_file_extension_test_works_on_correct_files(test_files):
     assert test_status == TestStatus.PASS
 
 
-@pytest.mark.integration
 def test_that_the_file_extension_test_works_on_correct_remote_file(test_files):
-    good_file = test_files["synapse"]
-    target = Target(good_file)
+    remote_file = test_files["remote"]
+    target = Target(remote_file)
     test = tests.FileExtensionTest(target)
     test_status = test.get_status()
     assert test_status == TestStatus.PASS
 
 
-# @pytest.mark.integration
-# def test_that_a_tiff_file_with_good_extensions_is_passed():
-#     file = File("syn://syn50944306", {"file_type": "TIFF"})
-#     target = Target(file)
-#     test = tests.FileExtensionTest(target)
-#     assert test.get_status() == TestStatus.PASS
+def test_that_a_tiff_file_with_good_extensions_is_passed(test_files):
+    file = test_files["tiff"]
+    target = Target(file)
+    test = tests.FileExtensionTest(target)
+    assert test.get_status() == TestStatus.PASS
 
 
 def test_that_the_file_extension_test_works_on_incorrect_files(test_files):

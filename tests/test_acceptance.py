@@ -8,7 +8,8 @@ from dcqc.tests.test_abc import TestABC
 from dcqc.utils import open_parent_fs
 
 
-@pytest.mark.integration
+@pytest.mark.slow
+@pytest.mark.acceptance
 def test_json_report_generation(get_data):
     # GIVEN a list of external tests to skip (to remain self-contained)
     all_tests = TestABC.list_subclasses()
