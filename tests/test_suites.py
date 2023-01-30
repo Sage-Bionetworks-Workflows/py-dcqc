@@ -92,3 +92,29 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
     tests = [test_1, test_2]
     with pytest.raises(ValueError):
         SuiteABC.from_tests(tests)
+
+
+def test_that_a_suite_will_not_consider_unrequired_tests(test_targets):
+    target = test_targets["bad"]
+    required_tests = []
+    skipped_tests = ["LibTiffInfoTest"]
+    suite = SuiteABC.from_target(target, required_tests, skipped_tests)
+    suite_status = suite.compute_status()
+    assert suite_status == TestStatus.PASS
+
+
+def test_that_a_suite_will_consider_required_tests_when_failing(test_targets):
+    target = test_targets["bad"]
+    required_tests = ["FileExtensionTest"]
+    skipped_tests = ["LibTiffInfoTest"]
+    suite = SuiteABC.from_target(target, required_tests, skipped_tests)
+    suite_status = suite.compute_status()
+    assert suite_status == TestStatus.FAIL
+
+
+def test_that_a_suite_will_consider_required_tests_when_passing(test_targets):
+    target = test_targets["good"]
+    required_tests = ["Md5ChecksumTest"]
+    suite = SuiteABC.from_target(target, required_tests)
+    suite_status = suite.compute_status()
+    assert suite_status == TestStatus.PASS

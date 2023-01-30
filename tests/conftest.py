@@ -54,6 +54,7 @@ def get_data():
 @pytest.fixture
 def test_files(get_data):
     txt_path = get_data("test.txt")
+    jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
     syn_path = "syn://syn50555279"
     good_metadata = {
@@ -64,6 +65,10 @@ def test_files(get_data):
         "file_type": "tiff",
         "md5_checksum": "definitelynottherightmd5checksum",
     }
+    jsonld_metadata = {
+        "file_type": "JSON-LD",
+        "md5_checksum": "56bb5f34da6d6df2ade3ac37e25586b7",
+    }
     tiff_metadata = {
         "file_type": "tiff",
         "md5_checksum": "c7b08f6decb5e7572efbe6074926a843",
@@ -72,6 +77,7 @@ def test_files(get_data):
         "good": File(txt_path.as_posix(), good_metadata),
         "bad": File(txt_path.as_posix(), bad_metadata),
         "tiff": File(tiff_path.as_posix(), tiff_metadata),
+        "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
         "synapse": File(syn_path, good_metadata),
     }
 

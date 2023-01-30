@@ -51,7 +51,9 @@ class SuiteABC(SerializableMixin, ABC):
         test_classes = self.list_test_classes()
         test_names = set(test.__name__ for test in test_classes)
 
-        required_tests = required_tests or self._default_required_tests()
+        # To differentiate between None and []
+        if required_tests is None:
+            required_tests = self._default_required_tests()
         self.required_tests = set(required_tests).intersection(test_names)
 
         skipped_tests = skipped_tests or list()
@@ -229,8 +231,9 @@ class SuiteABC(SerializableMixin, ABC):
     def compute_status(self) -> TestStatus:
         """Compute the overall suite status."""
         self.compute_tests()
-        if self._status is not TestStatus.NONE:
+        if self._status != TestStatus.NONE:
             return self._status
+        self._status = TestStatus.PASS
         for test in self.tests:
             test_name = test.type
             if test_name not in self.required_tests:
