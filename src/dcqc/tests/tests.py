@@ -35,7 +35,7 @@ class Md5ChecksumTest(TestABC):
         return status
 
     def _compute_md5_checksum(self, file: File) -> str:
-        local_path = file.get_local_path()
+        local_path = file.local_path
         hash_md5 = hashlib.md5()
         with local_path.open("rb") as infile:
             for chunk in iter(lambda: infile.read(4096), b""):
@@ -58,7 +58,7 @@ class JsonLoadTest(TestABC):
 
     def _can_be_loaded(self, file: File) -> bool:
         success = True
-        local_path = file.get_local_path()
+        local_path = file.local_path
         with local_path.open("r") as infile:
             try:
                 json.load(infile)
@@ -84,7 +84,7 @@ class JsonLdLoadTest(TestABC):
         graph = rdflib.Graph()
 
         success = True
-        local_path = file.get_local_path()
+        local_path = file.local_path
         with local_path.open("r") as infile:
             try:
                 graph.parse(infile, format="json-ld")
@@ -98,7 +98,7 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
 
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
-        path = file.get_local_path().as_posix()
+        path = file.local_path.as_posix()
         command_args = ["tiffinfo", path]
         process = Process(
             container="quay.io/brunograndephd/libtiff:2.0",
@@ -112,7 +112,7 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
 
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
-        path = file.get_local_path().as_posix()
+        path = file.local_path.as_posix()
         command_args = [
             "/opt/bftools/showinf",
             "-nopix",
@@ -132,7 +132,7 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
 
     def generate_process(self) -> Process:
         file = self._get_single_target_file()
-        path = file.get_local_path().as_posix()
+        path = file.local_path.as_posix()
         command_args = [
             "/opt/bftools/xmlvalid",
             path,
