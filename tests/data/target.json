@@ -9,7 +9,7 @@
       },
       "type": "TIFF",
       "name": "test.txt",
-      "local_path": "/Users/bgrande/Repos/py-dcqc/tests/data/test.txt"
+      "local_path": "tests/data/test.txt"
     }
   ]
 }

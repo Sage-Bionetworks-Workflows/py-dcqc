@@ -4,6 +4,7 @@
 
 import os
 import sys
+from pathlib import Path
 from typing import Sequence
 
 from dcqc.file import File
@@ -16,7 +17,7 @@ from dcqc.tests import tests
 # Shared values
 data_dir = sys.path[0]
 data_dir = os.path.relpath(data_dir)
-report = JsonReport()
+report = JsonReport(paths_relative_to=Path.cwd())
 
 
 # Shared functions
