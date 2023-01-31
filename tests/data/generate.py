@@ -4,6 +4,8 @@
 
 import os
 import sys
+from pathlib import Path
+from typing import Sequence
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
@@ -15,19 +17,22 @@ from dcqc.tests import tests
 # Shared values
 data_dir = sys.path[0]
 data_dir = os.path.relpath(data_dir)
-report = JsonReport()
+report = JsonReport(paths_relative_to=Path.cwd())
 
 
 # Shared functions
-def export(obj: SerializableMixin, filename: str):
+def export(obj: SerializableMixin | Sequence[SerializableMixin], filename: str):
     output_url = os.path.join(data_dir, filename)
     report.save(obj, output_url, overwrite=True)
 
 
-# target.json
+# file.json
 file_url = os.path.join(data_dir, "test.txt")
 metadata = {"file_type": "TIFF", "md5_checksum": "14758f1afd44c09b7992073ccf00b43d"}
 file = File(file_url, metadata)
+export(file, "file.json")
+
+# target.json
 target = Target(file, id="001")
 export(target, "target.json")
 
@@ -43,6 +48,10 @@ export(external_test, "test.external.json")
 computed_test = tests.Md5ChecksumTest(target)
 computed_test.get_status()
 export(computed_test, "test.computed.json")
+
+# tests.json
+test_list = [internal_test, external_test, computed_test]
+export(test_list, "tests.json")
 
 # suite.json
 suite_tests = [internal_test, external_test]

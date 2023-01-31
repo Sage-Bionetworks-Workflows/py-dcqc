@@ -1,0 +1,9 @@
+{
+  "url": "tests/data/test.txt",
+  "metadata": {
+    "md5_checksum": "14758f1afd44c09b7992073ccf00b43d"
+  },
+  "type": "TIFF",
+  "name": "test.txt",
+  "local_path": "tests/data/test.txt"
+}

@@ -18,6 +18,12 @@ def run_command(arguments: list[Any]):
 
 
 def check_command_result(result: Result):
+    if result.exit_code != 0:
+        print(result.stdout)
+        try:
+            print(result.stderr)
+        except ValueError:
+            pass
     assert result.exit_code == 0
 
 

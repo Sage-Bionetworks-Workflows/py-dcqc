@@ -69,6 +69,15 @@ class FileType:
         self._registry[name] = self
 
     @classmethod
+    def list_file_types(cls) -> list[FileType]:
+        """Retrieve all available file type objects.
+
+        Returns:
+            The full list of file type objects.
+        """
+        return list(cls._registry.values())
+
+    @classmethod
     def get_file_type(cls, file_type: str) -> FileType:
         """Retrieve file type object based on its name.
 

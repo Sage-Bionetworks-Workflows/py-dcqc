@@ -1,3 +1,4 @@
-from dcqc.main import app
+if __name__ == "__main__":
+    from dcqc.main import app
 
-app(prog_name="dcqc")
+    app(prog_name="dcqc")

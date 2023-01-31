@@ -4,7 +4,7 @@ from collections.abc import Collection, Iterator
 from pathlib import Path
 from typing import Any, Optional, Type, TypeVar, cast
 
-from dcqc.file import File
+from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
@@ -85,14 +85,17 @@ class JsonParser:
         suite_classes = SuiteABC.list_subclasses()
         suite_cls_map = {cls.__name__: cls for cls in suite_classes}
 
-        if cls_name == "File":
-            return File
-        elif cls_name == "Target":
+        file_types = FileType.list_file_types()
+        file_types_names = {ft.name.lower() for ft in file_types}
+
+        if cls_name == "Target":
             return Target
         elif cls_name in test_cls_map:
             return test_cls_map[cls_name]
         elif cls_name in suite_cls_map:
             return suite_cls_map[cls_name]
+        elif cls_name.lower() in file_types_names:
+            return File
         else:
             message = f"Type ({cls_name}) is not recognized."
             raise ValueError(message)
@@ -126,7 +129,7 @@ class JsonParser:
         contents = parser.load_json()
 
         if not isinstance(contents, list):
-            message = f"JSON file ({cls.path}) does not contain a list of objects."
+            message = f"JSON file ({parser.path}) does not contain a list of objects."
             raise ValueError(message)
 
         objects = [cls.from_dict(dictionary) for dictionary in contents]
