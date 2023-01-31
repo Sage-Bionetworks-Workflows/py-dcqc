@@ -3,7 +3,8 @@ from __future__ import annotations
 import shlex
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import InitVar, dataclass
 from enum import Enum
 from importlib import import_module
 from pathlib import Path
@@ -62,9 +63,9 @@ class TestABC(SerializableMixin, ABC):
         """Force the test to be skipped."""
         self._status = TestStatus.SKIP
 
-    def get_status(self) -> TestStatus:
+    def get_status(self, compute_ok: bool = True) -> TestStatus:
         """Compute (if applicable) and return the test status."""
-        if self._status == TestStatus.NONE:
+        if self._status == TestStatus.NONE and compute_ok:
             self._status = self.compute_status()
         return self._status
 
@@ -141,18 +142,18 @@ class TestABC(SerializableMixin, ABC):
 @dataclass
 class Process(SerializableMixin):
     container: str
-    command_args: Sequence[str]
+    command_args: InitVar[Sequence[str]]
     cpus: int = 1
     memory: int = 2  # In GB
 
-    def get_command(self) -> str:
-        return shlex.join(self.command_args)
+    _serialized_properties = ["command"]
 
-    def to_dict(self):
-        dictionary = super(Process, self).to_dict()
-        del dictionary["command_args"]
-        dictionary["command"] = self.get_command()
-        return dictionary
+    def __post_init__(self, command_args: Sequence[str]):
+        self._command_args = command_args
+
+    @property
+    def command(self) -> str:
+        return shlex.join(self._command_args)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Process:
@@ -164,6 +165,7 @@ class Process(SerializableMixin):
         Returns:
             The reconstructed process object.
         """
+        dictionary = deepcopy(dictionary)
         command = dictionary.pop("command")
         command_args = shlex.split(command)
         dictionary["command_args"] = command_args

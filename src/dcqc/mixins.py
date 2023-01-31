@@ -108,6 +108,7 @@ class SerializableMixin(ABC):
         return self.dict_factory(result)
 
     # TODO: Use template method to handle `_serialized_properties`
+    #       as well as `deepcopy()`
     @classmethod
     @abstractmethod
     def from_dict(cls, dictionary: SerializedObject) -> SerializableMixin:
