@@ -121,7 +121,7 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
             path,
         ]
         process = Process(
-            container="openmicroscopy/bftools:latest",
+            container="quay.io/sagebionetworks/bftools:latest",
             command_args=command_args,
         )
         return process
@@ -138,7 +138,7 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
             path,
         ]
         process = Process(
-            container="openmicroscopy/bftools:latest",
+            container="quay.io/sagebionetworks/bftools:latest",
             command_args=command_args,
         )
         return process
