@@ -154,7 +154,7 @@ class GrepDateTest(ExternalTestMixin, TestABC):
             "-E",
             "-w",
             "-i",
-            "'date|time'"
+            "'date|time'",
             path,
         ]
         process = Process(
