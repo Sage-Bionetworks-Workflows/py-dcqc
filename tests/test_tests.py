@@ -214,7 +214,7 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
-def test_that_the_rep_date_test_command_is_produced(test_targets):
+def test_that_the_grep_date_test_command_is_produced(test_targets):
     target = test_targets["tiff"]
     test = tests.GrepDateTest(target)
     process = test.generate_process()
