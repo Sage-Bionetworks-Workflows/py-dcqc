@@ -142,3 +142,23 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
             command_args=command_args,
         )
         return process
+
+class GrepDateTest(ExternalTestMixin, TestABC):
+    tier = 2
+
+    def generate_process(self) -> Process:
+        file = self._get_single_target_file()
+        path = file.local_path.as_posix()
+        command_args = [
+            "grep",
+            "-E",
+            "-w",
+            "-i",
+            "'date|time'"
+            path,
+        ]
+        process = Process(
+            container="quay.io/sagebionetworks/bftools:latest",
+            command_args=command_args,
+        )
+        return process
