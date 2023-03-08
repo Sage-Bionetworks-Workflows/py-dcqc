@@ -101,7 +101,7 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
         path = file.local_path.as_posix()
         command_args = ["tiffinfo", path]
         process = Process(
-            container="quay.io/brunograndephd/libtiff:2.0",
+            container="quay.io/sagebionetworks/libtiff:2.0",
             command_args=command_args,
         )
         return process
