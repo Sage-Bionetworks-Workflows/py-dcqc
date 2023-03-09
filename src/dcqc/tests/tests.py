@@ -158,7 +158,7 @@ class GrepDateTest(ExternalTestMixin, TestABC):
             path,
         ]
         process = Process(
-            container="quay.io/sagebionetworks/bftools:latest",
+            container="quay.io/biocontainers/coreutils:8.30--h14c3975_1000",
             command_args=command_args,
         )
         return process
