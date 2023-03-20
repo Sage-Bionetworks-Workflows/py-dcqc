@@ -28,3 +28,7 @@ class TiffSuite(FileSuite):
 class OmeTiffSuite(TiffSuite):
     file_type = FileType.get_file_type("OME-TIFF")
     add_tests = (tests.OmeXmlSchemaTest, tests.BioFormatsInfoTest)
+
+
+class TSVSuite(FileSuite):
+    file_type = FileType.get_file_type("TSV")

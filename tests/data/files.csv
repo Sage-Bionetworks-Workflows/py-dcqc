@@ -5,3 +5,4 @@ osfs://test.txt,TXT,definitelynottherightmd5checksum
 syn://syn50555279,TXT,14758f1afd44c09b7992073ccf00b43d
 circuit.tif,TIFF,c7b08f6decb5e7572efbe6074926a843
 example.jsonld,JSON-LD,56bb5f34da6d6df2ade3ac37e25586b7
+example.tsv,TSV,4942c80c8ab0cd7406394af3368332e4
