@@ -33,3 +33,5 @@ class RiskTermsSuite(FileSuite):
     file_type = FileType.get_file_type("*")
     add_tests = (tests.GrepDateTest)
 
+class TSVSuite(FileSuite):
+    file_type = FileType.get_file_type("TSV")
