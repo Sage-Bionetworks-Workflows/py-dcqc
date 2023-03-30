@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import wraps
 from pathlib import Path
 from typing import Optional
 
@@ -65,10 +64,30 @@ class Target(SerializableMixin):
             raise NotImplementedError(message)
         return file_type
 
-    @wraps(File.stage)
     def stage(
         self, destination: Optional[Path] = None, overwrite: bool = False
     ) -> list[Path]:
+        """Create local copy of local or remote file.
+
+        A destination is not required for remote files; it
+        defaults to a temporary directory.
+        Local files aren't moved if a destination is omitted.
+
+        Args:
+            destination: File or folder where to store the file.
+                Defaults to None.
+            overwrite: Whether to ignore existing file at the
+                target destination. Defaults to False.
+
+        Raises:
+            ValueError: If the parent directory of the
+                destination does not exist.
+            FileExistsError: If the destination file already
+                exists and ``overwrite`` was not enabled.
+
+        Returns:
+            The path of the local copy.
+        """
         paths = list()
         for file in self.files:
             path = file.stage(destination, overwrite)

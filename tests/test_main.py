@@ -8,6 +8,8 @@ from typer.testing import CliRunner
 
 import dcqc
 from dcqc.main import app
+from dcqc.parsers import JsonParser
+from dcqc.suites.suite_abc import SuiteABC
 
 
 def run_command(arguments: list[Any]):
@@ -112,6 +114,9 @@ def test_create_suite(get_data, get_output):
     result = run_command(args)
     check_command_result(result)
     assert output_path.exists()
+
+    suite = JsonParser.parse_object(output_path, SuiteABC)
+    assert len(suite.required_tests) > 0
 
 
 def test_combine_suites(get_data, get_output):
