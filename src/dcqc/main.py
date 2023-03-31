@@ -1,7 +1,7 @@
 import sys
 from csv import DictWriter
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from typer import Argument, Exit, Option, Typer
 
@@ -61,24 +61,6 @@ def create_targets(
 
     report = JsonReport()
     report.save_many(named_targets, output_dir.as_posix(), overwrite)
-
-
-@app.command()
-def stage_target(
-    input_json: Path = input_path_arg,
-    output_json: str = output_arg,
-    output_dir: Path = output_dir_path_arg,
-    overwrite: bool = overwrite_opt,
-    paths_relative_to: Optional[Path] = paths_relative_to_opt,
-):
-    """Create local file copies from a target JSON file"""
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    target = JsonParser.parse_object(input_json, Target)
-    target.stage(output_dir, overwrite)
-
-    report = JsonReport(paths_relative_to)
-    report.save(target, output_json, overwrite)
 
 
 @app.command()

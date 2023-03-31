@@ -55,20 +55,6 @@ def test_create_targets(get_data, get_output):
     assert len(list(output_dir.iterdir())) > 0
 
 
-def test_stage_target(get_data, get_output):
-    input_json = get_data("target.json")
-    output_json = get_output("stage_target/target.staged.json")
-    output_dir = get_output("stage_target/targets")
-    output_json.unlink(missing_ok=True)
-    shutil.rmtree(output_dir, ignore_errors=True)
-
-    assert not output_dir.exists()
-    args = ["stage-target", "-prt", ".", input_json, output_json, output_dir]
-    result = run_command(args)
-    check_command_result(result)
-    assert len(list(output_dir.iterdir())) > 0
-
-
 def test_create_tests(get_data, get_output):
     input_json = get_data("target.json")
     output_dir = get_output("create_tests")

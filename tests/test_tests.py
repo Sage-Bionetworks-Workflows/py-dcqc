@@ -190,3 +190,11 @@ def test_that_a_process_can_be_serialized_and_deserialized():
     process_dict = process.to_dict()
     process_from_dict = Process.from_dict(process_dict)
     assert process_dict == process_from_dict.to_dict()
+
+
+def test_for_an_error_when_getting_one_file_from_multi_file_target(test_files):
+    file = test_files["good"]
+    target = Target(file, file)
+    test = tests.FileExtensionTest(target)
+    with pytest.raises(ValueError):
+        test.get_file()

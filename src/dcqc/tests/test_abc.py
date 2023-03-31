@@ -69,8 +69,31 @@ class TestABC(SerializableMixin, ABC):
             self._status = self.compute_status()
         return self._status
 
-    def _get_single_target_file(self) -> File:
-        files = self.target.files
+    def get_files(self) -> list[File]:
+        """Get and stage files for target.
+
+        Returns:
+            Staged target files.
+        """
+        files = []
+        for file in self.target.files:
+            file.stage()
+            files.append(file)
+        return files
+
+    def get_file(self) -> File:
+        """Get and stage file for single-file target.
+
+        Raises:
+            ValueError: If the target has multiple files.
+
+        Returns:
+            Staged target file.
+        """
+        files = self.get_files()
+        if len(files) != 1:
+            message = "This method only supports single-file targets."
+            raise ValueError(message)
         return files[0]
 
     @classmethod
