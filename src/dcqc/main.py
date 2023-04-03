@@ -92,8 +92,12 @@ def create_tests(
     """Create test JSON files from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Interpret empty lists from CLI as None (to auto-generate values)
+    required_tests_maybe = required_tests if len(required_tests) > 0 else None
+    skipped_tests_maybe = skipped_tests if len(skipped_tests) > 0 else None
+
     target = JsonParser.parse_object(input_json, Target)
-    suite = SuiteABC.from_target(target, required_tests, skipped_tests)
+    suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests_maybe)
 
     report = JsonReport()
     for test in suite.tests:
@@ -145,8 +149,12 @@ def create_suite(
     overwrite: bool = overwrite_opt,
 ):
     """Create a suite from a set of test JSON files sharing the same target"""
+    # Interpret empty lists from CLI as None (to auto-generate values)
+    required_tests_maybe = required_tests if len(required_tests) > 0 else None
+    skipped_tests_maybe = skipped_tests if len(skipped_tests) > 0 else None
+
     tests = [JsonParser.parse_object(test_json, TestABC) for test_json in input_jsons]
-    suite = SuiteABC.from_tests(tests, required_tests, skipped_tests)
+    suite = SuiteABC.from_tests(tests, required_tests_maybe, skipped_tests_maybe)
     report = JsonReport()
     report.save(suite, output_json, overwrite)
 
