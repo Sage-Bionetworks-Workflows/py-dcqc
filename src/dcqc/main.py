@@ -71,8 +71,8 @@ def create_tests(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Interpret empty lists from CLI as None (to auto-generate values)
-    required_tests_maybe = required_tests if len(required_tests) > 0 else None
-    skipped_tests_maybe = skipped_tests if len(skipped_tests) > 0 else None
+    required_tests_maybe = required_tests if required_tests else None
+    skipped_tests_maybe = skipped_tests if skipped_tests else None
 
     target = JsonParser.parse_object(input_json, Target)
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests_maybe)
@@ -128,8 +128,8 @@ def create_suite(
 ):
     """Create a suite from a set of test JSON files sharing the same target"""
     # Interpret empty lists from CLI as None (to auto-generate values)
-    required_tests_maybe = required_tests if len(required_tests) > 0 else None
-    skipped_tests_maybe = skipped_tests if len(skipped_tests) > 0 else None
+    required_tests_maybe = required_tests if required_tests else None
+    skipped_tests_maybe = skipped_tests if skipped_tests else None
 
     tests = [JsonParser.parse_object(test_json, TestABC) for test_json in input_jsons]
     suite = SuiteABC.from_tests(tests, required_tests_maybe, skipped_tests_maybe)
