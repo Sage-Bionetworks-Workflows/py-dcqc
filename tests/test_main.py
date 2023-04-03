@@ -61,7 +61,7 @@ def test_create_tests(get_data, get_output):
     shutil.rmtree(output_dir, ignore_errors=True)
 
     assert not output_dir.exists()
-    args = ["create-tests", "-rt", "Md5ChecksumTest", input_json, output_dir]
+    args = ["create-tests", "-r", "Md5ChecksumTest", input_json, output_dir]
     result = run_command(args)
     check_command_result(result)
     assert len(list(output_dir.iterdir())) > 0
