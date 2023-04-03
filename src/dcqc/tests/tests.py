@@ -1,7 +1,7 @@
 import hashlib
 import json
+from pathlib import Path
 
-from dcqc.file import File
 from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC, TestStatus
 
 
@@ -11,7 +11,7 @@ class FileExtensionTest(TestABC):
 
     def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
-        for file in self.target.files:
+        for file in self.get_files(staged=False):
             file_type = file.get_file_type()
             file_extensions = file_type.file_extensions
             if not file.name.endswith(file_extensions):
@@ -26,18 +26,17 @@ class Md5ChecksumTest(TestABC):
 
     def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
-        for file in self.target.files:
+        for file in self.get_files():
             expected_md5 = file.get_metadata("md5_checksum")
-            actual_md5 = self._compute_md5_checksum(file)
+            actual_md5 = self._compute_md5_checksum(file.local_path)
             if expected_md5 != actual_md5:
                 status = TestStatus.FAIL
                 break
         return status
 
-    def _compute_md5_checksum(self, file: File) -> str:
-        local_path = file.local_path
+    def _compute_md5_checksum(self, path: Path) -> str:
         hash_md5 = hashlib.md5()
-        with local_path.open("rb") as infile:
+        with path.open("rb") as infile:
             for chunk in iter(lambda: infile.read(4096), b""):
                 hash_md5.update(chunk)
         actual_md5 = hash_md5.hexdigest()
@@ -50,16 +49,15 @@ class JsonLoadTest(TestABC):
 
     def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
-        for file in self.target.files:
-            if not self._can_be_loaded(file):
+        for file in self.get_files():
+            if not self._can_be_loaded(file.local_path):
                 status = TestStatus.FAIL
                 break
         return status
 
-    def _can_be_loaded(self, file: File) -> bool:
+    def _can_be_loaded(self, path: Path) -> bool:
         success = True
-        local_path = file.local_path
-        with local_path.open("r") as infile:
+        with path.open("r") as infile:
             try:
                 json.load(infile)
             except Exception:
@@ -73,19 +71,18 @@ class JsonLdLoadTest(TestABC):
 
     def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
-        for file in self.target.files:
-            if not self._can_be_loaded(file):
+        for file in self.get_files():
+            if not self._can_be_loaded(file.local_path):
                 status = TestStatus.FAIL
                 break
         return status
 
-    def _can_be_loaded(self, file: File) -> bool:
+    def _can_be_loaded(self, path: Path) -> bool:
         rdflib = self.import_module("rdflib")
         graph = rdflib.Graph()
 
         success = True
-        local_path = file.local_path
-        with local_path.open("r") as infile:
+        with path.open("r") as infile:
             try:
                 graph.parse(infile, format="json-ld")
             except Exception:
@@ -97,9 +94,8 @@ class LibTiffInfoTest(ExternalTestMixin, TestABC):
     tier = 2
 
     def generate_process(self) -> Process:
-        file = self._get_single_target_file()
-        path = file.local_path.as_posix()
-        command_args = ["tiffinfo", path]
+        file = self.get_file()
+        command_args = ["tiffinfo", file.local_path.as_posix()]
         process = Process(
             container="quay.io/sagebionetworks/libtiff:2.0",
             command_args=command_args,
@@ -111,14 +107,13 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
     tier = 2
 
     def generate_process(self) -> Process:
-        file = self._get_single_target_file()
-        path = file.local_path.as_posix()
+        file = self.get_file()
         command_args = [
             "/opt/bftools/showinf",
             "-nopix",
             "-novalid",
             "-nocore",
-            path,
+            file.local_path.as_posix(),
         ]
         process = Process(
             container="quay.io/sagebionetworks/bftools:latest",
@@ -131,11 +126,10 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
     tier = 2
 
     def generate_process(self) -> Process:
-        file = self._get_single_target_file()
-        path = file.local_path.as_posix()
+        file = self.get_file()
         command_args = [
             "/opt/bftools/xmlvalid",
-            path,
+            file.local_path.as_posix(),
         ]
         process = Process(
             container="quay.io/sagebionetworks/bftools:latest",
