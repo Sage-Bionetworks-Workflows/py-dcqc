@@ -28,11 +28,8 @@ output_dir_path_arg = Argument(..., help="Directory path for output files")
 
 # Common options
 overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
-required_tests_opt = Option(None, "--required-tests", "-rt", help="Required tests")
-skipped_tests_opt = Option(None, "--skipped-tests", "-st", help="Skipped tests")
-stage_files_opt = Option(False, "--stage-files", "-sf", help="Stage remote files.")
-prt_help = "Update paths to be relative to given directory upon serialization."
-paths_relative_to_opt = Option(None, "--paths-relative-to", "-prt", help=prt_help)
+required_tests_opt = Option(None, "--required-tests", "-r", help="Required tests")
+skipped_tests_opt = Option(None, "--skipped-tests", "-s", help="Skipped tests")
 
 
 @app.callback()
@@ -48,12 +45,11 @@ def create_targets(
     input_csv: Path = input_path_arg,
     output_dir: Path = output_dir_path_arg,
     overwrite: bool = overwrite_opt,
-    stage_files: bool = stage_files_opt,
 ):
     """Create target JSON files from a targets CSV file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    parser = CsvParser(input_csv, stage_files)
+    parser = CsvParser(input_csv)
     targets = parser.create_targets()
 
     # Naming the targets by index to ensure no clashes
