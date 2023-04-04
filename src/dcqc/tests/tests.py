@@ -137,11 +137,12 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
         )
         return process
 
+
 class GrepDateTest(ExternalTestMixin, TestABC):
     tier = 2
 
     def generate_process(self) -> Process:
-        file = self._get_single_target_file()
+        file = self.get_file()
         path = file.local_path.as_posix()
         command_args = [
             "grep",

@@ -29,9 +29,11 @@ class OmeTiffSuite(TiffSuite):
     file_type = FileType.get_file_type("OME-TIFF")
     add_tests = (tests.OmeXmlSchemaTest, tests.BioFormatsInfoTest)
 
+
 class RiskTermsSuite(FileSuite):
     file_type = FileType.get_file_type("*")
-    add_tests = (tests.GrepDateTest)
+    add_tests = tests.GrepDateTest
+
 
 class TSVSuite(FileSuite):
     file_type = FileType.get_file_type("TSV")
