@@ -1,7 +1,7 @@
 import sys
 from csv import DictWriter
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from typer import Argument, Exit, Option, Typer
 
@@ -28,11 +28,8 @@ output_dir_path_arg = Argument(..., help="Directory path for output files")
 
 # Common options
 overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
-required_tests_opt = Option(None, "--required-tests", "-rt", help="Required tests")
-skipped_tests_opt = Option(None, "--skipped-tests", "-st", help="Skipped tests")
-stage_files_opt = Option(False, "--stage-files", "-sf", help="Stage remote files.")
-prt_help = "Update paths to be relative to given directory upon serialization."
-paths_relative_to_opt = Option(None, "--paths-relative-to", "-prt", help=prt_help)
+required_tests_opt = Option(None, "--required-tests", "-r", help="Required tests")
+skipped_tests_opt = Option(None, "--skipped-tests", "-s", help="Skipped tests")
 
 
 @app.callback()
@@ -48,12 +45,11 @@ def create_targets(
     input_csv: Path = input_path_arg,
     output_dir: Path = output_dir_path_arg,
     overwrite: bool = overwrite_opt,
-    stage_files: bool = stage_files_opt,
 ):
     """Create target JSON files from a targets CSV file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    parser = CsvParser(input_csv, stage_files)
+    parser = CsvParser(input_csv)
     targets = parser.create_targets()
 
     # Naming the targets by index to ensure no clashes
@@ -61,24 +57,6 @@ def create_targets(
 
     report = JsonReport()
     report.save_many(named_targets, output_dir.as_posix(), overwrite)
-
-
-@app.command()
-def stage_target(
-    input_json: Path = input_path_arg,
-    output_json: str = output_arg,
-    output_dir: Path = output_dir_path_arg,
-    overwrite: bool = overwrite_opt,
-    paths_relative_to: Optional[Path] = paths_relative_to_opt,
-):
-    """Create local file copies from a target JSON file"""
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    target = JsonParser.parse_object(input_json, Target)
-    target.stage(output_dir, overwrite)
-
-    report = JsonReport(paths_relative_to)
-    report.save(target, output_json, overwrite)
 
 
 @app.command()
@@ -92,8 +70,12 @@ def create_tests(
     """Create test JSON files from a target JSON file"""
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Interpret empty lists from CLI as None (to auto-generate values)
+    required_tests_maybe = required_tests if required_tests else None
+    skipped_tests_maybe = skipped_tests if skipped_tests else None
+
     target = JsonParser.parse_object(input_json, Target)
-    suite = SuiteABC.from_target(target, required_tests, skipped_tests)
+    suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests_maybe)
 
     report = JsonReport()
     for test in suite.tests:
@@ -145,8 +127,12 @@ def create_suite(
     overwrite: bool = overwrite_opt,
 ):
     """Create a suite from a set of test JSON files sharing the same target"""
+    # Interpret empty lists from CLI as None (to auto-generate values)
+    required_tests_maybe = required_tests if required_tests else None
+    skipped_tests_maybe = skipped_tests if skipped_tests else None
+
     tests = [JsonParser.parse_object(test_json, TestABC) for test_json in input_jsons]
-    suite = SuiteABC.from_tests(tests, required_tests, skipped_tests)
+    suite = SuiteABC.from_tests(tests, required_tests_maybe, skipped_tests_maybe)
     report = JsonReport()
     report.save(suite, output_json, overwrite)
 

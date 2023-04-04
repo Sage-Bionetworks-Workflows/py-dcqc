@@ -191,6 +191,7 @@ def test_that_a_process_can_be_serialized_and_deserialized():
     process_from_dict = Process.from_dict(process_dict)
     assert process_dict == process_from_dict.to_dict()
 
+
 def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
@@ -214,8 +215,17 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
+
 def test_that_the_grep_date_test_command_is_produced(test_targets):
     target = test_targets["tiff"]
     test = tests.GrepDateTest(target)
     process = test.generate_process()
     assert "grep" in process.command
+
+
+def test_for_an_error_when_getting_one_file_from_multi_file_target(test_files):
+    file = test_files["good"]
+    target = Target(file, file)
+    test = tests.FileExtensionTest(target)
+    with pytest.raises(ValueError):
+        test.get_file()
