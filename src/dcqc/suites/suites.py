@@ -22,16 +22,13 @@ class JsonLdSuite(JsonSuite):
 
 class TiffSuite(FileSuite):
     file_type = FileType.get_file_type("TIFF")
-    add_tests = (tests.LibTiffInfoTest,)
+    add_tests = (tests.LibTiffInfoTest, tests.GrepDateTest)
 
 
 class OmeTiffSuite(TiffSuite):
     file_type = FileType.get_file_type("OME-TIFF")
     add_tests = (tests.OmeXmlSchemaTest, tests.BioFormatsInfoTest)
 
-class RiskTermsSuite(FileSuite):
-    file_type = FileType.get_file_type("*")
-    add_tests = (tests.GrepDateTest)
 
 class TSVSuite(FileSuite):
     file_type = FileType.get_file_type("TSV")
