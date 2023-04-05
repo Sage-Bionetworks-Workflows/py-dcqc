@@ -184,7 +184,7 @@ def qc_file(
     required_tests: List[str] = required_tests_opt,
     skipped_tests: List[str] = skipped_tests_opt,
 ):
-    """Perform quality control on a single file"""
+    """Run QC tests on a single file (external tests are skipped)"""
     # Interpret empty lists from CLI as None (to auto-generate values)
     required_tests_maybe = required_tests if required_tests else None
 
