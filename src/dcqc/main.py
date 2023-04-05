@@ -1,3 +1,4 @@
+import json
 import sys
 from csv import DictWriter
 from pathlib import Path
@@ -6,7 +7,7 @@ from typing import List
 from typer import Argument, Exit, Option, Typer
 
 from dcqc import __version__
-from dcqc.file import FileType
+from dcqc.file import File, FileType
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
@@ -30,6 +31,8 @@ output_dir_path_arg = Argument(..., help="Directory path for output files")
 overwrite_opt = Option(False, "--overwrite", "-f", help="Ignore existing files")
 required_tests_opt = Option(None, "--required-tests", "-r", help="Required tests")
 skipped_tests_opt = Option(None, "--skipped-tests", "-s", help="Skipped tests")
+file_type_opt = Option(..., "--file-type", "-t", help="File type")
+metadata_opt = Option("{}", "--metadata", "-m", help="File metadata")
 
 
 @app.callback()
@@ -171,3 +174,33 @@ def list_tests():
     writer = DictWriter(sys.stdout, fieldnames)
     writer.writeheader()
     writer.writerows(rows)
+
+
+@app.command()
+def qc_file(
+    input_file: Path = input_path_arg,
+    file_type: str = file_type_opt,
+    metadata: str = metadata_opt,
+    required_tests: List[str] = required_tests_opt,
+    skipped_tests: List[str] = skipped_tests_opt,
+):
+    """Perform quality control on a single file"""
+    # Interpret empty lists from CLI as None (to auto-generate values)
+    required_tests_maybe = required_tests if required_tests else None
+
+    # Prepare target
+    file_metadata = json.loads(metadata)
+    file_metadata["file_type"] = file_type
+    file = File(input_file.as_posix(), file_metadata)
+    target = Target(file)
+
+    # Prepare suite (skip all external tests)
+    suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests)
+    external_tests = [test.type for test in suite.tests if test.is_external_test]
+    skipped_tests += external_tests
+    suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests)
+
+    # Output QC report on stdout
+    report = JsonReport()
+    suite_json = report.generate(suite)
+    json.dump(suite_json, sys.stdout, indent=2)
