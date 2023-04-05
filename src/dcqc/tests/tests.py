@@ -116,7 +116,7 @@ class BioFormatsInfoTest(ExternalTestMixin, TestABC):
             file.local_path.as_posix(),
         ]
         process = Process(
-            container="quay.io/repository/biocontainers/bftools",
+            container="quay.io/sagebionetworks/bftools:latest",
             command_args=command_args,
         )
         return process
@@ -132,7 +132,7 @@ class OmeXmlSchemaTest(ExternalTestMixin, TestABC):
             file.local_path.as_posix(),
         ]
         process = Process(
-            container="quay.io/repository/biocontainers/bftools",
+            container="quay.io/sagebionetworks/bftools:latest",
             command_args=command_args,
         )
         return process
