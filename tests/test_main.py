@@ -120,3 +120,17 @@ def test_list_tests():
     args = ["list-tests"]
     result = run_command(args)
     check_command_result(result)
+
+
+def test_qc_file(get_data):
+    tiff_path = get_data("circuit.tif")
+    args = [
+        "qc-file",
+        "-t",
+        "TIFF",
+        "-m",
+        '{"md5_checksum": "c7b08f6decb5e7572efbe6074926a843"}',
+        tiff_path,
+    ]
+    result = run_command(args)
+    check_command_result(result)
