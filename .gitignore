@@ -58,5 +58,3 @@ MANIFEST
 .conda*/
 .python-version
 
-# Large example files
-example.bam
