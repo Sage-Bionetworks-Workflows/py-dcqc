@@ -57,3 +57,6 @@ MANIFEST
 .venv*/
 .conda*/
 .python-version
+
+# Large example files
+example.bam

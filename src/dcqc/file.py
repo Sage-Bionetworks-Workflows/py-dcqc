@@ -108,6 +108,7 @@ FileType("JSON-LD", (".jsonld",), "format_3749")
 FileType("TIFF", (".tif", ".tiff"), "format_3591")
 FileType("OME-TIFF", (".ome.tif", ".ome.tiff"), "format_3727")
 FileType("TSV", (".tsv"), "format_3475")
+FileType("BAM", (".bam"), "format_2572")
 
 
 # TODO: Leverage post-init function in dataclasses
