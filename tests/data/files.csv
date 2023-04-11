@@ -8,4 +8,4 @@ example.jsonld,JSON-LD,56bb5f34da6d6df2ade3ac37e25586b7
 example.tsv,TSV,f47c75614087a8dd938ba4acff252494
 example.bam,BAM,14758f1afd44c09b7992073ccf00b43d
 example.fastq,FASTQ,14758f1afd44c09b7992073ccf00b43d
-example.fastq.gz,FASTQ-GZ,14758f1afd44c09b7992073ccf00b43d
+example.fastq.gz,FASTQ,14758f1afd44c09b7992073ccf00b43d

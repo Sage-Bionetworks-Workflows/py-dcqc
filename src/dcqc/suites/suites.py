@@ -40,7 +40,3 @@ class BAMSuite(FileSuite):
 
 class FastqSuite(FileSuite):
     file_type = FileType.get_file_type("FASTQ")
-
-
-class FastqGZSuite(FileSuite):
-    file_type = FileType.get_file_type("FASTQ-GZ")
