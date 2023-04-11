@@ -36,3 +36,11 @@ class TSVSuite(FileSuite):
 
 class BAMSuite(FileSuite):
     file_type = FileType.get_file_type("BAM")
+
+
+class FastqSuite(FileSuite):
+    file_type = FileType.get_file_type("FASTQ")
+
+
+class FastqGZSuite(FileSuite):
+    file_type = FileType.get_file_type("FASTQ-GZ")
