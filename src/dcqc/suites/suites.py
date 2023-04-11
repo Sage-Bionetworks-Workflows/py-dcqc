@@ -32,3 +32,7 @@ class OmeTiffSuite(TiffSuite):
 
 class TSVSuite(FileSuite):
     file_type = FileType.get_file_type("TSV")
+
+
+class BAMSuite(FileSuite):
+    file_type = FileType.get_file_type("BAM")
