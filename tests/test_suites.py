@@ -73,7 +73,7 @@ def test_that_the_generic_file_suite_is_retrieved_for_an_unpaired_file_type():
 
 
 def test_that_the_default_required_tests_are_only_tiers_1_and_2(test_suites):
-    suite = test_suites["tiff"]
+    suite = test_suites["jsonld"]
     assert all(test.tier <= 2 for test in suite.tests)
 
 
