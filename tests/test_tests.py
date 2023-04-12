@@ -192,6 +192,37 @@ def test_that_a_process_can_be_serialized_and_deserialized():
     assert process_dict == process_from_dict.to_dict()
 
 
+def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
+    test_files, mocker
+):
+    tiff_file = test_files["tiff"]
+    target = Target(tiff_file)
+    with TemporaryDirectory() as tmp_dir:
+        path_0 = Path(tmp_dir, "code_0.txt")
+        path_1 = Path(tmp_dir, "code_1.txt")
+        path_0.write_text("0")
+        path_1.write_text("1")
+        good_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        bad_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+        test = tests.GrepDateTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=good_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.PASS
+
+        test = tests.LibTiffInfoTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=bad_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.FAIL
+
+
+def test_that_the_grep_date_test_command_is_produced(test_targets):
+    target = test_targets["tiff"]
+    test = tests.GrepDateTest(target)
+    process = test.generate_process()
+    assert "grep" in process.command
+
+
 def test_for_an_error_when_getting_one_file_from_multi_file_target(test_files):
     file = test_files["good"]
     target = Target(file, file)
