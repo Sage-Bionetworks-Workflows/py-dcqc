@@ -167,12 +167,14 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
         file = self.get_file()
         path = file.local_path.as_posix()
         command_args = [
-            "!" "grep",  # negate exit status
+            "!",  # negate exit status
+            "tifftools",
+            "dump" "|" "grep",  # pipe the output
             "-E",  # extended regular expression
             "-i",  # case insensitive
             "-a",  # treat input as text
             "-q",  # suppress output
-            "'DateTime 306 \(0x132\) ASCII'",  # match the expected tifftools dump output for the DateTime tag 306
+            r"'DateTime 306 \(0x132\) ASCII'",  # match the DateTime 306 tag
             path,
         ]
         process = Process(
