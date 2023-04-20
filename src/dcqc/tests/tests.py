@@ -158,3 +158,24 @@ class GrepDateTest(ExternalTestMixin, TestABC):
             command_args=command_args,
         )
         return process
+
+class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
+    tier = 4
+
+    def generate_process(self) -> Process:
+        file = self.get_file()
+        path = file.local_path.as_posix()
+        command_args = [
+            "!" "grep",  # negate exit status
+            "-E",  # extended regular expression
+            "-i",  # case insensitive
+            "-a",  # treat input as text
+            "-q",  # suppress output
+            "'DateTime 306 \(0x132\) ASCII'",  # match the expected tifftools dump output for the DateTime tag 306
+            path,
+        ]
+        process = Process(
+            container="quay.io/sagebionetworks/tifftools:latest",
+            command_args=command_args,
+        )
+        return process
