@@ -173,8 +173,6 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
             path,
             "|",
             "grep",  # pipe the output
-            "-E",  # extended regular expression
-            "-i",  # case insensitive
             "-a",  # treat input as text
             "-q",  # suppress output
             r"'DateTime 306 \(0x132\) ASCII'",  # match the DateTime 306 tag
