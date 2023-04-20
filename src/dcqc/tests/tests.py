@@ -169,13 +169,15 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
         command_args = [
             "!",  # negate exit status
             "tifftools",
-            "dump" "|" "grep",  # pipe the output
+            "dump",
+            path,
+            "|",
+            "grep",  # pipe the output
             "-E",  # extended regular expression
             "-i",  # case insensitive
             "-a",  # treat input as text
             "-q",  # suppress output
             r"'DateTime 306 \(0x132\) ASCII'",  # match the DateTime 306 tag
-            path,
         ]
         process = Process(
             container="quay.io/adamjtaylor/tifftools:latest",
