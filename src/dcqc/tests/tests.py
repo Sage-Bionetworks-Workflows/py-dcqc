@@ -159,6 +159,7 @@ class GrepDateTest(ExternalTestMixin, TestABC):
         )
         return process
 
+
 class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
     tier = 4
 
@@ -179,4 +180,3 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
             command_args=command_args,
         )
         return process
-    

@@ -230,6 +230,7 @@ def test_for_an_error_when_getting_one_file_from_multi_file_target(test_files):
     with pytest.raises(ValueError):
         test.get_file()
 
+
 def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
     target = test_targets["tiff"]
     test = tests.TiffTag306DateTimeTest(target)
