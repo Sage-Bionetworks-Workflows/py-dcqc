@@ -178,7 +178,7 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
             path,
         ]
         process = Process(
-            container="quay.io/sagebionetworks/tifftools:latest",
+            container="quay.io/adamjtaylor/tifftools:latest",
             command_args=command_args,
         )
         return process
