@@ -179,3 +179,4 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
             command_args=command_args,
         )
         return process
+    
