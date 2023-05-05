@@ -178,7 +178,7 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
             r"'DateTime 306 \(0x132\) ASCII'",  # match the DateTime 306 tag
         ]
         process = Process(
-            container="quay.io/adamjtaylor/tifftools:latest",
+            container="ghcr.io/sage-bionetworks-workflows/tifftools:latest",
             command_args=command_args,
         )
         return process
