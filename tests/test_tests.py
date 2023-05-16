@@ -236,3 +236,17 @@ def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
     test = tests.TiffTag306DateTimeTest(target)
     process = test.generate_process()
     assert "grep" in process.command
+
+
+def test_that_the_datetime306_test_works_on_a_correct_file(test_targets):
+    target = test_targets["tiff"]
+    test = tests.JsonLoadTest(target)
+    test_status = test.get_status()
+    assert test_status == TestStatus.PASS
+
+
+def test_that_the_datetime306_test_works_on_incorrect_files(test_targets):
+    target = test_targets["tiff_dirty_datetime"]
+    test = tests.TiffTag306DateTimeTest(target)
+    test_status = test.get_status()
+    assert test_status == TestStatus.FAIL

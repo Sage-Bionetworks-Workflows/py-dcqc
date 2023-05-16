@@ -57,6 +57,7 @@ def test_files(get_data):
     jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
     syn_path = "syn://syn50555279"
+    tiff_dirty_datetime_path = get_data("test_image_dirty_datetime.tif")
     good_metadata = {
         "file_type": "txt",
         "md5_checksum": "14758f1afd44c09b7992073ccf00b43d",
@@ -73,12 +74,19 @@ def test_files(get_data):
         "file_type": "tiff",
         "md5_checksum": "c7b08f6decb5e7572efbe6074926a843",
     }
+    tiff_dirty_datetime_metadata = {
+        "file_type": "tiff",
+        "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268",
+    }
     test_files = {
         "good": File(txt_path.as_posix(), good_metadata),
         "bad": File(txt_path.as_posix(), bad_metadata),
         "tiff": File(tiff_path.as_posix(), tiff_metadata),
         "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
         "synapse": File(syn_path, good_metadata),
+        "tiff_dirty_datetime": File(
+            tiff_dirty_datetime_path.as_posix, tiff_dirty_datetime_metadata
+        ),
     }
 
     # Create an in-memory remote file based on the good file
