@@ -85,7 +85,7 @@ def test_files(get_data):
         "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
         "synapse": File(syn_path, good_metadata),
         "tiff_dirty_datetime": File(
-            tiff_dirty_datetime_path.as_posix, tiff_dirty_datetime_metadata
+            tiff_dirty_datetime_path.as_posix(), tiff_dirty_datetime_metadata
         ),
     }
 
