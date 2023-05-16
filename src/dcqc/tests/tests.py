@@ -175,7 +175,7 @@ class TiffTag306DateTimeTest(ExternalTestMixin, TestABC):
             "grep",  # pipe the output
             "-a",  # treat input as text
             "-q",  # suppress output
-            r"'DateTime 306 \(0x132\) ASCII'",  # match the DateTime 306 tag
+            "'DateTime 306 (0x132) ASCII'",  # match the DateTime 306 tag
         ]
         process = Process(
             container="ghcr.io/sage-bionetworks-workflows/tifftools:latest",
