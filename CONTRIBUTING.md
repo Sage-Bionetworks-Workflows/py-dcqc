@@ -186,6 +186,36 @@ This often provides additional considerations and avoids unnecessary work.
    the PR as a draft first and mark it as ready for review after the feedbacks
    from the continuous integration (CI) system or any required fixes.
 
+### Special Considerations for Contributing External Tests
+
+In `py-dcqc`, any test where the primary business logic is executed outside of this package itself is considered to be external. One example is the `LibTiffInfoTest`. For these tests, `py-dcqc` is responsible for packaging up a Nextflow process which is then executed in an [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow run. Such tests are not possible to run in `py-dcqc` alone at this time. This makes contributing, testing, debugging, and using external tests a little more complicated that internal tests such as the `Md5ChecksumTest` which has all of its logic built into this package.
+
+When contributing an external test, following these steps may be helpful:
+
+1. Follow the steps above to set up `py-dcqc` and create your contribution.
+
+2. Follow the instructions in the [README.md](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/README.md)
+   file in the `nf-dcqc` respository to set up the workflow on your local machine.
+   - Run `git checkout dev` to switch to the developer branch
+
+3. Build your local version of `py-dcqc` with your new changes with:
+   ```console
+   src/docker/build.sh
+   ```
+   NOTE: This step assumes that you have docker installed and that it is running, and that you have `pipx` installed.
+
+4. Follow `nf-dcqc` instructions to create a `nextflow run` command that tests your contribution.
+   - You should include at least two files in your `nf-dcqc` input file ([example](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/testdata/input_full.csv)), one that you expect to pass your contributed test, and one that you expect to fail.
+   - Include the `local` profile so that the workflow leverages your locally built `py-orca` container
+
+   Example command (executed from within your local `nf-dcqc` repo clone):
+   ```
+   nextflow run main.nf -profile local,docker --input path/to/your/input.csv -- outdir output --required_tests <YOUR_TEST_NAME>
+   ```
+
+5. Examine the final `suites.json` that is exported by the Nextflow workflow, if your contributed test bahaved as
+   expected, you're done! If not, debug and make changes to your contribution and re-run the workflow.
+
 ### Troubleshooting
 
 The following tips can be used when facing problems to build or test the
