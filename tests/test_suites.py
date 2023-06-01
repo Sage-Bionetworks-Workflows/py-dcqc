@@ -3,11 +3,12 @@ import pytest
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
-from dcqc.tests.test_abc import TestABC, TestStatus
-from dcqc.tests.tests import (
+from dcqc.tests import (
+    BaseTest,
     FileExtensionTest,
     GrepDateTest,
     LibTiffInfoTest,
+    TestStatus,
     TiffTag306DateTimeTest,
 )
 
@@ -20,7 +21,7 @@ class RedundantFileSuite(TiffSuite):
     del_tests = (LibTiffInfoTest, GrepDateTest, TiffTag306DateTimeTest)
 
 
-class DummyTest(TestABC):
+class DummyTest(BaseTest):
     def compute_status(self) -> TestStatus:
         return TestStatus.NONE
 
@@ -28,7 +29,7 @@ class DummyTest(TestABC):
 def test_that_a_file_suite_results_in_multiple_tests():
     tests = FileSuite.list_test_classes()
     assert len(tests) > 0
-    assert all(issubclass(test, TestABC) for test in tests)
+    assert all(issubclass(test, BaseTest) for test in tests)
 
 
 def test_that_deleting_a_just_added_test_results_in_the_same_test_list():

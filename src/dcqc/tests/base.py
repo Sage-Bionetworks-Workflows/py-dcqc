@@ -7,6 +7,7 @@ from copy import deepcopy
 from dataclasses import InitVar, dataclass
 from enum import Enum
 from importlib import import_module
+from itertools import chain
 from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, Optional, Type
@@ -24,7 +25,7 @@ class TestStatus(Enum):
 
 
 # TODO: Look into the @typing.final decorator
-class TestABC(SerializableMixin, ABC):
+class BaseTest(SerializableMixin, ABC):
     """Abstract base class for QC tests.
 
     Args:
@@ -106,9 +107,9 @@ class TestABC(SerializableMixin, ABC):
         return files[0]
 
     @classmethod
-    def get_subclass_by_name(cls, test: str) -> Type[TestABC]:
+    def get_subclass_by_name(cls, test: str) -> Type[BaseTest]:
         """Retrieve subclass by name."""
-        test_classes = TestABC.__subclasses__()
+        test_classes = BaseTest.list_subclasses()
         registry = {test_class.__name__: test_class for test_class in test_classes}
         if test not in registry:
             test_names = list(registry)
@@ -117,10 +118,15 @@ class TestABC(SerializableMixin, ABC):
         return registry[test]
 
     @classmethod
-    def list_subclasses(cls) -> list[Type[TestABC]]:
+    def list_subclasses(cls) -> tuple[Type[BaseTest], ...]:
         """List all subclasses."""
-        test_classes = TestABC.__subclasses__()
-        return test_classes
+        subclasses: list[Type[BaseTest]]
+        subclasses = cls.__subclasses__()
+
+        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
+        subclasses_chain = chain(subclasses, *subsubclasses_list)
+        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
+        return all_subclasses
 
     @abstractmethod
     def compute_status(self) -> TestStatus:
@@ -137,7 +143,7 @@ class TestABC(SerializableMixin, ABC):
         return test_dict
 
     @classmethod
-    def from_dict(cls, dictionary: SerializedObject) -> TestABC:
+    def from_dict(cls, dictionary: SerializedObject) -> BaseTest:
         """Deserialize a dictionary into a test.
 
         Args:
@@ -205,7 +211,7 @@ class Process(SerializableMixin):
         return process
 
 
-class ExternalTestMixin(TestABC):
+class ExternalTestMixin(BaseTest):
     # Class attributes
     is_external_test = True
 

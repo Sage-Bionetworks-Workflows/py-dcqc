@@ -9,7 +9,7 @@ from typing import ClassVar, Optional, Type, Union
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.target import Target
-from dcqc.tests.test_abc import TestABC, TestStatus
+from dcqc.tests import BaseTest, TestStatus
 
 
 # TODO: Consider the Composite design pattern once
@@ -30,8 +30,8 @@ class SuiteABC(SerializableMixin, ABC):
 
     # Class attributes
     file_type: ClassVar[FileType]
-    add_tests: ClassVar[tuple[Type[TestABC], ...]]
-    del_tests: ClassVar[tuple[Type[TestABC], ...]]
+    add_tests: ClassVar[tuple[Type[BaseTest], ...]]
+    del_tests: ClassVar[tuple[Type[BaseTest], ...]]
 
     # Instance attributes
     type: str
@@ -92,7 +92,7 @@ class SuiteABC(SerializableMixin, ABC):
     @classmethod
     def from_tests(
         cls,
-        tests: Sequence[TestABC],
+        tests: Sequence[BaseTest],
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> SuiteABC:
@@ -132,9 +132,9 @@ class SuiteABC(SerializableMixin, ABC):
         return suite
 
     @classmethod
-    def list_test_classes(cls) -> tuple[Type[TestABC], ...]:
+    def list_test_classes(cls) -> tuple[Type[BaseTest], ...]:
         """List all applicable test classes"""
-        all_tests: set[Type[TestABC]]
+        all_tests: set[Type[BaseTest]]
         all_tests = set()
 
         superclasses = cls.__mro__
@@ -149,7 +149,7 @@ class SuiteABC(SerializableMixin, ABC):
         return tuple(all_tests)
 
     @classmethod
-    def list_test_classes_by_file_type(cls) -> dict[str, list[Type[TestABC]]]:
+    def list_test_classes_by_file_type(cls) -> dict[str, list[Type[BaseTest]]]:
         """List test classes by file type."""
         result = dict()
         suite_classes = cls.list_subclasses()
@@ -166,7 +166,7 @@ class SuiteABC(SerializableMixin, ABC):
         required_test_names = [test.__name__ for test in required_tests]
         return required_test_names
 
-    def init_test_classes(self) -> list[TestABC]:
+    def init_test_classes(self) -> list[BaseTest]:
         """Initialize applicable test classes with target."""
         test_classes = self.list_test_classes()
         tests = []
@@ -291,7 +291,7 @@ class SuiteABC(SerializableMixin, ABC):
         tests = list()
         for test_dict in dictionary["tests"]:
             test_dict["target"] = target_dict
-            test = TestABC.from_dict(test_dict)
+            test = BaseTest.from_dict(test_dict)
             tests.append(test)
         suite.tests = tests
 
