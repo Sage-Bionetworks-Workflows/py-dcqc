@@ -16,6 +16,7 @@ import logging
 
 # Import suites to ensure that they are defined and thus discoverable
 # It is located here to avoid a circular import
+from dcqc import tests
 from dcqc.suites import suite_abc
 from dcqc.suites import suites
 

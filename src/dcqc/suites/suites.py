@@ -1,6 +1,6 @@
+from dcqc import tests
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.tests import tests
 
 
 # TODO: Consider moving the filetype-test association logic

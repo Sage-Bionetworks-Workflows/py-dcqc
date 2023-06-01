@@ -5,7 +5,7 @@ from fs import open_fs
 
 from dcqc.parsers import CsvParser
 from dcqc.reports import JsonReport
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.base_test import BaseTest
 from dcqc.utils import open_parent_fs
 
 PARENT_FOLDER_URL = "syn://syn50696607"
@@ -26,7 +26,7 @@ def acceptance_test_folder_url(run_id):
 @pytest.mark.slow
 def test_json_report_generation(get_data, acceptance_test_folder_url):
     # GIVEN a list of external tests to skip (to remain self-contained)
-    all_tests = TestABC.list_subclasses()
+    all_tests = BaseTest.list_subclasses()
     skipped_tests = [test.__name__ for test in all_tests if test.is_external_test]
 
     # AND a subset of internal tests to be required (to verify suite status behavior)

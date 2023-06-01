@@ -8,7 +8,7 @@ from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.base_test import BaseTest
 
 # For context on TypeVar, check out this GitHub PR comment:
 # https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/8#discussion_r1087141497
@@ -79,7 +79,7 @@ class JsonParser:
 
     @classmethod
     def get_class(cls, cls_name: str) -> Type[SerializableMixin]:
-        test_classes = TestABC.list_subclasses()
+        test_classes = BaseTest.list_subclasses()
         test_cls_map = {cls.__name__: cls for cls in test_classes}
 
         suite_classes = SuiteABC.list_subclasses()

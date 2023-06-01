@@ -7,7 +7,7 @@ from dcqc.mixins import SerializableMixin
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests.test_abc import TestABC
+from dcqc.tests.base_test import BaseTest
 
 
 def test_that_parsing_a_csv_file_yields_suites(get_data):
@@ -61,6 +61,6 @@ def test_for_an_error_when_parsing_a_single_object_with_parse_objects(get_data):
 
 def test_that_json_parser_can_parse_multiple_objects(get_data):
     json_path = get_data("tests.json")
-    result = JsonParser.parse_objects(json_path, TestABC)
+    result = JsonParser.parse_objects(json_path, BaseTest)
     assert len(result) > 0
-    assert isinstance(result[0], TestABC)
+    assert isinstance(result[0], BaseTest)

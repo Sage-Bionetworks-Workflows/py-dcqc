@@ -12,7 +12,7 @@ from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests.test_abc import ExternalTestMixin, TestABC
+from dcqc.tests.base_test import BaseTest, ExternalTestMixin
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)
@@ -113,7 +113,7 @@ def compute_test(
     """Compute the test status from a test JSON file"""
     output_json.parent.mkdir(parents=True, exist_ok=True)
 
-    test = JsonParser.parse_object(input_json, TestABC)
+    test = JsonParser.parse_object(input_json, BaseTest)
     test.get_status()
     output_url = output_json.as_posix()
 
@@ -134,7 +134,7 @@ def create_suite(
     required_tests_maybe = required_tests if required_tests else None
     skipped_tests_maybe = skipped_tests if skipped_tests else None
 
-    tests = [JsonParser.parse_object(test_json, TestABC) for test_json in input_jsons]
+    tests = [JsonParser.parse_object(test_json, BaseTest) for test_json in input_jsons]
     suite = SuiteABC.from_tests(tests, required_tests_maybe, skipped_tests_maybe)
     report = JsonReport()
     report.save(suite, output_json, overwrite)

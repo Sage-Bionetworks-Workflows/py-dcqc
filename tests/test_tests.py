@@ -3,9 +3,9 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
+from dcqc import tests
 from dcqc.target import Target
-from dcqc.tests import tests
-from dcqc.tests.test_abc import ExternalTestMixin, Process, TestABC, TestStatus
+from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
 def test_that_the_file_extension_test_works_on_correct_files(test_targets):
@@ -78,12 +78,12 @@ def test_that_the_jsonld_load_test_works_on_incorrect_files(test_targets):
 
 
 def test_that_all_external_tests_inherit_from_the_mixin_first():
-    tests = TestABC.list_subclasses()
+    tests = BaseTest.list_subclasses()
     for test in tests:
         if issubclass(test, ExternalTestMixin):
             mro = test.__mro__
             mixin_index = mro.index(ExternalTestMixin)
-            abc_index = mro.index(TestABC)
+            abc_index = mro.index(BaseTest)
             assert mixin_index < abc_index
 
 
@@ -133,13 +133,13 @@ def test_that_the_ome_xml_schema_test_command_is_produced(test_targets):
 
 
 def test_that_the_md5_checksum_test_can_be_retrieved_by_name():
-    test = TestABC.get_subclass_by_name("Md5ChecksumTest")
+    test = BaseTest.get_subclass_by_name("Md5ChecksumTest")
     assert test is tests.Md5ChecksumTest
 
 
 def test_for_an_error_when_retrieving_a_random_test_by_name():
     with pytest.raises(ValueError):
-        TestABC.get_subclass_by_name("FooBar")
+        BaseTest.get_subclass_by_name("FooBar")
 
 
 def test_for_an_error_when_a_libtiff_info_test_is_given_multiple_files(test_files):
