@@ -8,7 +8,7 @@ from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests.base import BaseTest
+from dcqc.tests.base_test import BaseTest
 
 # For context on TypeVar, check out this GitHub PR comment:
 # https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/8#discussion_r1087141497

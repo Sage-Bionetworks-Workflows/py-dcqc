@@ -12,7 +12,7 @@ from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests.base import BaseTest, ExternalTestMixin
+from dcqc.tests.base_test import BaseTest, ExternalTestMixin
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)

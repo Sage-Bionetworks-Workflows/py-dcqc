@@ -7,7 +7,7 @@ from dcqc.mixins import SerializableMixin
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests.base import BaseTest
+from dcqc.tests.base_test import BaseTest
 
 
 def test_that_parsing_a_csv_file_yields_suites(get_data):

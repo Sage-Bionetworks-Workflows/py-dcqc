@@ -1,7 +1,7 @@
-from dcqc.tests.base import BaseTest, ExternalTestMixin, Process
+from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
-class BioFormatsInfoTest(ExternalTestMixin, BaseTest):
+class BioFormatsInfoTest(ExternalBaseTest):
     tier = 2
 
     def generate_process(self) -> Process:

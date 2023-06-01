@@ -1,4 +1,4 @@
-from dcqc.tests.base import BaseTest, ExternalTestMixin, Process, TestStatus
+from dcqc.tests.base_test import BaseTest, ExternalTestMixin, Process, TestStatus
 from dcqc.tests.bioformats_info_test import BioFormatsInfoTest
 from dcqc.tests.file_extension_test import FileExtensionTest
 from dcqc.tests.grep_date_test import GrepDateTest

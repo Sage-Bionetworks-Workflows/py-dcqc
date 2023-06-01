@@ -5,7 +5,7 @@ from fs import open_fs
 
 from dcqc.parsers import CsvParser
 from dcqc.reports import JsonReport
-from dcqc.tests.base import BaseTest
+from dcqc.tests.base_test import BaseTest
 from dcqc.utils import open_parent_fs
 
 PARENT_FOLDER_URL = "syn://syn50696607"

@@ -1,10 +1,10 @@
 import hashlib
 from pathlib import Path
 
-from dcqc.tests.base import BaseTest, TestStatus
+from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
-class Md5ChecksumTest(BaseTest):
+class Md5ChecksumTest(InternalBaseTest):
     tier = 1
     only_one_file_targets = False
 

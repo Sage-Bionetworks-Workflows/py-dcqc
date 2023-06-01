@@ -266,3 +266,11 @@ class ExternalTestMixin(BaseTest):
     #     process = self.generate_process()
     #     dictionary["process"] = process.to_dict()
     #     return dictionary
+
+
+class InternalBaseTest(BaseTest):
+    """Base class for all internal tests."""
+
+
+class ExternalBaseTest(ExternalTestMixin, BaseTest):
+    """Base class for all external tests."""

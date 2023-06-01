@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 
-from dcqc.tests.base import BaseTest, TestStatus
+from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
-class JsonLoadTest(BaseTest):
+class JsonLoadTest(InternalBaseTest):
     tier = 2
     only_one_file_targets = False
 

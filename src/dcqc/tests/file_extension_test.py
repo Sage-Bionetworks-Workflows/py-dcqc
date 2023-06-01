@@ -1,7 +1,7 @@
-from dcqc.tests.base import BaseTest, TestStatus
+from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
-class FileExtensionTest(BaseTest):
+class FileExtensionTest(InternalBaseTest):
     tier = 1
     only_one_file_targets = False
 
