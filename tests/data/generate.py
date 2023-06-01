@@ -7,12 +7,12 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from dcqc import tests
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import Target
-from dcqc.tests import tests
 
 # Shared values
 data_dir = sys.path[0]
