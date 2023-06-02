@@ -3,6 +3,7 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 class LibTiffInfoTest(ExternalBaseTest):
     tier = 2
+    pass_code = "0"
 
     def generate_process(self) -> Process:
         file = self.get_file()

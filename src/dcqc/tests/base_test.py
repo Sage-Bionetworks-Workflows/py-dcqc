@@ -191,7 +191,7 @@ class Process(SerializableMixin):
 
     @property
     def command(self) -> str:
-        return " ".join(self._command_args)
+        return shlex.join(self._command_args)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Process:
@@ -254,7 +254,7 @@ class ExternalTestMixin(BaseTest):
         """Interpret the process output files to yield a test status."""
         exit_code = outputs["exit_code"].read_text()
         exit_code = exit_code.strip()
-        if exit_code == "0":
+        if exit_code == self.pass_code:
             status = TestStatus.PASS
         else:
             status = TestStatus.FAIL
