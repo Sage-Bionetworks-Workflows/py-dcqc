@@ -191,7 +191,7 @@ class Process(SerializableMixin):
 
     @property
     def command(self) -> str:
-        return shlex.join(self._command_args)
+        return " ".join(self._command_args)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Process:
