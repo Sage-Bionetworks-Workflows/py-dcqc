@@ -100,19 +100,6 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
         SuiteABC.from_tests(tests)
 
 
-# TODO: Enable once multi-file target is implemented
-# def test_for_an_error_when_building_suite_from_tests_with_multifile_target(
-#     test_files,
-# ):
-#     file = test_files["good"]
-#     target = BaseTarget(file, file)
-#     test_1 = FileExtensionTest(target)
-#     test_2 = FileExtensionTest(target)
-#     tests = [test_1, test_2]
-#     with pytest.raises(ValueError):
-#         SuiteABC.from_tests(tests)
-
-
 def test_that_a_suite_will_not_consider_unrequired_tests(test_targets):
     target = test_targets["bad"]
     required_tests = []
