@@ -7,7 +7,7 @@ from typing import Any, Optional, Type, TypeVar, cast
 from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import BaseTarget, Target
+from dcqc.target import BaseTarget, SingleTarget
 from dcqc.tests.base_test import BaseTest
 
 # For context on TypeVar, check out this GitHub PR comment:
@@ -45,9 +45,9 @@ class CsvParser:
                 file.stage(destination, overwrite=True)
             yield index, file
 
-    def create_targets(self) -> Iterator[Target]:
+    def create_targets(self) -> Iterator[SingleTarget]:
         for index, file in self.create_files():
-            yield Target(file, id=f"{index:04}")
+            yield SingleTarget(file, id=f"{index:04}")
 
     def create_suites(
         self,

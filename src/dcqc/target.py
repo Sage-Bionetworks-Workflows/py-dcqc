@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+from abc import ABC
 from copy import deepcopy
 from dataclasses import dataclass
-from itertools import chain
 from pathlib import Path
-from typing import Optional, Type
+from typing import Optional
 
 from dcqc.file import File, FileType
-from dcqc.mixins import SerializableMixin, SerializedObject
+from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 
 
 # TODO: Eventually, there might be target-specific metadata
@@ -16,7 +16,7 @@ from dcqc.mixins import SerializableMixin, SerializedObject
 #       really is just a wrapper for a group of files
 # TODO: Maybe the Composite pattern would work here?
 @dataclass
-class BaseTarget(SerializableMixin):
+class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
     """Construct a multi-file Target.
 
     Targets ensure support for both single-file
@@ -72,28 +72,6 @@ class BaseTarget(SerializableMixin):
         return paths
 
     @classmethod
-    def list_subclasses(cls) -> tuple[Type[BaseTarget], ...]:
-        """List all subclasses."""
-        subclasses: list[Type[BaseTarget]]
-        subclasses = cls.__subclasses__()
-
-        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
-        subclasses_chain = chain(subclasses, *subsubclasses_list)
-        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
-        return all_subclasses
-
-    @classmethod
-    def get_subclass_by_name(cls, name: str) -> Type[BaseTarget]:
-        """Retrieve a subclass by name."""
-        subclasses = cls.list_subclasses()
-        registry = {subcls.__name__: subcls for subcls in subclasses}
-        if name not in registry:
-            options = list(registry)
-            message = f"Target ({name}) not available ({options})."
-            raise ValueError(message)
-        return registry[name]
-
-    @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> BaseTarget:
         """Deserialize a dictionary into a target.
 
@@ -112,9 +90,14 @@ class BaseTarget(SerializableMixin):
         target = target_cls(*files, id=id)
         return target
 
+    @classmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+        return BaseTarget
+
 
 @dataclass(init=False)
-class Target(BaseTarget):
+class SingleTarget(BaseTarget):
     """Single-file target."""
 
     def __post_init__(self):

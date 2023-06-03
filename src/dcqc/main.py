@@ -11,7 +11,7 @@ from dcqc.file import File, FileType
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 from dcqc.tests.base_test import BaseTest, ExternalTestMixin
 
 # Make commands optional to allow for `dcqc --version`
@@ -77,7 +77,7 @@ def create_tests(
     required_tests_maybe = required_tests if required_tests else None
     skipped_tests_maybe = skipped_tests if skipped_tests else None
 
-    target = JsonParser.parse_object(input_json, Target)
+    target = JsonParser.parse_object(input_json, SingleTarget)
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests_maybe)
 
     report = JsonReport()
@@ -192,7 +192,7 @@ def qc_file(
     file_metadata = json.loads(metadata)
     file_metadata["file_type"] = file_type
     file = File(input_file.as_posix(), file_metadata)
-    target = Target(file)
+    target = SingleTarget(file)
 
     # Prepare suite (skip all external tests)
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests)

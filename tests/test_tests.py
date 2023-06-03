@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from dcqc import tests
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
@@ -91,7 +91,7 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     tiff_file = test_files["tiff"]
-    target = Target(tiff_file)
+    target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
         path_1 = Path(tmp_dir, "code_1.txt")
@@ -184,7 +184,7 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     tiff_file = test_files["tiff"]
-    target = Target(tiff_file)
+    target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
         path_1 = Path(tmp_dir, "code_1.txt")
@@ -222,7 +222,7 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     tiff_file = test_files["tiff"]
-    target = Target(tiff_file)
+    target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
         path_1 = Path(tmp_dir, "code_1.txt")

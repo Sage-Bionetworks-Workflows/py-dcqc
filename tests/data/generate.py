@@ -12,7 +12,7 @@ from dcqc.file import File
 from dcqc.mixins import SerializableMixin
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 
 # Shared values
 data_dir = sys.path[0]
@@ -33,7 +33,7 @@ file = File(file_url, metadata)
 export(file, "file.json")
 
 # target.json
-target = Target(file, id="001")
+target = SingleTarget(file, id="001")
 export(target, "target.json")
 
 # test.internal.json

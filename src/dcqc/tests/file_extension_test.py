@@ -1,10 +1,10 @@
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
 class FileExtensionTest(InternalBaseTest):
     tier = 1
-    target: Target
+    target: SingleTarget
 
     def compute_status(self) -> TestStatus:
         status = TestStatus.PASS

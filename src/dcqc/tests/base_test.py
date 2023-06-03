@@ -7,12 +7,11 @@ from copy import deepcopy
 from dataclasses import InitVar, dataclass
 from enum import Enum
 from importlib import import_module
-from itertools import chain
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Optional, Type
+from typing import ClassVar, Optional
 
-from dcqc.mixins import SerializableMixin, SerializedObject
+from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 from dcqc.target import BaseTarget
 
 
@@ -24,7 +23,7 @@ class TestStatus(Enum):
 
 
 # TODO: Look into the @typing.final decorator
-class BaseTest(SerializableMixin, ABC):
+class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC):
     """Abstract base class for QC tests.
 
     Args:
@@ -62,28 +61,6 @@ class BaseTest(SerializableMixin, ABC):
             self._status = self.compute_status()
         return self._status
 
-    @classmethod
-    def get_subclass_by_name(cls, test: str) -> Type[BaseTest]:
-        """Retrieve subclass by name."""
-        test_classes = BaseTest.list_subclasses()
-        registry = {test_class.__name__: test_class for test_class in test_classes}
-        if test not in registry:
-            test_names = list(registry)
-            message = f"Test ({test}) not among available options ({test_names})."
-            raise ValueError(message)
-        return registry[test]
-
-    @classmethod
-    def list_subclasses(cls) -> tuple[Type[BaseTest], ...]:
-        """List all subclasses."""
-        subclasses: list[Type[BaseTest]]
-        subclasses = cls.__subclasses__()
-
-        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
-        subclasses_chain = chain(subclasses, *subsubclasses_list)
-        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
-        return all_subclasses
-
     @abstractmethod
     def compute_status(self) -> TestStatus:
         """Compute the status of the test."""
@@ -109,7 +86,7 @@ class BaseTest(SerializableMixin, ABC):
             The reconstructed test object.
         """
         test_cls_name = dictionary.pop("type")
-        test_cls = cls.get_subclass_by_name(test_cls_name)
+        test_cls = BaseTest.get_subclass_by_name(test_cls_name)
 
         target_dict = dictionary["target"]
         target = BaseTarget.from_dict(target_dict)
@@ -131,6 +108,11 @@ class BaseTest(SerializableMixin, ABC):
             )
             raise ModuleNotFoundError(message)
         return module
+
+    @classmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+        return BaseTest
 
 
 @dataclass

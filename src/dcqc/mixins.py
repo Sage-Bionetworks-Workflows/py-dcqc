@@ -6,11 +6,13 @@ from collections.abc import Iterable, Mapping
 from dataclasses import fields
 from itertools import chain
 from pathlib import Path, PurePath
-from typing import Any, ClassVar, Optional, TypeVar, cast
+from typing import Any, ClassVar, Generic, Optional, Type, TypeVar, cast
 
 SerializedObject = dict[str, Any]
 
 T = TypeVar("T", bound="SerializableMixin")
+
+U = TypeVar("U", bound=Type[object])
 
 
 class SerializableMixin(ABC):
@@ -132,3 +134,32 @@ class SerializableMixin(ABC):
         # Incompatible return value type (got "SerializableMixin", expected "T")
         copy = cast(T, copy)
         return copy
+
+
+class SubclassRegistryMixin(ABC, Generic[U]):
+    """Mixin for tracking subclasses."""
+
+    @classmethod
+    @abstractmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+
+    @classmethod
+    def list_subclasses(cls) -> tuple[Type[U], ...]:
+        """List all subclasses."""
+        subclasses = cls.__subclasses__()
+        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
+        subclasses_chain = chain(subclasses, *subsubclasses_list)
+        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
+        return all_subclasses
+
+    @classmethod
+    def get_subclass_by_name(cls, name: str) -> Type[U]:
+        """Retrieve a subclass by name."""
+        subclasses = cls.get_base_class().list_subclasses()
+        registry = {subcls.__name__: subcls for subcls in subclasses}
+        if name not in registry:
+            options = list(registry)
+            message = f"Subclass ({name}) not available ({options})."
+            raise ValueError(message)
+        return registry[name]

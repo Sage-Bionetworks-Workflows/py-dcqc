@@ -3,18 +3,17 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection, Sequence
 from copy import deepcopy
-from itertools import chain
 from typing import ClassVar, Optional, Type, Union
 
 from dcqc.file import FileType
-from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.target import BaseTarget, Target
+from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
+from dcqc.target import BaseTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
 # TODO: Consider the Composite design pattern once
 #       we have higher-level QC suites
-class SuiteABC(SerializableMixin, ABC):
+class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
     """Abstract base class for QC test suites.
 
     Args:
@@ -65,7 +64,7 @@ class SuiteABC(SerializableMixin, ABC):
     @classmethod
     def from_target(
         cls,
-        target: Target,
+        target: SingleTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> SuiteABC:
@@ -126,7 +125,7 @@ class SuiteABC(SerializableMixin, ABC):
         if not all(representative_target == target for target in targets):
             message = f"Not all tests refer to the same target ({targets})."
             raise ValueError(message)
-        if not isinstance(representative_target, Target):
+        if not isinstance(representative_target, SingleTarget):  # pragma: no cover
             raise ValueError("Can only recreate suite from single-file target.")
         suite = cls.from_target(representative_target, required_tests, skipped_tests)
         suite.tests = suite_tests
@@ -178,28 +177,6 @@ class SuiteABC(SerializableMixin, ABC):
             test = test_cls(self.target, skip)
             tests.append(test)
         return tests
-
-    @classmethod
-    def list_subclasses(cls) -> tuple[Type[SuiteABC], ...]:
-        """List all subclasses."""
-        subclasses: list[Type[SuiteABC]]
-        subclasses = cls.__subclasses__()
-
-        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
-        subclasses_chain = chain(subclasses, *subsubclasses_list)
-        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
-        return all_subclasses
-
-    @classmethod
-    def get_subclass_by_name(cls, name: str) -> Type[SuiteABC]:
-        """Retrieve a subclass by name."""
-        subclasses = cls.list_subclasses()
-        registry = {subcls.__name__: subcls for subcls in subclasses}
-        if name not in registry:
-            options = list(registry)
-            message = f"Suite ({name}) not available ({options})."
-            raise ValueError(message)
-        return registry[name]
 
     @classmethod
     def get_subclass_by_file_type(
@@ -298,3 +275,8 @@ class SuiteABC(SerializableMixin, ABC):
         suite.tests = tests
 
         return suite
+
+    @classmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+        return SuiteABC
