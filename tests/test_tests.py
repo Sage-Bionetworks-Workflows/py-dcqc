@@ -142,18 +142,6 @@ def test_for_an_error_when_retrieving_a_random_test_by_name():
         BaseTest.get_subclass_by_name("FooBar")
 
 
-def test_for_an_error_when_a_libtiff_info_test_is_given_multiple_files(test_files):
-    tiff_file = test_files["tiff"]
-    target = Target(tiff_file, tiff_file)
-
-    assert not tests.Md5ChecksumTest.only_one_file_targets
-    tests.Md5ChecksumTest(target)
-
-    assert tests.LibTiffInfoTest.only_one_file_targets
-    with pytest.raises(ValueError):
-        tests.LibTiffInfoTest(target)
-
-
 def test_that_process_output_files_can_be_found(get_data):
     std_out = get_data("tiffinfo/std_out.txt")
     std_err = get_data("tiffinfo/std_err.txt")
@@ -221,14 +209,6 @@ def test_that_the_grep_date_test_command_is_produced(test_targets):
     test = tests.GrepDateTest(target)
     process = test.generate_process()
     assert "grep" in process.command
-
-
-def test_for_an_error_when_getting_one_file_from_multi_file_target(test_files):
-    file = test_files["good"]
-    target = Target(file, file)
-    test = tests.FileExtensionTest(target)
-    with pytest.raises(ValueError):
-        test.get_file()
 
 
 def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):

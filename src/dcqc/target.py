@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+from itertools import chain
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Type
 
 from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
@@ -15,7 +16,7 @@ from dcqc.mixins import SerializableMixin, SerializedObject
 #       really is just a wrapper for a group of files
 # TODO: Maybe the Composite pattern would work here?
 @dataclass
-class Target(SerializableMixin):
+class BaseTarget(SerializableMixin):
     """Construct a multi-file Target.
 
     Targets ensure support for both single-file
@@ -27,42 +28,18 @@ class Target(SerializableMixin):
             Defaults to None.
     """
 
-    type: str
-    id: Optional[str]
     files: list[File]
+    id: Optional[str]
+    type: str
 
     def __init__(self, *files: File, id: Optional[str] = None):
         self.type = self.__class__.__name__
         self.files = list(files)
         self.id = id
+        self.__post_init__()
 
-    def __hash__(self):
-        return hash(tuple(self.files))
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def get_file_type(self) -> FileType:
-        """Retrieve the file type for the target.
-
-        This function currently only supports targets
-        composed of a single file.
-
-        Raises:
-            NotImplementedError: If the target has
-                more or less than one file.
-
-        Returns:
-            The file type object.
-        """
-        num_files = len(self.files)
-        if num_files == 1:
-            file = self.files[0]
-            file_type = file.get_file_type()
-        else:
-            message = f"Target has {num_files} files, which isn't supported yet."
-            raise NotImplementedError(message)
-        return file_type
+    def __post_init__(self):
+        """Placeholder __post_init__ method."""
 
     def stage(
         self, destination: Optional[Path] = None, overwrite: bool = False
@@ -95,7 +72,29 @@ class Target(SerializableMixin):
         return paths
 
     @classmethod
-    def from_dict(cls, dictionary: SerializedObject) -> Target:
+    def list_subclasses(cls) -> tuple[Type[BaseTarget], ...]:
+        """List all subclasses."""
+        subclasses: list[Type[BaseTarget]]
+        subclasses = cls.__subclasses__()
+
+        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
+        subclasses_chain = chain(subclasses, *subsubclasses_list)
+        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
+        return all_subclasses
+
+    @classmethod
+    def get_subclass_by_name(cls, name: str) -> Type[BaseTarget]:
+        """Retrieve a subclass by name."""
+        subclasses = cls.list_subclasses()
+        registry = {subcls.__name__: subcls for subcls in subclasses}
+        if name not in registry:
+            options = list(registry)
+            message = f"Target ({name}) not available ({options})."
+            raise ValueError(message)
+        return registry[name]
+
+    @classmethod
+    def from_dict(cls, dictionary: SerializedObject) -> BaseTarget:
         """Deserialize a dictionary into a target.
 
         Args:
@@ -104,9 +103,45 @@ class Target(SerializableMixin):
         Returns:
             The reconstructed target object.
         """
+        target_cls_name = dictionary["type"]
+        target_cls = BaseTarget.get_subclass_by_name(target_cls_name)
         dictionary = deepcopy(dictionary)
-        dictionary = cls.from_dict_prepare(dictionary)
+        dictionary = target_cls.from_dict_prepare(dictionary)
         files = [File.from_dict(d) for d in dictionary["files"]]
         id = dictionary["id"]
-        target = cls(*files, id=id)
+        target = target_cls(*files, id=id)
         return target
+
+
+@dataclass(init=False)
+class Target(BaseTarget):
+    """Single-file target."""
+
+    def __post_init__(self):
+        """Run validation checks after initialization."""
+        self.ensure_single_file()
+
+    def ensure_single_file(self):
+        """Ensure that target is only initialized with a single file.
+
+        Args:
+            value: List of files.
+
+        Returns:
+            List of files.
+        """
+        if len(self.files) != 1:
+            raise ValueError("Target is restricted to single files")
+
+    @property
+    def file(self):
+        """Single file."""
+        return self.files[0]
+
+    def get_file_type(self) -> FileType:
+        """Retrieve the file type for the target.
+
+        Returns:
+            The file type object.
+        """
+        return self.file.get_file_type()

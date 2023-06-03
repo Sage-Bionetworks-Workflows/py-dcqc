@@ -22,8 +22,7 @@ def test_for_an_error_when_restoring_a_target_with_a_discordant_type(test_files)
         Target.from_dict(target_1_dict)
 
 
-def test_for_an_error_when_accessing_the_file_type_for_a_multifile_target(test_files):
-    file = test_files["good"]
-    target = Target(file, file)
-    with pytest.raises(NotImplementedError):
-        target.get_file_type()
+def test_for_an_error_when_creating_single_file_target_with_two_files(test_files):
+    test_file = test_files["good"]
+    with pytest.raises(ValueError):
+        Target(test_file, test_file)

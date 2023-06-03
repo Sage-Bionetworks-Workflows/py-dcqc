@@ -8,7 +8,7 @@ from typing import ClassVar, Optional, Type, Union
 
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.target import Target
+from dcqc.target import BaseTarget, Target
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -35,13 +35,13 @@ class SuiteABC(SerializableMixin, ABC):
 
     # Instance attributes
     type: str
-    target: Target
+    target: BaseTarget
     required_tests: set[str]
     skipped_tests: set[str]
 
     def __init__(
         self,
-        target: Target,
+        target: BaseTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ):
@@ -69,7 +69,7 @@ class SuiteABC(SerializableMixin, ABC):
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> SuiteABC:
-        """Generate a suite from a target.
+        """Generate a suite from a single-file target.
 
         The suite is selected based on the target file type.
 
@@ -126,6 +126,8 @@ class SuiteABC(SerializableMixin, ABC):
         if not all(representative_target == target for target in targets):
             message = f"Not all tests refer to the same target ({targets})."
             raise ValueError(message)
+        if not isinstance(representative_target, Target):
+            raise ValueError("Can only recreate suite from single-file target.")
         suite = cls.from_target(representative_target, required_tests, skipped_tests)
         suite.tests = suite_tests
 
@@ -279,7 +281,7 @@ class SuiteABC(SerializableMixin, ABC):
         suite_cls = SuiteABC.get_subclass_by_name(suite_cls_name)
 
         target_dict = dictionary["target"]
-        target = Target.from_dict(target_dict)
+        target = BaseTarget.from_dict(target_dict)
 
         required_tests = dictionary["suite_status"]["required_tests"]
         skipped_tests = dictionary["suite_status"]["skipped_tests"]

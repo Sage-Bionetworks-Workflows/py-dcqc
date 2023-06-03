@@ -1,18 +1,20 @@
 import hashlib
 from pathlib import Path
 
+from dcqc.target import BaseTarget
 from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
 class Md5ChecksumTest(InternalBaseTest):
     tier = 1
-    only_one_file_targets = False
+    target: BaseTarget
 
     def compute_status(self) -> TestStatus:
         status = TestStatus.PASS
-        for file in self.get_files():
+        for file in self.target.files:
+            path = file.stage()
             expected_md5 = file.get_metadata("md5_checksum")
-            actual_md5 = self._compute_md5_checksum(file.local_path)
+            actual_md5 = self._compute_md5_checksum(path)
             if expected_md5 != actual_md5:
                 status = TestStatus.FAIL
                 break

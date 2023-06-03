@@ -14,7 +14,6 @@ T = TypeVar("T", bound="SerializableMixin")
 
 
 class SerializableMixin(ABC):
-
     # Used to serialize properties in addition to dataclass attributes
     _serialized_properties: ClassVar[list[str]]
     _serialized_properties = list()
@@ -23,7 +22,7 @@ class SerializableMixin(ABC):
     def from_dict_prepare(cls, dictionary: SerializedObject) -> SerializedObject:
         """Validate and prepare dictionary for deserialization."""
         type_ = dictionary.pop("type")
-        if type_ != cls.__name__:
+        if type_ != cls.__name__:  # pragma: no cover
             message = f"Type ({type_}) does not match the class ({cls.__name__})."
             raise ValueError(message)
         return dictionary

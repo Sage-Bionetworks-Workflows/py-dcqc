@@ -1,12 +1,13 @@
+from dcqc.target import Target
 from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
 class GrepDateTest(ExternalBaseTest):
     tier = 4
+    target: Target
 
     def generate_process(self) -> Process:
-        file = self.get_file()
-        path = file.local_path.as_posix()
+        path = self.target.file.stage()
         command_args = [
             "!",  # negate exit status
             "grep",

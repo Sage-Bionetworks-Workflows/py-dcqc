@@ -7,7 +7,7 @@ from typing import Any, Optional, Type, TypeVar, cast
 from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import BaseTarget, Target
 from dcqc.tests.base_test import BaseTest
 
 # For context on TypeVar, check out this GitHub PR comment:
@@ -85,11 +85,14 @@ class JsonParser:
         suite_classes = SuiteABC.list_subclasses()
         suite_cls_map = {cls.__name__: cls for cls in suite_classes}
 
+        target_classes = BaseTarget.list_subclasses()
+        target_cls_map = {cls.__name__: cls for cls in target_classes}
+
         file_types = FileType.list_file_types()
         file_types_names = {ft.name.lower() for ft in file_types}
 
-        if cls_name == "Target":
-            return Target
+        if cls_name in target_cls_map:
+            return target_cls_map[cls_name]
         elif cls_name in test_cls_map:
             return test_cls_map[cls_name]
         elif cls_name in suite_cls_map:
