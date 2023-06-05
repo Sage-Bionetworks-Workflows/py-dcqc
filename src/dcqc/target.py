@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -11,38 +11,33 @@ from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMix
 
 
 # TODO: Eventually, there might be target-specific metadata
-# TODO: Now that Target is much simpler, it might make sense
-#       to rename the class to FileSet since it currently
-#       really is just a wrapper for a group of files
-# TODO: Maybe the Composite pattern would work here?
 @dataclass
 class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
-    """Construct a multi-file Target.
+    """Base class for targets with one or more files.
 
-    Targets ensure support for both single-file
-    and multi-file tests.
-
-    Args:
-        *files: Sequence of files objects.
-        id: A unique identifier for the target.
-            Defaults to None.
+    Attributes:
+        files: List of files objects.
+        id: A unique identifier for the target. Defaults to None.
+        type: The target type/subclass.
     """
 
-    files: list[File]
-    id: Optional[str]
-    type: str
+    file_or_files: InitVar[File | list[File]]
+    id: Optional[str] = None
+    files: list[File] = field(init=False)
+    type: str = field(init=False)
 
-    def __init__(self, *files: File, id: Optional[str] = None):
+    def __post_init__(self, file_or_files: File | list[File]):
+        """Ensure list of files and fill in Target type."""
         self.type = self.__class__.__name__
-        self.files = list(files)
-        self.id = id
-        self.__post_init__()
-
-    def __post_init__(self):
-        """Placeholder __post_init__ method."""
+        if isinstance(file_or_files, File):
+            self.files = [file_or_files]
+        else:
+            self.files = file_or_files
 
     def stage(
-        self, destination: Optional[Path] = None, overwrite: bool = False
+        self,
+        destination: Optional[Path] = None,
+        overwrite: bool = False,
     ) -> list[Path]:
         """Create local copy of local or remote file.
 
@@ -100,8 +95,9 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
 class SingleTarget(BaseTarget):
     """Single-file target."""
 
-    def __post_init__(self):
+    def __post_init__(self, file_or_files: File | list[File]):
         """Run validation checks after initialization."""
+        super().__post_init__(file_or_files)
         self.ensure_single_file()
 
     def ensure_single_file(self):

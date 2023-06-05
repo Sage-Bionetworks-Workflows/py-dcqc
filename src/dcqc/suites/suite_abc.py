@@ -3,27 +3,27 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection, Sequence
 from copy import deepcopy
-from typing import ClassVar, Optional, Type, Union
+from typing import ClassVar, Generic, Optional, Type, TypeVar, Union
 
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 from dcqc.target import BaseTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
+Target = TypeVar("Target", bound=BaseTarget)
+
 
 # TODO: Consider the Composite design pattern once
 #       we have higher-level QC suites
-class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
+class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """Abstract base class for QC test suites.
 
     Args:
-        target (Target): Single- or multi-file target.
-        required_tests (Optional[Collection[str]]):
-            List of tests that must pass for the
+        target: Single- or multi-file target.
+        required_tests: List of tests that must pass for the
             overall suite to pass. Defaults to None,
             which requires tier-1 and tier-2 tests.
-        skipped_tests (Optional[Collection[str]]):
-            List of tests that should not be
+        skipped_tests: List of tests that should not be
             evaluated. Defaults to None.
     """
 
@@ -34,13 +34,13 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
 
     # Instance attributes
     type: str
-    target: BaseTarget
+    target: Target
     required_tests: set[str]
     skipped_tests: set[str]
 
     def __init__(
         self,
-        target: BaseTarget,
+        target: Target,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ):

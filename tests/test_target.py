@@ -25,4 +25,4 @@ def test_for_an_error_when_restoring_a_target_with_a_discordant_type(test_files)
 def test_for_an_error_when_creating_single_file_target_with_two_files(test_files):
     test_file = test_files["good"]
     with pytest.raises(ValueError):
-        SingleTarget(test_file, test_file)
+        SingleTarget([test_file, test_file])

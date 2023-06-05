@@ -9,10 +9,12 @@ from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Optional
+from typing import ClassVar, Generic, Optional, TypeVar
 
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 from dcqc.target import BaseTarget
+
+Target = TypeVar("Target", bound=BaseTarget)
 
 
 class TestStatus(Enum):
@@ -23,7 +25,7 @@ class TestStatus(Enum):
 
 
 # TODO: Look into the @typing.final decorator
-class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC):
+class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """Abstract base class for QC tests.
 
     Args:
@@ -44,9 +46,9 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC):
 
     # Instance attributes
     type: str
-    target: BaseTarget
+    target: Target
 
-    def __init__(self, target: BaseTarget, skip: bool = False):
+    def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
         self.target = target
         self._status = TestStatus.SKIP if skip else TestStatus.NONE
