@@ -16,7 +16,7 @@ import pytest
 
 from dcqc.file import File
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
@@ -101,7 +101,7 @@ def test_files(get_data):
 def test_targets(test_files):
     test_targets = dict()
     for name, file in test_files.items():
-        test_targets[name] = Target(file)
+        test_targets[name] = SingleTarget(file)
     yield test_targets
 
 

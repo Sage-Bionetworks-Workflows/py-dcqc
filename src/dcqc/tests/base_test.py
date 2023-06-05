@@ -7,14 +7,14 @@ from copy import deepcopy
 from dataclasses import InitVar, dataclass
 from enum import Enum
 from importlib import import_module
-from itertools import chain
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Optional, Type
+from typing import ClassVar, Generic, Optional, TypeVar
 
-from dcqc.file import File
-from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.target import Target
+from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
+from dcqc.target import BaseTarget
+
+Target = TypeVar("Target", bound=BaseTarget)
 
 
 class TestStatus(Enum):
@@ -25,13 +25,13 @@ class TestStatus(Enum):
 
 
 # TODO: Look into the @typing.final decorator
-class BaseTest(SerializableMixin, ABC):
+class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """Abstract base class for QC tests.
 
     Args:
-        target (Target): Single- or multi-file target.
-        skip (bool, optional): Whether to skip this test,
-            resulting in ``TestStatus.SKIP`` as status.
+        target: Single- or multi-file target.
+        skip: Whether to skip this test, resulting
+            in ``TestStatus.SKIP`` as status.
             Defaults to False.
 
     Raises:
@@ -43,8 +43,6 @@ class BaseTest(SerializableMixin, ABC):
     tier: ClassVar[int]
     is_external_test: ClassVar[bool]
     is_external_test = False
-    only_one_file_targets: ClassVar[bool]
-    only_one_file_targets = True
 
     # Instance attributes
     type: str
@@ -55,11 +53,6 @@ class BaseTest(SerializableMixin, ABC):
         self.target = target
         self._status = TestStatus.SKIP if skip else TestStatus.NONE
 
-        files = self.target.files
-        if self.only_one_file_targets and len(files) > 1:
-            message = f"Test ({self.type}) expected one file, not multiple ({files})."
-            raise ValueError(message)
-
     def skip(self):
         """Force the test to be skipped."""
         self._status = TestStatus.SKIP
@@ -69,64 +62,6 @@ class BaseTest(SerializableMixin, ABC):
         if self._status == TestStatus.NONE and compute_ok:
             self._status = self.compute_status()
         return self._status
-
-    def get_files(self, staged: bool = True) -> list[File]:
-        """Get and stage files for target.
-
-        Args:
-            staged: Whether to make sure that the files are staged.
-            Defaults to True.
-
-        Returns:
-            Staged target files.
-        """
-        files = []
-        for file in self.target.files:
-            if staged:
-                file.stage()
-            files.append(file)
-        return files
-
-    def get_file(self, staged: bool = True) -> File:
-        """Get and stage file for single-file target.
-
-        Args:
-            staged: Whether to make sure that the files are staged.
-            Defaults to True.
-
-        Raises:
-            ValueError: If the target has multiple files.
-
-        Returns:
-            Staged target file.
-        """
-        files = self.get_files(staged)
-        if len(files) != 1:
-            message = "This method only supports single-file targets."
-            raise ValueError(message)
-        return files[0]
-
-    @classmethod
-    def get_subclass_by_name(cls, test: str) -> Type[BaseTest]:
-        """Retrieve subclass by name."""
-        test_classes = BaseTest.list_subclasses()
-        registry = {test_class.__name__: test_class for test_class in test_classes}
-        if test not in registry:
-            test_names = list(registry)
-            message = f"Test ({test}) not among available options ({test_names})."
-            raise ValueError(message)
-        return registry[test]
-
-    @classmethod
-    def list_subclasses(cls) -> tuple[Type[BaseTest], ...]:
-        """List all subclasses."""
-        subclasses: list[Type[BaseTest]]
-        subclasses = cls.__subclasses__()
-
-        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
-        subclasses_chain = chain(subclasses, *subsubclasses_list)
-        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
-        return all_subclasses
 
     @abstractmethod
     def compute_status(self) -> TestStatus:
@@ -153,10 +88,10 @@ class BaseTest(SerializableMixin, ABC):
             The reconstructed test object.
         """
         test_cls_name = dictionary.pop("type")
-        test_cls = cls.get_subclass_by_name(test_cls_name)
+        test_cls = BaseTest.get_subclass_by_name(test_cls_name)
 
         target_dict = dictionary["target"]
-        target = Target.from_dict(target_dict)
+        target = BaseTarget.from_dict(target_dict)
 
         test = test_cls(target)
 
@@ -176,6 +111,11 @@ class BaseTest(SerializableMixin, ABC):
             raise ModuleNotFoundError(message)
         return module
 
+    @classmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+        return BaseTest
+
 
 @dataclass
 class Process(SerializableMixin):
@@ -191,7 +131,8 @@ class Process(SerializableMixin):
 
     @property
     def command(self) -> str:
-        return " ".join(self._command_args)
+        args_strings = [str(arg) for arg in self._command_args]
+        return " ".join(args_strings)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Process:

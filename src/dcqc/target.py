@@ -1,71 +1,43 @@
 from __future__ import annotations
 
+from abc import ABC
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import Optional
 
 from dcqc.file import File, FileType
-from dcqc.mixins import SerializableMixin, SerializedObject
+from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 
 
 # TODO: Eventually, there might be target-specific metadata
-# TODO: Now that Target is much simpler, it might make sense
-#       to rename the class to FileSet since it currently
-#       really is just a wrapper for a group of files
-# TODO: Maybe the Composite pattern would work here?
 @dataclass
-class Target(SerializableMixin):
-    """Construct a multi-file Target.
+class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
+    """Base class for targets with one or more files.
 
-    Targets ensure support for both single-file
-    and multi-file tests.
-
-    Args:
-        *files: Sequence of files objects.
-        id: A unique identifier for the target.
-            Defaults to None.
+    Attributes:
+        files: List of files objects.
+        id: A unique identifier for the target. Defaults to None.
+        type: The target type/subclass.
     """
 
-    type: str
-    id: Optional[str]
-    files: list[File]
+    file_or_files: InitVar[File | list[File]]
+    id: Optional[str] = None
+    files: list[File] = field(init=False)
+    type: str = field(init=False)
 
-    def __init__(self, *files: File, id: Optional[str] = None):
+    def __post_init__(self, file_or_files: File | list[File]):
+        """Ensure list of files and fill in Target type."""
         self.type = self.__class__.__name__
-        self.files = list(files)
-        self.id = id
-
-    def __hash__(self):
-        return hash(tuple(self.files))
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def get_file_type(self) -> FileType:
-        """Retrieve the file type for the target.
-
-        This function currently only supports targets
-        composed of a single file.
-
-        Raises:
-            NotImplementedError: If the target has
-                more or less than one file.
-
-        Returns:
-            The file type object.
-        """
-        num_files = len(self.files)
-        if num_files == 1:
-            file = self.files[0]
-            file_type = file.get_file_type()
+        if isinstance(file_or_files, File):
+            self.files = [file_or_files]
         else:
-            message = f"Target has {num_files} files, which isn't supported yet."
-            raise NotImplementedError(message)
-        return file_type
+            self.files = file_or_files
 
     def stage(
-        self, destination: Optional[Path] = None, overwrite: bool = False
+        self,
+        destination: Optional[Path] = None,
+        overwrite: bool = False,
     ) -> list[Path]:
         """Create local copy of local or remote file.
 
@@ -95,7 +67,7 @@ class Target(SerializableMixin):
         return paths
 
     @classmethod
-    def from_dict(cls, dictionary: SerializedObject) -> Target:
+    def from_dict(cls, dictionary: SerializedObject) -> BaseTarget:
         """Deserialize a dictionary into a target.
 
         Args:
@@ -104,9 +76,55 @@ class Target(SerializableMixin):
         Returns:
             The reconstructed target object.
         """
+        target_cls_name = dictionary["type"]
+        target_cls = BaseTarget.get_subclass_by_name(target_cls_name)
         dictionary = deepcopy(dictionary)
-        dictionary = cls.from_dict_prepare(dictionary)
+        dictionary = target_cls.from_dict_prepare(dictionary)
         files = [File.from_dict(d) for d in dictionary["files"]]
         id = dictionary["id"]
-        target = cls(*files, id=id)
+        target = target_cls(*files, id=id)
         return target
+
+    @classmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+        return BaseTarget
+
+
+@dataclass(init=False)
+class SingleTarget(BaseTarget):
+    """Single-file target."""
+
+    def __post_init__(self, file_or_files: File | list[File]):
+        """Run validation checks after initialization."""
+        super().__post_init__(file_or_files)
+        self.ensure_single_file()
+
+    # While this function makes sense as a pydantic validator,
+    # we can into strange issues with the following test after
+    # switching to @pydantic.dataclasses.dataclass:
+    # test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to
+    def ensure_single_file(self):
+        """Ensure that target is only initialized with a single file.
+
+        Args:
+            value: List of files.
+
+        Returns:
+            List of files.
+        """
+        if len(self.files) != 1:
+            raise ValueError("Target is restricted to single files")
+
+    @property
+    def file(self):
+        """Single file."""
+        return self.files[0]
+
+    def get_file_type(self) -> FileType:
+        """Retrieve the file type for the target.
+
+        Returns:
+            The file type object.
+        """
+        return self.file.get_file_type()

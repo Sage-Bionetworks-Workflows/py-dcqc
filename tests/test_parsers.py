@@ -6,7 +6,7 @@ from dcqc.file import File
 from dcqc.mixins import SerializableMixin
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 from dcqc.tests.base_test import BaseTest
 
 
@@ -33,7 +33,7 @@ def test_that_parsing_a_json_file_must_match_listed_type(get_data):
     json_path = get_data("file.json")
     assert JsonParser.parse_object(json_path, File)
     with pytest.raises(ValueError):
-        JsonParser.parse_object(json_path, Target)
+        JsonParser.parse_object(json_path, SingleTarget)
 
 
 def test_for_an_error_when_parsing_an_unrecognized_type():
