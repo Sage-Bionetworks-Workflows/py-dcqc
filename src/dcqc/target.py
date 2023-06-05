@@ -100,6 +100,10 @@ class SingleTarget(BaseTarget):
         super().__post_init__(file_or_files)
         self.ensure_single_file()
 
+    # While this function makes sense as a pydantic validator,
+    # we can into strange issues with the following test after
+    # switching to @pydantic.dataclasses.dataclass:
+    # test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to
     def ensure_single_file(self):
         """Ensure that target is only initialized with a single file.
 
