@@ -51,6 +51,8 @@ class PairedFastqParityTest(InternalBaseTest):
         Returns:
             Opened FASTQ file (in text mode).
         """
+        # TODO: This logic should ideally live in the File class, and a
+        #       test should confirm the integrity of compressed files
         if path.name.endswith(".gz"):
             return gzip.open(path, "rt")
         else:
