@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from dcqc import tests
-from dcqc.target import SingleTarget
+from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
@@ -240,3 +240,34 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
         mocker.patch.object(test, "_find_process_outputs", return_value=bad_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
+
+
+def test_that_paired_fastq_parity_test_correctly_passes_identical_fastq_files(
+    test_files,
+):
+    fastq1 = test_files["fastq1"]
+    target = PairedTarget([fastq1, fastq1])
+    test = tests.PairedFastqParityTest(target)
+    test_status = test.get_status()
+    assert test_status == TestStatus.PASS
+
+
+def test_that_paired_fastq_parity_test_correctly_fails_different_fastq_files(
+    test_files,
+):
+    fastq1 = test_files["fastq1"]
+    fastq2 = test_files["fastq2"]
+    target = PairedTarget([fastq1, fastq2])
+    test = tests.PairedFastqParityTest(target)
+    test_status = test.get_status()
+    assert test_status == TestStatus.FAIL
+
+
+def test_that_paired_fastq_parity_test_correctly_handles_compressed_fastq_files(
+    test_files,
+):
+    fastq2 = test_files["fastq2"]
+    target = PairedTarget([fastq2, fastq2])
+    test = tests.PairedFastqParityTest(target)
+    test_status = test.get_status()
+    assert test_status == TestStatus.PASS

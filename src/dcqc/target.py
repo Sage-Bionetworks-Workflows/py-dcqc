@@ -105,16 +105,9 @@ class SingleTarget(BaseTarget):
     # switching to @pydantic.dataclasses.dataclass:
     # test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to
     def ensure_single_file(self):
-        """Ensure that target is only initialized with a single file.
-
-        Args:
-            value: List of files.
-
-        Returns:
-            List of files.
-        """
+        """Ensure that target is only initialized with a single file."""
         if len(self.files) != 1:
-            raise ValueError("Target is restricted to single files")
+            raise ValueError("SingleTarget is restricted to single files")
 
     @property
     def file(self):
@@ -128,3 +121,18 @@ class SingleTarget(BaseTarget):
             The file type object.
         """
         return self.file.get_file_type()
+
+
+@dataclass(init=False)
+class PairedTarget(BaseTarget):
+    """Paired (two-file) target."""
+
+    def __post_init__(self, file_or_files: File | list[File]):
+        """Run validation checks after initialization."""
+        super().__post_init__(file_or_files)
+        self.ensure_two_files()
+
+    def ensure_two_files(self):
+        """Ensure that target is only initialized with two files."""
+        if len(self.files) != 2:
+            raise ValueError("PairedTarget is restricted to two files")
