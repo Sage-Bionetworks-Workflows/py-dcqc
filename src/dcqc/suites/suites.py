@@ -44,3 +44,4 @@ class BAMSuite(FileSuite):
 
 class FastqSuite(FileSuite):
     file_type = FileType.get_file_type("FASTQ")
+    add_tests = (tests.PairedFastqParityTest,)
