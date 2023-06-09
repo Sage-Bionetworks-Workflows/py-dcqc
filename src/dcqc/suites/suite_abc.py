@@ -228,7 +228,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             if test_name in self.required_tests:
                 if test_status == TestStatus.FAIL:
                     self._status = SuiteStatus.RED
-                    break
+                    return self._status
             else:
                 if test_status == TestStatus.FAIL:
                     self._status = SuiteStatus.AMBER
