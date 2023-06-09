@@ -22,7 +22,7 @@
     "skipped_tests": [
       "LibTiffInfoTest"
     ],
-    "status": "passed"
+    "status": "GREEN"
   },
   "tests": [
     {

@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection, Sequence
 from copy import deepcopy
+from enum import Enum
 from typing import ClassVar, Generic, Optional, Type, TypeVar, Union
 
 from dcqc.file import FileType
@@ -11,6 +12,14 @@ from dcqc.target import BaseTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 Target = TypeVar("Target", bound=BaseTarget)
+
+
+class SuiteStatus(Enum):
+    NONE = "NONE"  # status not yet evaluated
+    GREEN = "GREEN"  # all tests passed
+    RED = "RED"  # one or more required tests failed
+    AMBER = "AMBER"  # all required tests passed, but one or more optional tests failed
+    # TODO GREY = "GREY" # error occurred
 
 
 # TODO: Consider the Composite design pattern once
@@ -59,7 +68,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         self.skipped_tests = set(skipped_tests).intersection(test_names)
 
         self.tests = self.init_test_classes()
-        self._status = TestStatus.NONE
+        self._status = SuiteStatus.NONE
 
     @classmethod
     def from_target(
@@ -207,24 +216,27 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         for test in self.tests:
             test.get_status()
 
-    def compute_status(self) -> TestStatus:
+    def compute_status(self) -> SuiteStatus:
         """Compute the overall suite status."""
         self.compute_tests()
-        if self._status != TestStatus.NONE:
+        if self._status != SuiteStatus.NONE:
             return self._status
-        self._status = TestStatus.PASS
+        self._status = SuiteStatus.GREEN
         for test in self.tests:
             test_name = test.type
-            if test_name not in self.required_tests:
-                continue
             test_status = test.get_status()
-            self._status = test_status
-            if self._status == TestStatus.FAIL:
-                break
+            if test_name in self.required_tests:
+                if test_status == TestStatus.FAIL:
+                    self._status = SuiteStatus.RED
+                    break
+            else:
+                if test_status == TestStatus.FAIL:
+                    self._status = SuiteStatus.AMBER
         return self._status
 
     def to_dict(self) -> SerializedObject:
         suite_status = self.compute_status()
+        print(suite_status)
         test_dicts = []
         for test in self.tests:
             test_dict = test.to_dict()
@@ -264,7 +276,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         skipped_tests = dictionary["suite_status"]["skipped_tests"]
         suite = suite_cls(target, required_tests, skipped_tests)
 
-        suite_status = TestStatus(dictionary["suite_status"]["status"])
+        suite_status = SuiteStatus(dictionary["suite_status"]["status"])
         suite._status = suite_status
 
         tests = list()
