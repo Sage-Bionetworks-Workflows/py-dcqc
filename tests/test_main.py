@@ -134,3 +134,20 @@ def test_qc_file(get_data):
     ]
     result = run_command(args)
     check_command_result(result)
+
+
+def test_update_csv(get_data, get_output):
+    suites_path = get_data("suites.json")
+    input_path = get_data("input.csv")
+    output_path = get_output("update_csv") / "output.csv"
+    output_path.unlink(missing_ok=True)
+
+    args = [
+        "update-csv",
+        suites_path,
+        input_path,
+        output_path,
+    ]
+    result = run_command(args)
+    check_command_result(result)
+    assert output_path.exists()
