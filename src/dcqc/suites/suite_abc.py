@@ -236,7 +236,6 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
     def to_dict(self) -> SerializedObject:
         suite_status = self.compute_status()
-        print(suite_status)
         test_dicts = []
         for test in self.tests:
             test_dict = test.to_dict()
