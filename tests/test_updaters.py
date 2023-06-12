@@ -1,9 +1,8 @@
 import csv
-
 from unittest.mock import MagicMock
 
-from dcqc.updaters import CsvUpdater
 from dcqc.suites.suite_abc import SuiteABC
+from dcqc.updaters import CsvUpdater
 
 
 class TestCsvUpdater:
