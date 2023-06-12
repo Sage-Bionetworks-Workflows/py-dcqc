@@ -3,7 +3,6 @@ import csv
 from unittest.mock import MagicMock
 
 from dcqc.updaters import CsvUpdater
-from pathlib import Path
 from dcqc.suites.suite_abc import SuiteABC
 
 
