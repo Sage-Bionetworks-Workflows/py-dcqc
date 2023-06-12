@@ -1,8 +1,9 @@
 from csv import DictWriter
 from pathlib import Path
-from dcqc.parsers import CsvParser, JsonParser
+from typing import Dict, List
+
+from dcqc.parsers import CsvParser
 from dcqc.suites.suite_abc import SuiteABC
-from typing import List, Dict
 
 
 class CsvUpdater:
@@ -11,12 +12,14 @@ class CsvUpdater:
     parser: CsvParser
 
     def __init__(self, input_path: Path, output_path: Path):
-        self.input_path = input_path
         self.output_path = output_path
         self.parser = CsvParser(input_path)
 
     def update(self, suites: List[SuiteABC]):
-        suite_dict: Dict[str, List[str]] = {}  # mypy made me do this, not sure why
+        suite_dict: Dict[
+            str, List[str]
+        ] = {}  # mypy made me do this, but only here. not sure why
+        # {url: [list_of_statuses]} data structure to allow for multi-file targets
         for suite in suites:
             url = suite.target.files[0].url
             status = suite.get_status()
@@ -24,7 +27,7 @@ class CsvUpdater:
                 suite_dict[url] = [status.value]
             else:
                 suite_dict[url].append(status.value)
-
+        # Evaluate dcqc_status for each url
         collapsed_dict = {}
         for url, statuses in suite_dict.items():
             if "RED" in statuses:
@@ -35,7 +38,7 @@ class CsvUpdater:
                 collapsed_dict[url] = "GREEN"
             else:
                 collapsed_dict[url] = "NONE"
-
+        # Create CSV data structure
         row_list = []
         for row in self.parser.list_rows():
             csv_data = row[1]
@@ -43,7 +46,7 @@ class CsvUpdater:
             row_list.append(csv_data)
 
         keys = row_list[0].keys()
-
+        # Export updated CSV
         with open(
             str(self.output_path), "w", newline="", encoding="utf-8"
         ) as output_file:
