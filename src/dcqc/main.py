@@ -13,6 +13,7 @@ from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import BaseTest, ExternalTestMixin
+from dcqc.updaters import CsvUpdater
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)
@@ -214,36 +215,5 @@ def update_csv(
 ):
     """Update input CSV file with dcqc_status column"""
     suites = JsonParser.parse_objects(suites_file, SuiteABC)
-    suite_dict = {}
-    for suite in suites:
-        url = suite.target.files[0].url
-        status = suite._status.value
-        if not suite_dict.get(url):
-            suite_dict[url] = [status]
-        else:
-            suite_dict[url].append(status)
-
-    collapsed_dict = {}
-    for url, statuses in suite_dict.items():
-        if "RED" in statuses:
-            collapsed_dict[url] = "RED"
-        elif "AMBER" in statuses:
-            collapsed_dict[url] = "AMBER"
-        elif "GREEN" in statuses:
-            collapsed_dict[url] = "GREEN"
-        else:
-            collapsed_dict[url] = "NONE"
-
-    parser = CsvParser(input_file)
-    row_list = []
-    for row in parser.list_rows():
-        row_list.append(row[1])
-    for row in row_list:
-        row["dcqc_status"] = collapsed_dict[row["url"]]
-
-    keys = row_list[0].keys()
-
-    with open(output_file, "w", newline="", encoding="utf-8") as output_file:
-        dict_writer = DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(row_list)
+    updater = CsvUpdater(input_file, output_file)
+    updater.update(suites)
