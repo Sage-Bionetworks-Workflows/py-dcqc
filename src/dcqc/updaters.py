@@ -33,10 +33,8 @@ class CsvUpdater:
                 collapsed_dict[url] = "RED"
             elif "AMBER" in statuses:
                 collapsed_dict[url] = "AMBER"
-            elif "GREEN" in statuses:
-                collapsed_dict[url] = "GREEN"
             else:
-                collapsed_dict[url] = "NONE"
+                collapsed_dict[url] = "GREEN"
         # Create CSV data structure
         row_list = []
         parser = CsvParser(self.input_path)
