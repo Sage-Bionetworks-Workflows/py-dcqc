@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO move this to pytest fixtures
 
 """Generate test files using latest version of dcqc."""
 

@@ -1,7 +1,7 @@
 import pytest
 
 from dcqc.file import FileType
-from dcqc.suites.suite_abc import SuiteABC
+from dcqc.suites.suite_abc import SuiteABC, SuiteStatus
 from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
 from dcqc.tests import (
     BaseTest,
@@ -100,13 +100,13 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
         SuiteABC.from_tests(tests)
 
 
-def test_that_a_suite_will_not_consider_unrequired_tests(test_targets):
+def test_that_a_suite_will_consider_non_required_failed_tests(test_targets):
     target = test_targets["bad"]
     required_tests = []
     skipped_tests = ["LibTiffInfoTest", "GrepDateTest", "TiffTag306DateTimeTest"]
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)
     suite_status = suite.compute_status()
-    assert suite_status == TestStatus.PASS
+    assert suite_status == SuiteStatus.AMBER
 
 
 def test_that_a_suite_will_consider_required_tests_when_failing(test_targets):
@@ -115,7 +115,7 @@ def test_that_a_suite_will_consider_required_tests_when_failing(test_targets):
     skipped_tests = ["LibTiffInfoTest", "GrepDateTest", "TiffTag306DateTimeTest"]
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)
     suite_status = suite.compute_status()
-    assert suite_status == TestStatus.FAIL
+    assert suite_status == SuiteStatus.RED
 
 
 def test_that_a_suite_will_consider_required_tests_when_passing(test_targets):
@@ -123,4 +123,4 @@ def test_that_a_suite_will_consider_required_tests_when_passing(test_targets):
     required_tests = ["Md5ChecksumTest"]
     suite = SuiteABC.from_target(target, required_tests)
     suite_status = suite.compute_status()
-    assert suite_status == TestStatus.PASS
+    assert suite_status == SuiteStatus.GREEN
