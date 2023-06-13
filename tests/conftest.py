@@ -56,6 +56,8 @@ def test_files(get_data):
     txt_path = get_data("test.txt")
     jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
+    fastq1_path = get_data("fastq1.fastq")
+    fastq2_path = get_data("fastq2.fastq.gz")
     syn_path = "syn://syn50555279"
     tiff_dirty_datetime_path = get_data("test_image_dirty_datetime.tif")
     good_metadata = {
@@ -74,6 +76,7 @@ def test_files(get_data):
         "file_type": "tiff",
         "md5_checksum": "c7b08f6decb5e7572efbe6074926a843",
     }
+    fastq_metadata = {"file_type": "fastq"}
     tiff_dirty_datetime_metadata = {
         "file_type": "tiff",
         "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268",
@@ -82,6 +85,8 @@ def test_files(get_data):
         "good": File(txt_path.as_posix(), good_metadata),
         "bad": File(txt_path.as_posix(), bad_metadata),
         "tiff": File(tiff_path.as_posix(), tiff_metadata),
+        "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
+        "fastq2": File(fastq2_path.as_posix(), fastq_metadata),
         "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
         "synapse": File(syn_path, good_metadata),
         "tiff_dirty_datetime": File(

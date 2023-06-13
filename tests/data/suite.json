@@ -1,6 +1,7 @@
 {
   "type": "TiffSuite",
   "target": {
+    "id": "001",
     "files": [
       {
         "url": "tests/data/test.txt",
@@ -12,7 +13,6 @@
         "local_path": "tests/data/test.txt"
       }
     ],
-    "id": "001",
     "type": "SingleTarget"
   },
   "suite_status": {

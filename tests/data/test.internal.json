@@ -4,6 +4,7 @@
   "is_external_test": false,
   "status": "pending",
   "target": {
+    "id": "001",
     "files": [
       {
         "url": "tests/data/test.txt",
@@ -15,7 +16,6 @@
         "local_path": "tests/data/test.txt"
       }
     ],
-    "id": "001",
     "type": "SingleTarget"
   }
 }
