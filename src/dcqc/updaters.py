@@ -21,7 +21,7 @@ class CsvUpdater:
     def update(self, suites: List[SuiteABC]):
         suite_dict = defaultdict(list)
         # {url: [list_of_statuses]} data structure to allow for multi-file targets
-        # TODO add support for suites with multiple files in them (multi-file targets)
+        # TODO add support for suites with multiple files in them (multi)
         for suite in suites:
             url = suite.target.files[0].url
             status = suite.get_status()
@@ -33,8 +33,10 @@ class CsvUpdater:
                 collapsed_dict[url] = "RED"
             elif "AMBER" in statuses:
                 collapsed_dict[url] = "AMBER"
-            else:
+            elif "GREEN" in statuses:
                 collapsed_dict[url] = "GREEN"
+            else:
+                collapsed_dict[url] = "NONE"
         # Create CSV data structure
         row_list = []
         parser = CsvParser(self.input_path)

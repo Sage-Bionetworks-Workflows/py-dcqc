@@ -138,6 +138,7 @@ def mocked_suites_single_targets():
         "syn://syn51585496": SuiteStatus.GREEN,
         "syn://syn51585494": SuiteStatus.RED,
         "syn://syn51585495": SuiteStatus.AMBER,
+        "syn://syn51585493": SuiteStatus.NONE,
     }
     mocked_suites = []
     for url, status in mock_dict_single.items():
