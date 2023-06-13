@@ -24,7 +24,9 @@ class TestCsvUpdater:
     mock_dict_multi = {
         "syn://syn51585496": "GREEN",
         "syn://syn51585494": "GREEN",
+        "syn://syn51585494": "RED",
         "syn://syn51585495": "GREEN",
+        "syn://syn51585495": "AMBER",
     }
 
     def __init__(self, get_data):
