@@ -1,11 +1,14 @@
+from collections import defaultdict
 from csv import DictWriter
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 from dcqc.parsers import CsvParser
 from dcqc.suites.suite_abc import SuiteABC
 
 
+@dataclass
 class CsvUpdater:
     input_path: Path
     output_path: Path
@@ -13,20 +16,15 @@ class CsvUpdater:
 
     def __init__(self, input_path: Path, output_path: Path):
         self.output_path = output_path
-        self.parser = CsvParser(input_path)
+        self.input_path = input_path
 
     def update(self, suites: List[SuiteABC]):
-        suite_dict: Dict[
-            str, List[str]
-        ] = {}  # mypy made me do this, but only here. not sure why
+        suite_dict = defaultdict(list)
         # {url: [list_of_statuses]} data structure to allow for multi-file targets
         for suite in suites:
             url = suite.target.files[0].url
             status = suite.get_status()
-            if not suite_dict.get(url):
-                suite_dict[url] = [status.value]
-            else:
-                suite_dict[url].append(status.value)
+            suite_dict[url].append(status.value)
         # Evaluate dcqc_status for each url
         collapsed_dict = {}
         for url, statuses in suite_dict.items():
@@ -40,7 +38,8 @@ class CsvUpdater:
                 collapsed_dict[url] = "NONE"
         # Create CSV data structure
         row_list = []
-        for row in self.parser.list_rows():
+        parser = CsvParser(self.input_path)
+        for row in parser.list_rows():
             csv_data = row[1]
             csv_data["dcqc_status"] = collapsed_dict[csv_data["url"]]
             row_list.append(csv_data)
