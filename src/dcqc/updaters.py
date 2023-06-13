@@ -21,6 +21,7 @@ class CsvUpdater:
     def update(self, suites: List[SuiteABC]):
         suite_dict = defaultdict(list)
         # {url: [list_of_statuses]} data structure to allow for multi-file targets
+        # TODO add support for suites with multiple files in them (multi-file targets)
         for suite in suites:
             url = suite.target.files[0].url
             status = suite.get_status()
