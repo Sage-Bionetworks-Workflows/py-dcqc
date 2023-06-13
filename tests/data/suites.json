@@ -19,8 +19,8 @@
     "suite_status": {
       "required_tests": [
         "Md5ChecksumTest",
-        "LibTiffInfoTest",
-        "FileExtensionTest"
+        "FileExtensionTest",
+        "LibTiffInfoTest"
       ],
       "skipped_tests": [],
       "status": "GREEN"
@@ -78,8 +78,8 @@
     "suite_status": {
       "required_tests": [
         "Md5ChecksumTest",
-        "LibTiffInfoTest",
-        "FileExtensionTest"
+        "FileExtensionTest",
+        "LibTiffInfoTest"
       ],
       "skipped_tests": [],
       "status": "RED"
@@ -137,8 +137,8 @@
     "suite_status": {
       "required_tests": [
         "Md5ChecksumTest",
-        "LibTiffInfoTest",
-        "FileExtensionTest"
+        "FileExtensionTest",
+        "LibTiffInfoTest"
       ],
       "skipped_tests": [],
       "status": "AMBER"
