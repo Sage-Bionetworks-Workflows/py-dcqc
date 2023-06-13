@@ -39,17 +39,19 @@ class CsvUpdater:
         # Create CSV data structure
         row_list = []
         parser = CsvParser(self.input_path)
-        for row in parser.list_rows():
-            csv_data = row[1]
+        for _, csv_data in parser.list_rows():
             csv_data["dcqc_status"] = collapsed_dict[csv_data["url"]]
             row_list.append(csv_data)
 
-        keys = row_list[0].keys()
-        # Export updated CSV
-        self.output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(
-            str(self.output_path), "w+", newline="", encoding="utf-8"
-        ) as output_file:
-            dict_writer = DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(row_list)
+        if row_list:
+            keys = row_list[0].keys()
+            # Export updated CSV
+            self.output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(
+                str(self.output_path), "w+", newline="", encoding="utf-8"
+            ) as output_file:
+                dict_writer = DictWriter(output_file, keys)
+                dict_writer.writeheader()
+                dict_writer.writerows(row_list)
+        else:
+            raise ValueError("No rows found in input CSV")
