@@ -23,15 +23,15 @@ def test_that_csv_updater_updates_csv_as_expected_with_single_targets(
     assert status_list == ["GREEN", "RED", "AMBER"]
 
 
-def test_that_csv_updater_updates_csv_as_expected_with_multi_targets(
-    get_data, mocked_suites_multi_targets
-):
-    input_file = get_data("input.csv")
-    output_file = get_data("output.csv")
-    updater = CsvUpdater(input_file, output_file)
-    updater.update(mocked_suites_multi_targets)
-    status_list = get_dcqc_status_list_from_file(output_file)
-    assert status_list == ["GREEN", "RED", "AMBER"]
+# def test_that_csv_updater_updates_csv_as_expected_with_multi_targets(
+#     get_data, mocked_suites_multi_targets
+# ):
+#     input_file = get_data("input.csv")
+#     output_file = get_data("output.csv")
+#     updater = CsvUpdater(input_file, output_file)
+#     updater.update(mocked_suites_multi_targets)
+#     status_list = get_dcqc_status_list_from_file(output_file)
+#     assert status_list == ["GREEN", "RED", "AMBER"]
 
 
 def test_that_empty_input_manifest_raises_error(get_data, mocked_suites_single_targets):

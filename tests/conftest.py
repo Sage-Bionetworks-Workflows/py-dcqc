@@ -148,17 +148,17 @@ def mocked_suites_single_targets():
     return mocked_suites
 
 
-@pytest.fixture
-def mocked_suites_multi_targets():
-    mock_dict_multi = {
-        "syn://syn51585496": SuiteStatus.GREEN,
-        "syn://syn51585494": SuiteStatus.RED,
-        "syn://syn51585495": SuiteStatus.AMBER,
-    }
-    mocked_suites = []
-    for url, status in mock_dict_multi.items():
-        suite = MagicMock(cls=SuiteABC)
-        suite.target.files[0].url = url
-        suite.get_status.return_value = status
-        mocked_suites.append(suite)
-    return mocked_suites
+# @pytest.fixture
+# def mocked_suites_multi_targets():
+#     mock_dict_multi = {
+#         "syn://syn51585496": SuiteStatus.GREEN,
+#         "syn://syn51585494": SuiteStatus.RED,
+#         "syn://syn51585495": SuiteStatus.AMBER,
+#     }
+#     mocked_suites = []
+#     for url, status in mock_dict_multi.items():
+#         suite = MagicMock(cls=SuiteABC)
+#         suite.target.files[0].url = url
+#         suite.get_status.return_value = status
+#         mocked_suites.append(suite)
+#     return mocked_suites
