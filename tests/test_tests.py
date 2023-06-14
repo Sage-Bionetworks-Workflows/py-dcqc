@@ -90,6 +90,7 @@ def test_that_all_external_tests_inherit_from_the_mixin_first():
 def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
+    # 0 is pass, 1 is fail
     tiff_file = test_files["tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
@@ -97,16 +98,16 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
         path_1 = Path(tmp_dir, "code_1.txt")
         path_0.write_text("0")
         path_1.write_text("1")
-        good_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        bad_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+        zero_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        one_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
         test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=good_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=zero_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
         test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=bad_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=one_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
@@ -183,6 +184,7 @@ def test_that_a_process_can_be_serialized_and_deserialized():
 def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
+    # 1 is pass, 0 is fail
     tiff_file = test_files["tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
@@ -190,16 +192,16 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
         path_1 = Path(tmp_dir, "code_1.txt")
         path_0.write_text("0")
         path_1.write_text("1")
-        good_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        bad_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+        zero_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        one_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
         test = tests.GrepDateTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=good_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=one_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
-        test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=bad_outputs)
+        test = tests.GrepDateTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=zero_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
@@ -221,6 +223,7 @@ def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
 def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
+    # 1 is pass, 0 is fail
     tiff_file = test_files["tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
@@ -228,16 +231,16 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
         path_1 = Path(tmp_dir, "code_1.txt")
         path_0.write_text("0")
         path_1.write_text("1")
-        good_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        bad_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+        zero_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        one_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
         test = tests.TiffTag306DateTimeTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=good_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=one_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
-        test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=bad_outputs)
+        test = tests.TiffTag306DateTimeTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=zero_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
