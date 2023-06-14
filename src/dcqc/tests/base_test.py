@@ -153,6 +153,7 @@ class Process(SerializableMixin):
 
 
 class ExternalTestMixin(BaseTest):
+    pass_code: ClassVar[str]
     # Class attributes
     is_external_test = True
 
