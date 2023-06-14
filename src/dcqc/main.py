@@ -13,6 +13,7 @@ from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import BaseTest, ExternalTestMixin
+from dcqc.updaters import CsvUpdater
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)
@@ -204,3 +205,15 @@ def qc_file(
     report = JsonReport()
     suite_json = report.generate(suite)
     json.dump(suite_json, sys.stdout, indent=2)
+
+
+@app.command()
+def update_csv(
+    suites_file: Path = input_path_arg,
+    input_file: Path = input_path_arg,
+    output_file: Path = output_path_arg,
+):
+    """Update input CSV file with dcqc_status column"""
+    suites = JsonParser.parse_objects(suites_file, SuiteABC)
+    updater = CsvUpdater(input_file, output_file)
+    updater.update(suites)

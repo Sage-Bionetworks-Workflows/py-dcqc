@@ -11,6 +11,7 @@ from typing import Sequence
 from dcqc import tests
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
+from dcqc.parsers import JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import SingleTarget
@@ -60,3 +61,15 @@ required_tests = ["Md5ChecksumTest"]
 skipped_tests = ["LibTiffInfoTest"]
 suite = SuiteABC.from_tests(suite_tests, required_tests, skipped_tests)
 export(suite, "suite.json")
+
+# suites.json
+input_jsons = [
+    Path(file_path)
+    for file_path in [
+        "tests/data/suites_files/suites_1.json",
+        "tests/data/suites_files/suites_2.json",
+        "tests/data/suites_files/suites_3.json",
+    ]
+]
+suites = [JsonParser.parse_object(json_, SuiteABC) for json_ in input_jsons]
+export(suites, "suites.json")

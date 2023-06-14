@@ -1,0 +1,179 @@
+[
+  {
+    "type": "TiffSuite",
+    "target": {
+      "id": "0001",
+      "files": [
+        {
+          "url": "syn://syn51585496",
+          "metadata": {
+            "md5_checksum": "c7b08f6decb5e7572efbe6074926a843"
+          },
+          "type": "TIFF",
+          "name": "circuit.tif",
+          "local_path": "/tmp/dcqc-staged-7onezxv1/circuit.tif"
+        }
+      ],
+      "type": "SingleTarget"
+    },
+    "suite_status": {
+      "required_tests": [
+        "Md5ChecksumTest",
+        "FileExtensionTest",
+        "LibTiffInfoTest"
+      ],
+      "skipped_tests": [],
+      "status": "GREEN"
+    },
+    "tests": [
+      {
+        "type": "FileExtensionTest",
+        "tier": 1,
+        "is_external_test": false,
+        "status": "passed"
+      },
+      {
+        "type": "GrepDateTest",
+        "tier": 4,
+        "is_external_test": true,
+        "status": "passed"
+      },
+      {
+        "type": "LibTiffInfoTest",
+        "tier": 2,
+        "is_external_test": true,
+        "status": "passed"
+      },
+      {
+        "type": "Md5ChecksumTest",
+        "tier": 1,
+        "is_external_test": false,
+        "status": "passed"
+      },
+      {
+        "type": "TiffTag306DateTimeTest",
+        "tier": 4,
+        "is_external_test": true,
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "type": "TiffSuite",
+    "target": {
+      "id": "0002",
+      "files": [
+        {
+          "url": "syn://syn51585494",
+          "metadata": {
+            "md5_checksum": "9cee1b0e8c4d051fabea82b62ae69404"
+          },
+          "type": "TIFF",
+          "name": "test_contains_word_date.tif",
+          "local_path": "/tmp/dcqc-staged-ddxo9fx2/test_contains_word_date.tif"
+        }
+      ],
+      "type": "SingleTarget"
+    },
+    "suite_status": {
+      "required_tests": [
+        "Md5ChecksumTest",
+        "FileExtensionTest",
+        "LibTiffInfoTest"
+      ],
+      "skipped_tests": [],
+      "status": "RED"
+    },
+    "tests": [
+      {
+        "type": "FileExtensionTest",
+        "tier": 1,
+        "is_external_test": false,
+        "status": "passed"
+      },
+      {
+        "type": "GrepDateTest",
+        "tier": 4,
+        "is_external_test": true,
+        "status": "failed"
+      },
+      {
+        "type": "LibTiffInfoTest",
+        "tier": 2,
+        "is_external_test": true,
+        "status": "failed"
+      },
+      {
+        "type": "Md5ChecksumTest",
+        "tier": 1,
+        "is_external_test": false,
+        "status": "passed"
+      },
+      {
+        "type": "TiffTag306DateTimeTest",
+        "tier": 4,
+        "is_external_test": true,
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "type": "TiffSuite",
+    "target": {
+      "id": "0003",
+      "files": [
+        {
+          "url": "syn://syn51585495",
+          "metadata": {
+            "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268"
+          },
+          "type": "TIFF",
+          "name": "test_image_dirty_datetime.tif",
+          "local_path": "/tmp/dcqc-staged-5m6d8fdj/test_image_dirty_datetime.tif"
+        }
+      ],
+      "type": "SingleTarget"
+    },
+    "suite_status": {
+      "required_tests": [
+        "Md5ChecksumTest",
+        "FileExtensionTest",
+        "LibTiffInfoTest"
+      ],
+      "skipped_tests": [],
+      "status": "AMBER"
+    },
+    "tests": [
+      {
+        "type": "FileExtensionTest",
+        "tier": 1,
+        "is_external_test": false,
+        "status": "passed"
+      },
+      {
+        "type": "GrepDateTest",
+        "tier": 4,
+        "is_external_test": true,
+        "status": "passed"
+      },
+      {
+        "type": "LibTiffInfoTest",
+        "tier": 2,
+        "is_external_test": true,
+        "status": "passed"
+      },
+      {
+        "type": "Md5ChecksumTest",
+        "tier": 1,
+        "is_external_test": false,
+        "status": "passed"
+      },
+      {
+        "type": "TiffTag306DateTimeTest",
+        "tier": 4,
+        "is_external_test": true,
+        "status": "failed"
+      }
+    ]
+  }
+]

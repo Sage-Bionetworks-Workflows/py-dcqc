@@ -291,3 +291,9 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     def get_base_class(cls):
         """Retrieve base class."""
         return SuiteABC
+
+    def get_status(self) -> SuiteStatus:
+        """Compute (if applicable) and return the suite status."""
+        if self._status == SuiteStatus.NONE:
+            self._status = self.compute_status()
+        return self._status

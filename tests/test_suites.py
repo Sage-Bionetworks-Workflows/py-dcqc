@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from dcqc.file import FileType
@@ -124,3 +126,16 @@ def test_that_a_suite_will_consider_required_tests_when_passing(test_targets):
     suite = SuiteABC.from_target(target, required_tests)
     suite_status = suite.compute_status()
     assert suite_status == SuiteStatus.GREEN
+
+
+def test_that_status_is_computed_if_not_already_assigned(test_targets):
+    with patch.object(
+        SuiteABC, "compute_status", return_value=SuiteStatus.GREEN
+    ) as patch_compute_status:
+        target = test_targets["good"]
+        required_tests = ["Md5ChecksumTest"]
+        suite = SuiteABC.from_target(target, required_tests)
+        suite._status = SuiteStatus.NONE
+        suite_status = suite.get_status()
+        assert suite_status == SuiteStatus.GREEN
+        patch_compute_status.assert_called_once()
