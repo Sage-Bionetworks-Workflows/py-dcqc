@@ -11,8 +11,9 @@ from dcqc.file import File, FileType
 from dcqc.parsers import CsvParser, JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 from dcqc.tests.base_test import BaseTest, ExternalTestMixin
+from dcqc.updaters import CsvUpdater
 
 # Make commands optional to allow for `dcqc --version`
 app = Typer(invoke_without_command=True)
@@ -77,7 +78,7 @@ def create_tests(
     required_tests_maybe = required_tests if required_tests else None
     skipped_tests_maybe = skipped_tests if skipped_tests else None
 
-    target = JsonParser.parse_object(input_json, Target)
+    target = JsonParser.parse_object(input_json, SingleTarget)
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests_maybe)
 
     report = JsonReport()
@@ -192,7 +193,7 @@ def qc_file(
     file_metadata = json.loads(metadata)
     file_metadata["file_type"] = file_type
     file = File(input_file.as_posix(), file_metadata)
-    target = Target(file)
+    target = SingleTarget(file)
 
     # Prepare suite (skip all external tests)
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests)
@@ -204,3 +205,15 @@ def qc_file(
     report = JsonReport()
     suite_json = report.generate(suite)
     json.dump(suite_json, sys.stdout, indent=2)
+
+
+@app.command()
+def update_csv(
+    suites_file: Path = input_path_arg,
+    input_file: Path = input_path_arg,
+    output_file: Path = output_path_arg,
+):
+    """Update input CSV file with dcqc_status column"""
+    suites = JsonParser.parse_objects(suites_file, SuiteABC)
+    updater = CsvUpdater(input_file, output_file)
+    updater.update(suites)

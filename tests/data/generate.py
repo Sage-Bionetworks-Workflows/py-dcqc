@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO move this to pytest fixtures
 
 """Generate test files using latest version of dcqc."""
 
@@ -10,9 +11,10 @@ from typing import Sequence
 from dcqc import tests
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
+from dcqc.parsers import JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.target import SingleTarget
 
 # Shared values
 data_dir = sys.path[0]
@@ -33,7 +35,7 @@ file = File(file_url, metadata)
 export(file, "file.json")
 
 # target.json
-target = Target(file, id="001")
+target = SingleTarget(file, id="001")
 export(target, "target.json")
 
 # test.internal.json
@@ -59,3 +61,15 @@ required_tests = ["Md5ChecksumTest"]
 skipped_tests = ["LibTiffInfoTest"]
 suite = SuiteABC.from_tests(suite_tests, required_tests, skipped_tests)
 export(suite, "suite.json")
+
+# suites.json
+input_jsons = [
+    Path(file_path)
+    for file_path in [
+        "tests/data/suites_files/suites_1.json",
+        "tests/data/suites_files/suites_2.json",
+        "tests/data/suites_files/suites_3.json",
+    ]
+]
+suites = [JsonParser.parse_object(json_, SuiteABC) for json_ in input_jsons]
+export(suites, "suites.json")

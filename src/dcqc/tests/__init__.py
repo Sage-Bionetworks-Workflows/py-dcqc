@@ -7,4 +7,5 @@ from dcqc.tests.jsonld_load_test import JsonLdLoadTest
 from dcqc.tests.libtiff_info_test import LibTiffInfoTest
 from dcqc.tests.md5_checksum_test import Md5ChecksumTest
 from dcqc.tests.ome_xml_schema_test import OmeXmlSchemaTest
+from dcqc.tests.paired_fastq_parity_test import PairedFastqParityTest
 from dcqc.tests.tiff_tag_306_date_time_test import TiffTag306DateTimeTest

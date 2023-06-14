@@ -1,5 +1,4 @@
 {
-  "type": "Target",
   "id": "001",
   "files": [
     {
@@ -11,5 +10,6 @@
       "name": "test.txt",
       "local_path": "tests/data/test.txt"
     }
-  ]
+  ],
+  "type": "SingleTarget"
 }

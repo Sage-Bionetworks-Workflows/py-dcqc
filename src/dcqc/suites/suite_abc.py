@@ -3,28 +3,36 @@ from __future__ import annotations
 from abc import ABC
 from collections.abc import Collection, Sequence
 from copy import deepcopy
-from itertools import chain
-from typing import ClassVar, Optional, Type, Union
+from enum import Enum
+from typing import ClassVar, Generic, Optional, Type, TypeVar, Union
 
 from dcqc.file import FileType
-from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.target import Target
+from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
+from dcqc.target import BaseTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
+
+Target = TypeVar("Target", bound=BaseTarget)
+
+
+class SuiteStatus(Enum):
+    NONE = "NONE"  # status not yet evaluated
+    GREEN = "GREEN"  # all tests passed
+    RED = "RED"  # one or more required tests failed
+    AMBER = "AMBER"  # all required tests passed, but one or more optional tests failed
+    # TODO GREY = "GREY" # error occurred
 
 
 # TODO: Consider the Composite design pattern once
 #       we have higher-level QC suites
-class SuiteABC(SerializableMixin, ABC):
+class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """Abstract base class for QC test suites.
 
     Args:
-        target (Target): Single- or multi-file target.
-        required_tests (Optional[Collection[str]]):
-            List of tests that must pass for the
+        target: Single- or multi-file target.
+        required_tests: List of tests that must pass for the
             overall suite to pass. Defaults to None,
             which requires tier-1 and tier-2 tests.
-        skipped_tests (Optional[Collection[str]]):
-            List of tests that should not be
+        skipped_tests: List of tests that should not be
             evaluated. Defaults to None.
     """
 
@@ -60,16 +68,16 @@ class SuiteABC(SerializableMixin, ABC):
         self.skipped_tests = set(skipped_tests).intersection(test_names)
 
         self.tests = self.init_test_classes()
-        self._status = TestStatus.NONE
+        self._status = SuiteStatus.NONE
 
     @classmethod
     def from_target(
         cls,
-        target: Target,
+        target: SingleTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> SuiteABC:
-        """Generate a suite from a target.
+        """Generate a suite from a single-file target.
 
         The suite is selected based on the target file type.
 
@@ -126,6 +134,8 @@ class SuiteABC(SerializableMixin, ABC):
         if not all(representative_target == target for target in targets):
             message = f"Not all tests refer to the same target ({targets})."
             raise ValueError(message)
+        if not isinstance(representative_target, SingleTarget):  # pragma: no cover
+            raise ValueError("Can only recreate suite from single-file target.")
         suite = cls.from_target(representative_target, required_tests, skipped_tests)
         suite.tests = suite_tests
 
@@ -178,28 +188,6 @@ class SuiteABC(SerializableMixin, ABC):
         return tests
 
     @classmethod
-    def list_subclasses(cls) -> tuple[Type[SuiteABC], ...]:
-        """List all subclasses."""
-        subclasses: list[Type[SuiteABC]]
-        subclasses = cls.__subclasses__()
-
-        subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
-        subclasses_chain = chain(subclasses, *subsubclasses_list)
-        all_subclasses = tuple(dict.fromkeys(subclasses_chain))
-        return all_subclasses
-
-    @classmethod
-    def get_subclass_by_name(cls, name: str) -> Type[SuiteABC]:
-        """Retrieve a subclass by name."""
-        subclasses = cls.list_subclasses()
-        registry = {subcls.__name__: subcls for subcls in subclasses}
-        if name not in registry:
-            options = list(registry)
-            message = f"Suite ({name}) not available ({options})."
-            raise ValueError(message)
-        return registry[name]
-
-    @classmethod
     def get_subclass_by_file_type(
         cls, file_type: Union[str, FileType]
     ) -> Type[SuiteABC]:
@@ -228,20 +216,22 @@ class SuiteABC(SerializableMixin, ABC):
         for test in self.tests:
             test.get_status()
 
-    def compute_status(self) -> TestStatus:
+    def compute_status(self) -> SuiteStatus:
         """Compute the overall suite status."""
         self.compute_tests()
-        if self._status != TestStatus.NONE:
+        if self._status != SuiteStatus.NONE:
             return self._status
-        self._status = TestStatus.PASS
+        self._status = SuiteStatus.GREEN
         for test in self.tests:
             test_name = test.type
-            if test_name not in self.required_tests:
-                continue
             test_status = test.get_status()
-            self._status = test_status
-            if self._status == TestStatus.FAIL:
-                break
+            if test_name in self.required_tests:
+                if test_status == TestStatus.FAIL:
+                    self._status = SuiteStatus.RED
+                    return self._status
+            else:
+                if test_status == TestStatus.FAIL:
+                    self._status = SuiteStatus.AMBER
         return self._status
 
     def to_dict(self) -> SerializedObject:
@@ -279,13 +269,13 @@ class SuiteABC(SerializableMixin, ABC):
         suite_cls = SuiteABC.get_subclass_by_name(suite_cls_name)
 
         target_dict = dictionary["target"]
-        target = Target.from_dict(target_dict)
+        target = BaseTarget.from_dict(target_dict)
 
         required_tests = dictionary["suite_status"]["required_tests"]
         skipped_tests = dictionary["suite_status"]["skipped_tests"]
         suite = suite_cls(target, required_tests, skipped_tests)
 
-        suite_status = TestStatus(dictionary["suite_status"]["status"])
+        suite_status = SuiteStatus(dictionary["suite_status"]["status"])
         suite._status = suite_status
 
         tests = list()
@@ -296,3 +286,14 @@ class SuiteABC(SerializableMixin, ABC):
         suite.tests = tests
 
         return suite
+
+    @classmethod
+    def get_base_class(cls):
+        """Retrieve base class."""
+        return SuiteABC
+
+    def get_status(self) -> SuiteStatus:
+        """Compute (if applicable) and return the suite status."""
+        if self._status == SuiteStatus.NONE:
+            self._status = self.compute_status()
+        return self._status

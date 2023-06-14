@@ -10,13 +10,14 @@
 from datetime import datetime
 from getpass import getuser
 from pathlib import Path
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
 
 from dcqc.file import File
-from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import Target
+from dcqc.suites.suite_abc import SuiteABC, SuiteStatus
+from dcqc.target import SingleTarget
 
 CNFPATH = Path(__file__).resolve()
 TESTDIR = CNFPATH.parent
@@ -56,6 +57,8 @@ def test_files(get_data):
     txt_path = get_data("test.txt")
     jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
+    fastq1_path = get_data("fastq1.fastq")
+    fastq2_path = get_data("fastq2.fastq.gz")
     syn_path = "syn://syn50555279"
     tiff_dirty_datetime_path = get_data("test_image_dirty_datetime.tif")
     good_metadata = {
@@ -74,6 +77,7 @@ def test_files(get_data):
         "file_type": "tiff",
         "md5_checksum": "c7b08f6decb5e7572efbe6074926a843",
     }
+    fastq_metadata = {"file_type": "fastq"}
     tiff_dirty_datetime_metadata = {
         "file_type": "tiff",
         "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268",
@@ -82,6 +86,8 @@ def test_files(get_data):
         "good": File(txt_path.as_posix(), good_metadata),
         "bad": File(txt_path.as_posix(), bad_metadata),
         "tiff": File(tiff_path.as_posix(), tiff_metadata),
+        "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
+        "fastq2": File(fastq2_path.as_posix(), fastq_metadata),
         "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
         "synapse": File(syn_path, good_metadata),
         "tiff_dirty_datetime": File(
@@ -101,7 +107,7 @@ def test_files(get_data):
 def test_targets(test_files):
     test_targets = dict()
     for name, file in test_files.items():
-        test_targets[name] = Target(file)
+        test_targets[name] = SingleTarget(file)
     yield test_targets
 
 
@@ -124,3 +130,36 @@ def get_output():
         return output
 
     yield _get_output
+
+
+@pytest.fixture
+def mocked_suites_single_targets():
+    mock_dict_single = {
+        "syn://syn51585496": SuiteStatus.GREEN,
+        "syn://syn51585494": SuiteStatus.RED,
+        "syn://syn51585495": SuiteStatus.AMBER,
+        "syn://syn51585493": SuiteStatus.NONE,
+    }
+    mocked_suites = []
+    for url, status in mock_dict_single.items():
+        suite = MagicMock(cls=SuiteABC)
+        suite.target.files[0].url = url
+        suite.get_status.return_value = status
+        mocked_suites.append(suite)
+    return mocked_suites
+
+
+# @pytest.fixture
+# def mocked_suites_multi_targets():
+#     mock_dict_multi = {
+#         "syn://syn51585496": SuiteStatus.GREEN,
+#         "syn://syn51585494": SuiteStatus.RED,
+#         "syn://syn51585495": SuiteStatus.AMBER,
+#     }
+#     mocked_suites = []
+#     for url, status in mock_dict_multi.items():
+#         suite = MagicMock(cls=SuiteABC)
+#         suite.target.files[0].url = url
+#         suite.get_status.return_value = status
+#         mocked_suites.append(suite)
+#     return mocked_suites

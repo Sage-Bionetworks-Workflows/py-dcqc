@@ -1,7 +1,6 @@
 {
   "type": "TiffSuite",
   "target": {
-    "type": "Target",
     "id": "001",
     "files": [
       {
@@ -13,7 +12,8 @@
         "name": "test.txt",
         "local_path": "tests/data/test.txt"
       }
-    ]
+    ],
+    "type": "SingleTarget"
   },
   "suite_status": {
     "required_tests": [
@@ -22,7 +22,7 @@
     "skipped_tests": [
       "LibTiffInfoTest"
     ],
-    "status": "passed"
+    "status": "GREEN"
   },
   "tests": [
     {

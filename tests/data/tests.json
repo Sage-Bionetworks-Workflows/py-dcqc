@@ -5,7 +5,6 @@
     "is_external_test": false,
     "status": "pending",
     "target": {
-      "type": "Target",
       "id": "001",
       "files": [
         {
@@ -17,7 +16,8 @@
           "name": "test.txt",
           "local_path": "tests/data/test.txt"
         }
-      ]
+      ],
+      "type": "SingleTarget"
     }
   },
   {
@@ -26,7 +26,6 @@
     "is_external_test": true,
     "status": "pending",
     "target": {
-      "type": "Target",
       "id": "001",
       "files": [
         {
@@ -38,7 +37,8 @@
           "name": "test.txt",
           "local_path": "tests/data/test.txt"
         }
-      ]
+      ],
+      "type": "SingleTarget"
     }
   },
   {
@@ -47,7 +47,6 @@
     "is_external_test": false,
     "status": "passed",
     "target": {
-      "type": "Target",
       "id": "001",
       "files": [
         {
@@ -59,7 +58,8 @@
           "name": "test.txt",
           "local_path": "tests/data/test.txt"
         }
-      ]
+      ],
+      "type": "SingleTarget"
     }
   }
 ]
