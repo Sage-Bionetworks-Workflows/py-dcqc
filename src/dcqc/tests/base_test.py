@@ -132,7 +132,7 @@ class Process(SerializableMixin):
     @property
     def command(self) -> str:
         args_strings = [str(arg) for arg in self._command_args]
-        return shlex.join(args_strings)
+        return " ".join(args_strings)
 
     @classmethod
     def from_dict(cls, dictionary: SerializedObject) -> Process:
@@ -201,6 +201,15 @@ class ExternalTestMixin(BaseTest):
         else:
             status = TestStatus.FAIL
         return status
+
+    def short_string_path(self, path: Path, substring: str) -> str:
+        # get index where staged folder is
+        index = [i for i, item in enumerate(path.parts) if substring in item][0]
+        # shorten path starting from staged folder
+        short_path = Path(*path.parts[index:])
+        # wrap path string in quotes
+        quote_path = str(short_path)
+        return f"'{quote_path}'"
 
     # TODO: Include process in serialized test dictionary
     # def to_dict(self):

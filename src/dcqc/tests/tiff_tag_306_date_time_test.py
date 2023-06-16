@@ -9,11 +9,12 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()
+        string_path = self.short_string_path(path, "dcqc-staged-")
+
         command_args = [
-            # "!",  # negate exit status
             "tifftools",
             "dump",
-            path,
+            string_path,
             "|",
             "grep",  # pipe the output
             "-a",  # treat input as text
