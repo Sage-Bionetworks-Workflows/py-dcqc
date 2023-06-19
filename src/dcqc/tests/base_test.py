@@ -202,6 +202,7 @@ class ExternalTestMixin(BaseTest):
             status = TestStatus.FAIL
         return status
 
+    # TODO: make changes to this package or the nextflow workflow so that file mounting is handled cleaner
     def short_string_path(self, path: Path, substring: str) -> str:
         # get index where staged folder is
         index = [i for i, item in enumerate(path.parts) if substring in item][0]
