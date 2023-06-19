@@ -204,7 +204,8 @@ class ExternalTestMixin(BaseTest):
 
     # TODO: make changes to this package or the nextflow
     # workflow so that file mounting is handled cleaner
-    def short_string_path(self, path: Path, substring: str) -> str:
+    @staticmethod
+    def _short_string_path(path: Path, substring: str) -> str:
         # get index where staged folder is
         index = [i for i, item in enumerate(path.parts) if substring in item][0]
         # shorten path starting from staged folder
