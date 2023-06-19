@@ -153,6 +153,7 @@ class Process(SerializableMixin):
 
 
 class ExternalTestMixin(BaseTest):
+    pass_code: ClassVar[str]
     # Class attributes
     is_external_test = True
 
@@ -195,11 +196,26 @@ class ExternalTestMixin(BaseTest):
         """Interpret the process output files to yield a test status."""
         exit_code = outputs["exit_code"].read_text()
         exit_code = exit_code.strip()
-        if exit_code == "0":
+        if exit_code == self.pass_code:
             status = TestStatus.PASS
         else:
             status = TestStatus.FAIL
         return status
+
+    # TODO: make changes to this package or the nextflow
+    # workflow so that file mounting is handled cleaner
+    @staticmethod
+    def _short_string_path(path: Path, substring: str) -> str:
+        # chech if substring is in path
+        if substring not in path.as_posix():
+            raise ValueError(f"{substring} not in {path}")
+        # get index where staged folder is
+        index = next(i for i, item in enumerate(path.parts) if substring in item)
+        # shorten path starting from staged folder
+        short_path = Path(*path.parts[index:])
+        # wrap path string in quotes
+        quote_path = str(short_path)
+        return f"'{quote_path}'"
 
     # TODO: Include process in serialized test dictionary
     # def to_dict(self):

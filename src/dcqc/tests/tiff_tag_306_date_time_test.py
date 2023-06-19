@@ -4,15 +4,17 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 class TiffTag306DateTimeTest(ExternalBaseTest):
     tier = 4
+    pass_code = "1"
     target: SingleTarget
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()
+        string_path = self._short_string_path(path, "dcqc-staged-")
+
         command_args = [
-            "!",  # negate exit status
             "tifftools",
             "dump",
-            path,
+            string_path,
             "|",
             "grep",  # pipe the output
             "-a",  # treat input as text
