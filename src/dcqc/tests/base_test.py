@@ -206,8 +206,11 @@ class ExternalTestMixin(BaseTest):
     # workflow so that file mounting is handled cleaner
     @staticmethod
     def _short_string_path(path: Path, substring: str) -> str:
+        # chech if substring is in path
+        if substring not in path.as_posix():
+            raise ValueError(f"{substring} not in {path}")
         # get index where staged folder is
-        index = [i for i, item in enumerate(path.parts) if substring in item][0]
+        index = next(i for i, item in enumerate(path.parts) if substring in item)
         # shorten path starting from staged folder
         short_path = Path(*path.parts[index:])
         # wrap path string in quotes
