@@ -98,16 +98,16 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
         path_1 = Path(tmp_dir, "code_1.txt")
         path_0.write_text("0")
         path_1.write_text("1")
-        zero_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        one_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+        pass_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        fail_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
         test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=zero_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
         test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=one_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
@@ -192,16 +192,16 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
         path_1 = Path(tmp_dir, "code_1.txt")
         path_0.write_text("0")
         path_1.write_text("1")
-        zero_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        one_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
         test = tests.GrepDateTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=one_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
         test = tests.GrepDateTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=zero_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
@@ -231,16 +231,16 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
         path_1 = Path(tmp_dir, "code_1.txt")
         path_0.write_text("0")
         path_1.write_text("1")
-        zero_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        one_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
 
         test = tests.TiffTag306DateTimeTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=one_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.PASS
 
         test = tests.TiffTag306DateTimeTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=zero_outputs)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
 
