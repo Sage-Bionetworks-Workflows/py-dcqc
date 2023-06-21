@@ -125,6 +125,8 @@ class File(SerializableMixin):
             current work directory (default).
     """
 
+    DCQCTMPDIR: ClassVar[str] = "dcqc-staged-"
+
     _serialized_properties = ["name", "local_path"]
 
     url: str
@@ -336,9 +338,7 @@ class File(SerializableMixin):
             if self._local_path is not None:
                 return self._local_path
             else:
-                # TODO: This prefix is used by nf-dcqc to easily find the staged file.
-                #       It might be worth using a DCQCTMPDIR to avoid hard-coding this.
-                destination_str = mkdtemp(prefix="dcqc-staged-")
+                destination_str = mkdtemp(prefix=self.DCQCTMPDIR)
                 destination = Path(destination_str)
 
         # By this point, destination is defined (not None)
