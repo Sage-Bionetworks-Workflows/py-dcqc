@@ -125,7 +125,7 @@ class File(SerializableMixin):
             current work directory (default).
     """
 
-    DCQCTMPDIR: ClassVar[str] = "dcqc-staged-"
+    tmp_dir: ClassVar[str] = "dcqc-staged-"
 
     _serialized_properties = ["name", "local_path"]
 
@@ -338,7 +338,7 @@ class File(SerializableMixin):
             if self._local_path is not None:
                 return self._local_path
             else:
-                destination_str = mkdtemp(prefix=self.DCQCTMPDIR)
+                destination_str = mkdtemp(prefix=self.tmp_dir)
                 destination = Path(destination_str)
 
         # By this point, destination is defined (not None)
