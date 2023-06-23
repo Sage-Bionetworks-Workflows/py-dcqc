@@ -9,14 +9,13 @@ class BioFormatsInfoTest(ExternalBaseTest):
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()
-        string_path = self._short_string_path(path, "dcqc-staged-")
 
         command_args = [
             "/opt/bftools/showinf",
             "-nopix",
             "-novalid",
             "-nocore",
-            string_path,
+            f"'{path.name}'",
         ]
         process = Process(
             container="quay.io/sagebionetworks/bftools:latest",

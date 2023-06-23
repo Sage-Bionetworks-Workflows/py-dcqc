@@ -202,21 +202,6 @@ class ExternalTestMixin(BaseTest):
             status = TestStatus.FAIL
         return status
 
-    # TODO: make changes to this package or the nextflow
-    # workflow so that file mounting is handled cleaner
-    @staticmethod
-    def _short_string_path(path: Path, substring: str) -> str:
-        # chech if substring is in path
-        if substring not in path.as_posix():
-            raise ValueError(f"{substring} not in {path}")
-        # get index where staged folder is
-        index = next(i for i, item in enumerate(path.parts) if substring in item)
-        # shorten path starting from staged folder
-        short_path = Path(*path.parts[index:])
-        # wrap path string in quotes
-        quote_path = str(short_path)
-        return f"'{quote_path}'"
-
     # TODO: Include process in serialized test dictionary
     # def to_dict(self):
     #     dictionary = super(ExternalTestMixin, self).to_dict()

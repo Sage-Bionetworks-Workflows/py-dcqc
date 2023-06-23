@@ -324,18 +324,3 @@ def test_that_paired_fastq_parity_test_correctly_handles_compressed_fastq_files(
     test = tests.PairedFastqParityTest(target)
     test_status = test.get_status()
     assert test_status == TestStatus.PASS
-
-
-def test_that_short_string_path_correctly_shortens_file_paths():
-    substring = "test-substring"
-    long_path = f"path/needs/to/be/shortened/{substring}/file.txt"
-    expected_short_path = f"'{substring}/file.txt'"
-    short_path = ExternalTestMixin._short_string_path(Path(long_path), substring)
-    assert short_path == expected_short_path
-
-
-def test_that_short_string_path_raises_valueerror_if_substring_not_in_path():
-    substring = "test-substring"
-    long_path = "path/needs/to/be/shortened/fail/file.txt"
-    with pytest.raises(ValueError):
-        ExternalTestMixin._short_string_path(Path(long_path), substring)

@@ -9,7 +9,6 @@ class GrepDateTest(ExternalBaseTest):
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()
-        string_path = self._short_string_path(path, "dcqc-staged-")
 
         command_args = [
             "grep",
@@ -18,7 +17,7 @@ class GrepDateTest(ExternalBaseTest):
             "-a",  # treat input as text
             "-q",  # suppress output
             "'date|time'",  # match date or time
-            string_path,
+            f"'{path.name}'",
         ]
         process = Process(
             container="quay.io/biocontainers/coreutils:8.30--h14c3975_1000",
