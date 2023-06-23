@@ -4,13 +4,16 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 class OmeXmlSchemaTest(ExternalBaseTest):
     tier = 2
+    pass_code = "0"
     target: SingleTarget
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()
+        string_path = self._short_string_path(path, "dcqc-staged-")
+
         command_args = [
             "/opt/bftools/xmlvalid",
-            path,
+            string_path,
         ]
         process = Process(
             container="quay.io/sagebionetworks/bftools:latest",
