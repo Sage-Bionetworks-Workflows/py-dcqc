@@ -26,6 +26,7 @@ class TiffSuite(FileSuite):
         tests.LibTiffInfoTest,
         tests.GrepDateTest,
         tests.TiffTag306DateTimeTest,
+        tests.GrepLabelMacroTest,
     )
 
 
