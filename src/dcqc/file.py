@@ -309,7 +309,7 @@ class File(SerializableMixin):
         """
         return self._local_path is not None
 
-    def file_already_staged(self) -> list[Path]:
+    def already_staged(self) -> list[Path]:
         """Check if the target file has already been staged to the remote directory.
 
         Returns:
@@ -359,7 +359,7 @@ class File(SerializableMixin):
                 return self._local_path
             else:
                 # if file has already been staged
-                staged_files = self.file_already_staged()
+                staged_files = self.already_staged()
                 if not staged_files:
                     destination_str = mkdtemp(prefix=self.tmp_dir)
                     destination = Path(destination_str)
