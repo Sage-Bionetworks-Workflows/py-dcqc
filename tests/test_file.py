@@ -1,5 +1,8 @@
+import os
+import shutil
+
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, gettempdir
 
 import pytest
 
@@ -60,6 +63,27 @@ def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_
     staged_path = remote_file.stage()
     assert staged_path.exists()
     assert remote_file.local_path == staged_path
+
+
+def test_that_error_is_raised_when_a_file_has_been_staged_multiple_times(test_files):
+    duplicate_files = [
+        os.path.join(gettempdir(), "dcqc-staged-test1/test.txt"),
+        os.path.join(gettempdir(), "dcqc-staged-test2/test.txt"),
+    ]
+    for file_path in duplicate_files:
+        parent_dir = os.path.dirname(file_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+        if not os.path.exists(file_path):
+            with open(file_path, "w"):
+                pass
+    remote_file = test_files["remote"]
+    with pytest.raises(FileExistsError):
+        remote_file.stage()
+    for file_path in duplicate_files:
+        directory_path = os.path.dirname(file_path)
+        if os.path.exists(directory_path):
+            shutil.rmtree(directory_path)
 
 
 def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files):
