@@ -11,13 +11,13 @@ Classes:
 
 from __future__ import annotations
 
-import os
 import glob
+import os
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from tempfile import mkdtemp, gettempdir
+from tempfile import gettempdir, mkdtemp
 from typing import Any, ClassVar, Optional
 from warnings import warn
 
@@ -313,10 +313,12 @@ class File(SerializableMixin):
         """Check if the target file has already been staged to the remote directory.
 
         Returns:
-            staged_file_paths (list): List of already staged file paths. Empty list if file has not been staged.
+            staged_file_paths (list): List of already staged file paths.
+            Empty list if file has not been staged.
 
         Raises:
-            FileExistsError: If the file has already been staged more than once. This would cause a name collision in Nextflow.
+            FileExistsError: If the file has already been staged more than once.
+            This would cause a name collision in Nextflow.
         """
         path_str = os.path.join(gettempdir(), self.tmp_dir + "*", self.name)
         staged_file_strs = glob.glob(path_str)
