@@ -367,6 +367,7 @@ class File(SerializableMixin):
                     destination = Path(destination_str)
                 else:
                     destination = staged_files[0]
+                    self._local_path = destination
                     return destination
 
         # By this point, destination is defined (not None)
