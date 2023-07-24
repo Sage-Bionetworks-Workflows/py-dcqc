@@ -1,11 +1,53 @@
+import glob
 import os
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
+from typing import List
 
 import pytest
 
 from dcqc.file import File, FileType
+
+
+def create_duplicate_files(file_num) -> List[str]:
+    """Create duplicate files (empty txt) for testing.
+
+    Args:
+        file_num (int): number of files to create
+
+    Returns:
+       file_path_list (List[str]): list of file paths
+    """
+    file_path_list = [
+        os.path.join(gettempdir(), f"dcqc-staged-test{i}/test.txt")
+        for i in range(file_num)
+    ]
+
+    for file_path in file_path_list:
+        parent_dir = os.path.dirname(file_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+        if not os.path.exists(file_path):
+            with open(file_path, "w"):
+                pass
+
+    return file_path_list
+
+
+def remove_staged_files():
+    """Removes all staged files and their parent directories
+    which follow the 'dcqc-staged-*' pattern.
+
+    To be used at the end of all tests which result in such
+    files being created.
+    """
+    path_str = os.path.join(gettempdir(), "dcqc-staged-" + "*", "test.txt")
+    staged_file_strs = glob.glob(path_str)
+    for staged_file_str in staged_file_strs:
+        directory_path = os.path.dirname(staged_file_str)
+        if os.path.exists(directory_path):
+            shutil.rmtree(directory_path)
 
 
 def test_for_an_error_if_registering_a_duplicate_file_type():
@@ -62,27 +104,23 @@ def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_
     staged_path = remote_file.stage()
     assert staged_path.exists()
     assert remote_file.local_path == staged_path
+    remove_staged_files()
 
 
 def test_that_error_is_raised_when_a_file_has_been_staged_multiple_times(test_files):
-    duplicate_files = [
-        os.path.join(gettempdir(), "dcqc-staged-test1/test.txt"),
-        os.path.join(gettempdir(), "dcqc-staged-test2/test.txt"),
-    ]
-    for file_path in duplicate_files:
-        parent_dir = os.path.dirname(file_path)
-        if not os.path.exists(parent_dir):
-            os.makedirs(parent_dir)
-        if not os.path.exists(file_path):
-            with open(file_path, "w"):
-                pass
+    create_duplicate_files(2)
     remote_file = test_files["remote"]
     with pytest.raises(FileExistsError):
         remote_file.stage()
-    for file_path in duplicate_files:
-        directory_path = os.path.dirname(file_path)
-        if os.path.exists(directory_path):
-            shutil.rmtree(directory_path)
+    remove_staged_files()
+
+
+def test_that_file_is_not_staged_when_it_already_has_been_staged(test_files):
+    duplicate_file = create_duplicate_files(1)[0]
+    remote_file = test_files["remote"]
+    destination = remote_file.stage()
+    assert destination == Path(duplicate_file)
+    remove_staged_files()
 
 
 def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files):

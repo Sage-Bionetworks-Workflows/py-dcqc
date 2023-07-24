@@ -360,7 +360,7 @@ class File(SerializableMixin):
             if self._local_path is not None:
                 return self._local_path
             else:
-                # if file has already been staged
+                # check if file has already been staged
                 staged_files = self.already_staged()
                 if not staged_files:
                     destination_str = mkdtemp(prefix=self.tmp_dir)
