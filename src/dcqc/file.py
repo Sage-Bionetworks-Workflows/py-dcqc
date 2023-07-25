@@ -11,12 +11,13 @@ Classes:
 
 from __future__ import annotations
 
+import glob
 import os
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from tempfile import mkdtemp
+from tempfile import gettempdir, mkdtemp
 from typing import Any, ClassVar, Optional
 from warnings import warn
 
@@ -308,6 +309,27 @@ class File(SerializableMixin):
         """
         return self._local_path is not None
 
+    def already_staged(self) -> list[Path]:
+        """Check if the target file has already been staged to the remote directory.
+
+        Returns:
+            staged_file_paths (list): List of already staged file paths.
+            Empty list if file has not been staged.
+
+        Raises:
+            FileExistsError: If the file has already been staged more than once.
+            This would cause a name collision in Nextflow.
+        """
+        path_str = os.path.join(gettempdir(), self.tmp_dir + "*", self.name)
+        staged_file_strs = glob.glob(path_str)
+        staged_file_paths = [Path(path) for path in staged_file_strs]
+        if len(staged_file_paths) > 1:
+            message = (
+                f"File has already been staged multiple times: {staged_file_paths}"
+            )
+            raise FileExistsError(message)
+        return staged_file_paths
+
     def stage(
         self,
         destination: Optional[Path] = None,
@@ -338,8 +360,15 @@ class File(SerializableMixin):
             if self._local_path is not None:
                 return self._local_path
             else:
-                destination_str = mkdtemp(prefix=self.tmp_dir)
-                destination = Path(destination_str)
+                # check if file has already been staged
+                staged_files = self.already_staged()
+                if not staged_files:
+                    destination_str = mkdtemp(prefix=self.tmp_dir)
+                    destination = Path(destination_str)
+                else:
+                    destination = staged_files[0]
+                    self._local_path = destination
+                    return destination
 
         # By this point, destination is defined (not None)
         if destination.is_dir():
