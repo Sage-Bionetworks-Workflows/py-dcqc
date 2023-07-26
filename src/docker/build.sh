@@ -8,8 +8,7 @@ TARBALL_PATH=$(ls dist/*.tar.gz)
 export TARBALL_PATH
 
 docker build \
-    -t bwmac03570/py-dcqc-test:hdf5_suite \
-    --platform linux/amd64 \
+    -t dcqc \
     -f "${SCRIPT_DIR}/Dockerfile" \
     --build-arg TARBALL_PATH \
     "${SCRIPT_DIR}/../.."
