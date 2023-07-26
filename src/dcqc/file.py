@@ -109,6 +109,7 @@ FileType("JSON-LD", (".jsonld",), "format_3749")
 FileType("TIFF", (".tif", ".tiff", ".svs", ".scn"), "format_3591")
 FileType("OME-TIFF", (".ome.tif", ".ome.tiff"), "format_3727")
 FileType("TSV", (".tsv"), "format_3475")
+FileType("CSV", (".csv"), "format_3752")
 FileType("BAM", (".bam"), "format_2572")
 FileType("FASTQ", (".fastq", ".fastq.gz", ".fq", ".fq.gz"), "format_1930")
 
