@@ -49,3 +49,7 @@ class FastqSuite(FileSuite):
 
 class TXTSuite(FileSuite):
     file_type = FileType.get_file_type("TXT")
+
+
+class CSVSuite(FileSuite):
+    file_type = FileType.get_file_type("CSV")
