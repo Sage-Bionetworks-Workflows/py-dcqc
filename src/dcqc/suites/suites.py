@@ -53,3 +53,7 @@ class TXTSuite(FileSuite):
 
 class CSVSuite(FileSuite):
     file_type = FileType.get_file_type("CSV")
+
+
+class HDF5Suite(FileSuite):
+    file_type = FileType.get_file_type("HDF5")
