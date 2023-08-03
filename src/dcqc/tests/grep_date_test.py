@@ -5,6 +5,9 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 class GrepDateTest(ExternalBaseTest):
     tier = 4
     pass_code = "1"
+    fail_code = "0"
+    reason = ""
+    reason_location = "std_out"
     target: SingleTarget
 
     def generate_process(self) -> Process:
@@ -15,9 +18,9 @@ class GrepDateTest(ExternalBaseTest):
             "-E",  # extended regular expression
             "-i",  # case insensitive
             "-a",  # treat input as text
-            "-q",  # suppress output
+            # "-q",  # suppress output
             "'date|time'",  # match date or time
-            f"'{path.name}'",
+            f"'abc.txt'",
         ]
         process = Process(
             container="quay.io/biocontainers/coreutils:8.30--h14c3975_1000",

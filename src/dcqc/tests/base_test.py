@@ -22,6 +22,7 @@ class TestStatus(Enum):
     FAIL = "failed"
     PASS = "passed"
     SKIP = "skipped"
+    ERROR = "error"
 
 
 # TODO: Look into the @typing.final decorator
@@ -73,6 +74,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             "tier": self.tier,
             "is_external_test": self.is_external_test,
             "status": self._status.value,
+            "reason": self.reason,
             "target": self.target.to_dict(),
         }
         return test_dict
@@ -97,6 +99,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
         status = TestStatus(dictionary["status"])
         test._status = status
+        reason = dictionary["reason"]
+        test.reason = reason
 
         return test
 
@@ -154,6 +158,10 @@ class Process(SerializableMixin):
 
 class ExternalTestMixin(BaseTest):
     pass_code: ClassVar[str]
+    fail_code: ClassVar[str]
+    reason: ClassVar[str]
+    reason_location: ClassVar[str]
+
     # Class attributes
     is_external_test = True
 
@@ -196,10 +204,16 @@ class ExternalTestMixin(BaseTest):
         """Interpret the process output files to yield a test status."""
         exit_code = outputs["exit_code"].read_text()
         exit_code = exit_code.strip()
+
         if exit_code == self.pass_code:
             status = TestStatus.PASS
-        else:
+        elif exit_code == self.fail_code:
             status = TestStatus.FAIL
+            # TODO: Include stdout and/or stderr in test json
+            self.reason = outputs[self.reason_location].read_text()
+        else:
+            status = TestStatus.ERROR
+            self.reason = outputs["std_err"].read_text()
         return status
 
     # TODO: Include process in serialized test dictionary

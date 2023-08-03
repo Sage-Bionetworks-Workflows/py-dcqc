@@ -29,7 +29,9 @@ class CsvUpdater:
         # Evaluate dcqc_status for each url
         collapsed_dict = {}
         for url, statuses in suite_dict.items():
-            if "RED" in statuses:
+            if "GREY" in statuses:
+                collapsed_dict[url] = "GREY"
+            elif "RED" in statuses:
                 collapsed_dict[url] = "RED"
             elif "AMBER" in statuses:
                 collapsed_dict[url] = "AMBER"

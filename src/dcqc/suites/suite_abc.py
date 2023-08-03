@@ -19,7 +19,7 @@ class SuiteStatus(Enum):
     GREEN = "GREEN"  # all tests passed
     RED = "RED"  # one or more required tests failed
     AMBER = "AMBER"  # all required tests passed, but one or more optional tests failed
-    # TODO GREY = "GREY" # error occurred
+    GREY = "GREY"  # error occurred
 
 
 # TODO: Consider the Composite design pattern once
@@ -225,6 +225,9 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         for test in self.tests:
             test_name = test.type
             test_status = test.get_status()
+            if test_status == TestStatus.ERROR:
+                self._status = SuiteStatus.GREY
+                return self._status
             if test_name in self.required_tests:
                 if test_status == TestStatus.FAIL:
                     self._status = SuiteStatus.RED

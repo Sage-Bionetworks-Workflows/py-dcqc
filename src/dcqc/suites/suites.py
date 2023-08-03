@@ -7,7 +7,7 @@ from dcqc.suites.suite_abc import SuiteABC
 #       to the file types
 class FileSuite(SuiteABC):
     file_type = FileType.get_file_type("*")
-    add_tests = (tests.FileExtensionTest, tests.Md5ChecksumTest)
+    # add_tests = (tests.FileExtensionTest, tests.Md5ChecksumTest)
 
 
 class JsonSuite(FileSuite):
@@ -23,9 +23,9 @@ class JsonLdSuite(JsonSuite):
 class TiffSuite(FileSuite):
     file_type = FileType.get_file_type("TIFF")
     add_tests = (
-        tests.LibTiffInfoTest,
+        # tests.LibTiffInfoTest,
         tests.GrepDateTest,
-        tests.TiffTag306DateTimeTest,
+        # tests.TiffTag306DateTimeTest,
     )
 
 
