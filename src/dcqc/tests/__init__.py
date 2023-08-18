@@ -9,3 +9,4 @@ from dcqc.tests.md5_checksum_test import Md5ChecksumTest
 from dcqc.tests.ome_xml_schema_test import OmeXmlSchemaTest
 from dcqc.tests.paired_fastq_parity_test import PairedFastqParityTest
 from dcqc.tests.tiff_tag_306_date_time_test import TiffTag306DateTimeTest
+from dcqc.tests.tiff_date_time_test import TiffDateTimeTest
