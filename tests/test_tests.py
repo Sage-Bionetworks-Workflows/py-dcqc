@@ -295,6 +295,38 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
         assert test_status == TestStatus.FAIL
 
 
+def test_that_the_tiffdatetimetest_command_is_produced(test_targets):
+    target = test_targets["tiff"]
+    test = tests.TiffDateTimeTest(target)
+    process = test.generate_process()
+    assert "grep" in process.command
+
+
+def test_that_the_tiffdatetimetest_correctly_interprets_exit_code_0_and_1(
+    test_files, mocker
+):
+    # 1 is pass, 0 is fail
+    tiff_file = test_files["tiff"]
+    target = SingleTarget(tiff_file)
+    with TemporaryDirectory() as tmp_dir:
+        path_0 = Path(tmp_dir, "code_0.txt")
+        path_1 = Path(tmp_dir, "code_1.txt")
+        path_0.write_text("0")
+        path_1.write_text("1")
+        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+        test = tests.TiffDateTimeTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.PASS
+
+        test = tests.TiffDateTimeTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.FAIL
+
+
 def test_that_paired_fastq_parity_test_correctly_passes_identical_fastq_files(
     test_files,
 ):
