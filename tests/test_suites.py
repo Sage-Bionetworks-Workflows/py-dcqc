@@ -8,9 +8,9 @@ from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
 from dcqc.tests import (
     BaseTest,
     FileExtensionTest,
-    TiffDateTimeTest,
     LibTiffInfoTest,
     TestStatus,
+    TiffDateTimeTest,
     TiffTag306DateTimeTest,
 )
 
