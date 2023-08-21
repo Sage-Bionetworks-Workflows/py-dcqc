@@ -19,7 +19,7 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
             "|",
             "jq",
             "-e",
-            "'.[].ifds[].tags['306']'",
+            "'.[].ifds[].tags[\"306\"]'",
         ]
         process = Process(
             container="ghcr.io/sage-bionetworks-workflows/tifftools:latest",

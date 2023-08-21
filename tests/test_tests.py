@@ -267,7 +267,7 @@ def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
     target = test_targets["tiff"]
     test = tests.TiffTag306DateTimeTest(target)
     process = test.generate_process()
-    assert "grep" in process.command
+    assert "jq" in process.command
 
 
 def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
