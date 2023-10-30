@@ -55,6 +55,8 @@ def get_data():
 @pytest.fixture
 def test_files(get_data):
     txt_path = get_data("test.txt")
+    date_path = get_data("test_contains_word_date.txt")
+    ome_tiff_path = get_data("ome_tiff.ome.tiff")
     jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
     fastq1_path = get_data("fastq1.fastq")
@@ -64,6 +66,14 @@ def test_files(get_data):
     good_metadata = {
         "file_type": "txt",
         "md5_checksum": "14758f1afd44c09b7992073ccf00b43d",
+    }
+    date_txt_metadata = {
+        "file_type": "txt",
+        "md5_checksum": "9cee1b0e8c4d051fabea82b62ae69404",
+    }
+    ome_tiff_metadata = {
+        "file_type": "ome-tiff",
+        "md5_checksum": "293e46687fa6543a2e8189f1698cc5d0",
     }
     bad_metadata = {
         "file_type": "tiff",
@@ -84,6 +94,8 @@ def test_files(get_data):
     }
     test_files = {
         "good": File(txt_path.as_posix(), good_metadata),
+        "date_txt": File(date_path.as_posix(), date_txt_metadata),
+        "ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
         "bad": File(txt_path.as_posix(), bad_metadata),
         "tiff": File(tiff_path.as_posix(), tiff_metadata),
         "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
