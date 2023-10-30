@@ -62,7 +62,7 @@ jobs:
         - "3.11"  # newest Python that is stable
         platform:
         - ubuntu-latest
-        # - macos-latest
+        - macos-latest
         # TODO: Debug the Windows issues
         # - windows-latest
     env:
@@ -76,6 +76,11 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
+      - name: Setup docker (missing on MacOS)
+        if: runner.os == 'macos'
+        run: |
+          brew install docker
+          colima start
       - name: Run tests
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
