@@ -80,6 +80,8 @@ jobs:
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
         run: |
+          codesign --sign - --entitlements entitlements.xml \
+          --force /usr/local/bin/qemu-system-x86_64
           brew install docker colima
           colima start
           while ! docker info > /dev/null 2>&1; do
