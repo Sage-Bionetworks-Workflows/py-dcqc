@@ -85,7 +85,8 @@ jobs:
           while ! docker info > /dev/null 2>&1; do
             echo "Waiting for docker daemon to start..."
             sleep 5
-          done
+            done
+          echo "Docker daemon is running"
       - name: Run tests
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
