@@ -181,78 +181,21 @@ def test_that_the_bioformats_info_test_command_is_produced(test_targets):
     assert "showinf" in process.command
 
 
-# def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_files):
-#     one_tiff_file = test_files["ome_tiff"]
-#     target = SingleTarget(one_tiff_file)
-#     test = tests.BioFormatsInfoTest(target)
-#     process = test.generate_process()
-#     executor = DockerExecutor(process.container, process.command, target.file.url)
-#     executor.execute()
-#     assert executor.exit_code == "0"
-
-
-# def test_that_the_bioformats_info_test_correctly_interprets_exit_code_0_and_1(
-#     test_files, mocker
-# ):
-#     # 0 is pass, 1 is fail
-#     tiff_file = test_files["tiff"]
-#     target = SingleTarget(tiff_file)
-#     with TemporaryDirectory() as tmp_dir:
-#         path_0 = Path(tmp_dir, "code_0.txt")
-#         path_1 = Path(tmp_dir, "code_1.txt")
-#         path_0.write_text("0")
-#         path_1.write_text("1")
-#         pass_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-#         fail_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
-
-#         test = tests.BioFormatsInfoTest(target)
-#         mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
-#         test_status = test.get_status()
-#         assert test_status == TestStatus.PASS
-
-#         test = tests.BioFormatsInfoTest(target)
-#         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
-#         test_status = test.get_status()
-#         assert test_status == TestStatus.FAIL
-
-
-# def test_that_the_ome_xml_schema_test_command_is_produced(test_targets):
-#     target = test_targets["tiff"]
-#     test = tests.OmeXmlSchemaTest(target)
-#     process = test.generate_process()
-#     assert "xmlvalid" in process.command
-
-
-# def test_that_the_ome_xml_info_test_correctly_interprets_exit_code_0_and_1(
-#     test_files, mocker
-# ):
-#     # 0 is pass, 1 is fail
-#     tiff_file = test_files["tiff"]
-#     target = SingleTarget(tiff_file)
-#     with TemporaryDirectory() as tmp_dir:
-#         path_0 = Path(tmp_dir, "code_0.txt")
-#         path_1 = Path(tmp_dir, "code_1.txt")
-#         path_0.write_text("0")
-#         path_1.write_text("1")
-#         pass_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-#         fail_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
-
-#         test = tests.OmeXmlSchemaTest(target)
-#         mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
-#         test_status = test.get_status()
-#         assert test_status == TestStatus.PASS
-
-#         test = tests.OmeXmlSchemaTest(target)
-#         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
-#         test_status = test.get_status()
-#         assert test_status == TestStatus.FAIL
-
-
 # def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
 #     target = test_targets["tiff"]
 #     test = tests.TiffTag306DateTimeTest(target)
 #     process = test.generate_process()
 #     assert "jq" in process.command
+
+
+# def test_that_the_tifftag306datetimetest_exit_code_is_0_when_it_should_be(test_files):
+#     tiff_file = test_files["tiff"]
+#     target = SingleTarget(tiff_file)
+#     test = tests.TiffTag306DateTimeTest(target)
+#     process = test.generate_process()
+#     executor = DockerExecutor(process.container, process.command, target.file.url)
+#     executor.execute()
+#     assert executor.exit_code == "0"
 
 
 # def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
@@ -307,6 +250,83 @@ def test_that_the_bioformats_info_test_command_is_produced(test_targets):
 #         assert test_status == TestStatus.PASS
 
 #         test = tests.TiffDateTimeTest(target)
+#         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
+#         test_status = test.get_status()
+#         assert test_status == TestStatus.FAIL
+
+
+# def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_files):
+#     one_tiff_file = test_files["ome_tiff"]
+#     target = SingleTarget(one_tiff_file)
+#     test = tests.BioFormatsInfoTest(target)
+#     process = test.generate_process()
+#     executor = DockerExecutor(process.container, process.command, target.file.url)
+#     executor.execute()
+#     assert executor.exit_code == "0"
+
+
+# def test_that_the_bioformats_info_test_correctly_interprets_exit_code_0_and_1(
+#     test_files, mocker
+# ):
+#     # 0 is pass, 1 is fail
+#     tiff_file = test_files["tiff"]
+#     target = SingleTarget(tiff_file)
+#     with TemporaryDirectory() as tmp_dir:
+#         path_0 = Path(tmp_dir, "code_0.txt")
+#         path_1 = Path(tmp_dir, "code_1.txt")
+#         path_0.write_text("0")
+#         path_1.write_text("1")
+#         pass_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+#         fail_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+#         test = tests.BioFormatsInfoTest(target)
+#         mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
+#         test_status = test.get_status()
+#         assert test_status == TestStatus.PASS
+
+#         test = tests.BioFormatsInfoTest(target)
+#         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
+#         test_status = test.get_status()
+#         assert test_status == TestStatus.FAIL
+
+
+# def test_that_the_ome_xml_schema_test_command_is_produced(test_targets):
+#     target = test_targets["tiff"]
+#     test = tests.OmeXmlSchemaTest(target)
+#     process = test.generate_process()
+#     assert "xmlvalid" in process.command
+
+
+# def test_that_the_ome_xml_schema_test_exit_code_is_0_when_it_should_be(test_files):
+#     tiff_file = test_files["ome_tiff"]
+#     target = SingleTarget(tiff_file)
+#     test = tests.OmeXmlSchemaTest(target)
+#     process = test.generate_process()
+#     executor = DockerExecutor(process.container, process.command, target.file.url)
+#     executor.execute()
+#     assert executor.exit_code == "0"
+
+
+# def test_that_the_ome_xml_info_test_correctly_interprets_exit_code_0_and_1(
+#     test_files, mocker
+# ):
+#     # 0 is pass, 1 is fail
+#     tiff_file = test_files["tiff"]
+#     target = SingleTarget(tiff_file)
+#     with TemporaryDirectory() as tmp_dir:
+#         path_0 = Path(tmp_dir, "code_0.txt")
+#         path_1 = Path(tmp_dir, "code_1.txt")
+#         path_0.write_text("0")
+#         path_1.write_text("1")
+#         pass_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+#         fail_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+#         test = tests.OmeXmlSchemaTest(target)
+#         mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
+#         test_status = test.get_status()
+#         assert test_status == TestStatus.PASS
+
+#         test = tests.OmeXmlSchemaTest(target)
 #         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
 #         test_status = test.get_status()
 #         assert test_status == TestStatus.FAIL

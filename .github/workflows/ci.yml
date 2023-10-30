@@ -61,8 +61,8 @@ jobs:
         - "3.8"
         - "3.11"  # newest Python that is stable
         platform:
-        #- ubuntu-latest
-        - macos-latest
+        - ubuntu-latest
+        # - macos-latest
         # TODO: Debug the Windows issues
         # - windows-latest
     env:
@@ -79,16 +79,7 @@ jobs:
       - name: Run tests
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
-        run: |
-          codesign --sign - --entitlements entitlements.xml \
-          --force /usr/local/bin/qemu-system-x86_64
-          brew install docker colima
-          colima start
-          while ! docker info > /dev/null 2>&1; do
-            echo "Waiting for docker daemon to start..."
-            sleep 5
-            done
-          echo "Docker daemon is running"
+        run: >-
           pipx run --spec 'tox~=3.0' tox \
           --installpkg '${{ needs.prepare.outputs.wheel-path }}' \
           -- -rFEx --durations 10 --color yes
