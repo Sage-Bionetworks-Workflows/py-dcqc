@@ -63,6 +63,12 @@ def test_files(get_data):
     fastq2_path = get_data("fastq2.fastq.gz")
     syn_path = "syn://syn50555279"
     tiff_dirty_datetime_path = get_data("test_image_dirty_datetime.tif")
+    tiff_date_in_tag_path = get_data("date_tag.tif")
+    invalid_xml_ome_tiff_path = get_data("invalid_xml.ome.tif")
+    invalid_xml_metadata = {
+        "file_type": "tiff",
+        "md5_checksum": "a2550a887091d51351d547c8beae8f0c",
+    }
     good_metadata = {
         "file_type": "txt",
         "md5_checksum": "14758f1afd44c09b7992073ccf00b43d",
@@ -93,9 +99,13 @@ def test_files(get_data):
         "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268",
     }
     test_files = {
+        "date_in_tag_tiff": File(tiff_date_in_tag_path.as_posix(), tiff_metadata),
         "good": File(txt_path.as_posix(), good_metadata),
         "date_txt": File(date_path.as_posix(), date_txt_metadata),
         "ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
+        "invalid_xml_tiff": File(
+            invalid_xml_ome_tiff_path.as_posix(), invalid_xml_metadata
+        ),
         "bad": File(txt_path.as_posix(), bad_metadata),
         "tiff": File(tiff_path.as_posix(), tiff_metadata),
         "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
