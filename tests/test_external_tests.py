@@ -12,14 +12,6 @@ from dcqc.target import SingleTarget
 from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
-# TODO Make changes to fully support Docker-enabled tests in macOS
-def docker_enabled_test(func):
-    return pytest.mark.skipif(
-        "linux" not in sys.platform.lower(),
-        reason="Docker-enabled tests only run on Linux",
-    )(func)
-
-
 def test_that_all_external_tests_inherit_from_the_mixin_first():
     tests = BaseTest.list_subclasses()
     for test in tests:
@@ -52,6 +44,14 @@ def test_that_a_process_can_be_serialized_and_deserialized():
     process_dict = process.to_dict()
     process_from_dict = Process.from_dict(process_dict)
     assert process_dict == process_from_dict.to_dict()
+
+
+# TODO Make changes to fully support Docker-enabled tests in macOS
+def docker_enabled_test(func):
+    return pytest.mark.skipif(
+        "linux" not in sys.platform.lower(),
+        reason="Docker-enabled tests only run in Linux",
+    )(func)
 
 
 class DockerExecutor:
