@@ -1,9 +1,9 @@
+import os
+import shlex
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-import shlex
-import os
 
 import docker
 from dcqc import tests
@@ -56,9 +56,9 @@ class DockerExecutor:
         self.container_path = os.path.join("/", file_path.split("/")[-1])
 
     def format_command_for_sh(self, command):
-        # Escape special characters in the command
+        """Format the command for sh -c.
+        Standardizes command execution across containers."""
         escaped_command = shlex.quote(command)
-        # Add the sh -c prefix
         formatted_command = f"sh -c {escaped_command}"
         return formatted_command
 
@@ -295,24 +295,24 @@ def test_that_the_bioformats_info_test_command_is_produced(test_targets):
     assert "showinf" in process.command
 
 
-# def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_files):
-#     one_tiff_file = test_files["ome_tiff"]
-#     target = SingleTarget(one_tiff_file)
-#     test = tests.BioFormatsInfoTest(target)
-#     process = test.generate_process()
-#     executor = DockerExecutor(process.container, process.command, target.file.url)
-#     executor.execute()
-#     assert executor.exit_code == "0"
+def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_files):
+    one_tiff_file = test_files["ome_tiff"]
+    target = SingleTarget(one_tiff_file)
+    test = tests.BioFormatsInfoTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "0"
 
 
-# def test_that_the_bioformats_info_test_exit_code_is_1_when_it_should_be(test_files):
-#     one_tiff_file = test_files["good"]
-#     target = SingleTarget(one_tiff_file)
-#     test = tests.BioFormatsInfoTest(target)
-#     process = test.generate_process()
-#     executor = DockerExecutor(process.container, process.command, target.file.url)
-#     executor.execute()
-#     assert executor.exit_code == "1"
+def test_that_the_bioformats_info_test_exit_code_is_1_when_it_should_be(test_files):
+    one_tiff_file = test_files["good"]
+    target = SingleTarget(one_tiff_file)
+    test = tests.BioFormatsInfoTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "1"
 
 
 def test_that_the_bioformats_info_test_correctly_interprets_exit_code_0_and_1(

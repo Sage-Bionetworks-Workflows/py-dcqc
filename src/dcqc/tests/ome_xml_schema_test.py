@@ -15,7 +15,7 @@ class OmeXmlSchemaTest(ExternalBaseTest):
             f"'{path.name}'",
             "|",
             "grep",
-            "'No validation errors found.'",  # check for this string in stdout
+            "'No validation errors found.'",
         ]
         process = Process(
             container="quay.io/sagebionetworks/bftools:latest",
