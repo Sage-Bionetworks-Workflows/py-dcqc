@@ -11,4 +11,5 @@ docker build \
     -t dcqc \
     -f "${SCRIPT_DIR}/Dockerfile" \
     --build-arg TARBALL_PATH \
+    --platform linux/amd64 \
     "${SCRIPT_DIR}/../.."
