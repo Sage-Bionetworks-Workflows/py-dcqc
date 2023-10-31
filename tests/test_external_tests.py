@@ -12,7 +12,13 @@ from dcqc.target import SingleTarget
 from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="Linux tests")
+def docker_enabled_test(func):
+    return pytest.mark.skipif(
+        "linux" not in sys.platform.lower(),
+        reason="Docker-enabled tests only run on Linux",
+    )(func)
+
+
 def test_that_all_external_tests_inherit_from_the_mixin_first():
     tests = BaseTest.list_subclasses()
     for test in tests:
@@ -24,7 +30,6 @@ def test_that_all_external_tests_inherit_from_the_mixin_first():
 
 
 def test_that_process_output_files_can_be_found(get_data):
-    print(f"--------SYSTEM: {sys.platform}-------------")
     std_out = get_data("tiffinfo/std_out.txt")
     std_err = get_data("tiffinfo/std_err.txt")
     exit_code = get_data("tiffinfo/exit_code.txt")
@@ -90,6 +95,7 @@ def test_that_the_grep_date_test_command_is_produced(test_targets):
     assert "grep" in process.command
 
 
+@docker_enabled_test
 def test_that_the_grep_date_test_exit_code_is_0_when_it_should_be(test_files):
     date_file = test_files["date_txt"]
     target = SingleTarget(date_file)
@@ -100,6 +106,7 @@ def test_that_the_grep_date_test_exit_code_is_0_when_it_should_be(test_files):
     assert executor.exit_code == "0"
 
 
+@docker_enabled_test
 def test_that_the_grep_date_test_exit_code_is_1_when_it_should_be(test_files):
     tiff_file = test_files["good"]
     target = SingleTarget(tiff_file)
@@ -142,6 +149,7 @@ def test_that_the_libtiff_info_test_command_is_produced(test_targets):
     assert "tiffinfo" in process.command
 
 
+@docker_enabled_test
 def test_that_the_libtiff_info_test_exit_code_is_0_when_it_should_be(test_files):
     tiff_file = test_files["tiff"]
     target = SingleTarget(tiff_file)
@@ -152,6 +160,7 @@ def test_that_the_libtiff_info_test_exit_code_is_0_when_it_should_be(test_files)
     assert executor.exit_code == "0"
 
 
+@docker_enabled_test
 def test_that_the_libtiff_info_test_exit_code_is_1_when_it_should_be(test_files):
     tiff_file = test_files["bad"]
     target = SingleTarget(tiff_file)
@@ -194,6 +203,7 @@ def test_that_the_tiffdatetimetest_command_is_produced(test_targets):
     assert "grep" in process.command
 
 
+@docker_enabled_test
 def test_that_the_tiffdatetimetest_exit_code_is_1_when_it_should_be(test_files):
     tiff_file = test_files["tiff"]
     target = SingleTarget(tiff_file)
@@ -204,6 +214,7 @@ def test_that_the_tiffdatetimetest_exit_code_is_1_when_it_should_be(test_files):
     assert executor.exit_code == "1"
 
 
+@docker_enabled_test
 def test_that_the_tiffdatetimetest_exit_code_is_0_when_it_should_be(test_files):
     tiff_file = test_files["date_in_tag_tiff"]
     target = SingleTarget(tiff_file)
@@ -246,6 +257,7 @@ def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
     assert "jq" in process.command
 
 
+@docker_enabled_test
 def test_that_the_tifftag306datetimetest_exit_code_is_1_when_it_should_be(test_files):
     tiff_file = test_files["tiff"]
     target = SingleTarget(tiff_file)
@@ -256,6 +268,7 @@ def test_that_the_tifftag306datetimetest_exit_code_is_1_when_it_should_be(test_f
     assert executor.exit_code == "1"
 
 
+@docker_enabled_test
 def test_that_the_tifftag306datetimetest_exit_code_is_0_when_it_should_be(test_files):
     tiff_file = test_files["tiff_dirty_datetime"]
     target = SingleTarget(tiff_file)
@@ -298,6 +311,7 @@ def test_that_the_bioformats_info_test_command_is_produced(test_targets):
     assert "showinf" in process.command
 
 
+@docker_enabled_test
 def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_files):
     one_tiff_file = test_files["ome_tiff"]
     target = SingleTarget(one_tiff_file)
@@ -308,6 +322,7 @@ def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_fil
     assert executor.exit_code == "0"
 
 
+@docker_enabled_test
 def test_that_the_bioformats_info_test_exit_code_is_1_when_it_should_be(test_files):
     one_tiff_file = test_files["good"]
     target = SingleTarget(one_tiff_file)
@@ -350,6 +365,7 @@ def test_that_the_ome_xml_schema_test_command_is_produced(test_targets):
     assert "xmlvalid" in process.command
 
 
+@docker_enabled_test
 def test_that_the_ome_xml_schema_test_exit_code_is_0_when_it_should_be(test_files):
     tiff_file = test_files["ome_tiff"]
     target = SingleTarget(tiff_file)
@@ -360,6 +376,7 @@ def test_that_the_ome_xml_schema_test_exit_code_is_0_when_it_should_be(test_file
     assert executor.exit_code == "0"
 
 
+@docker_enabled_test
 def test_that_the_ome_xml_schema_test_exit_code_is_1_when_it_should_be(test_files):
     tiff_file = test_files["good"]
     target = SingleTarget(tiff_file)
