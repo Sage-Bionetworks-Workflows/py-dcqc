@@ -12,6 +12,7 @@ from dcqc.target import SingleTarget
 from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
+# TODO Make changes to fully support Docker-enabled tests in macOS
 def docker_enabled_test(func):
     return pytest.mark.skipif(
         "linux" not in sys.platform.lower(),
