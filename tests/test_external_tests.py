@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
+import sys
 
 import docker
 from dcqc import tests
@@ -11,6 +12,7 @@ from dcqc.target import SingleTarget
 from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux tests")
 def test_that_all_external_tests_inherit_from_the_mixin_first():
     tests = BaseTest.list_subclasses()
     for test in tests:
@@ -22,6 +24,7 @@ def test_that_all_external_tests_inherit_from_the_mixin_first():
 
 
 def test_that_process_output_files_can_be_found(get_data):
+    print(f"--------SYSTEM: {sys.platform}-------------")
     std_out = get_data("tiffinfo/std_out.txt")
     std_err = get_data("tiffinfo/std_err.txt")
     exit_code = get_data("tiffinfo/exit_code.txt")
