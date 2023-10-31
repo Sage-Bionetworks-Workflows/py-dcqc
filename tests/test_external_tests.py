@@ -1,10 +1,10 @@
 import os
 import shlex
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-import sys
 
 import docker
 from dcqc import tests
