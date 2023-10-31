@@ -56,7 +56,7 @@ def get_data():
 def test_files(get_data):
     txt_path = get_data("test.txt")
     date_path = get_data("test_contains_word_date.txt")
-    ome_tiff_path = get_data("ome_tiff.ome.tiff")
+    ome_tiff_path = get_data("single-channel.ome.tif")
     jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
     fastq1_path = get_data("fastq1.fastq")
