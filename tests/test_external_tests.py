@@ -48,6 +48,7 @@ def test_that_a_process_can_be_serialized_and_deserialized():
 
 # TODO Make changes to fully support Docker-enabled tests in macOS
 def docker_enabled_test(func):
+    """Marks Docker-enabled tests to only run in Linux environments."""
     return pytest.mark.skipif(
         "linux" not in sys.platform.lower(),
         reason="Docker-enabled tests only run in Linux",
@@ -82,7 +83,6 @@ class DockerExecutor:
             stderr=True,
             volumes={self.local_path: {"bind": self.container_path, "mode": "ro"}},
             working_dir="/",
-            # remove=True, UNCOMMENT THIS WHEN READY TO COMMIT
         )
         self.exit_code = str(container.wait()["StatusCode"])
         self.std_out = container.logs(stdout=True, stderr=False).decode("utf-8")
