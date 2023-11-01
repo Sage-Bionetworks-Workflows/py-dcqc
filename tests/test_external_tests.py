@@ -46,7 +46,7 @@ def test_that_a_process_can_be_serialized_and_deserialized():
     assert process_dict == process_from_dict.to_dict()
 
 
-# TODO Make changes to fully support Docker-enabled tests in macOS
+# TODO Make changes to fully support Docker-enabled tests in macOS once it is possile
 def docker_enabled_test(func):
     """Marks Docker-enabled tests to only run in Linux environments."""
     return pytest.mark.skipif(
@@ -87,60 +87,6 @@ class DockerExecutor:
         self.exit_code = str(container.wait()["StatusCode"])
         self.std_out = container.logs(stdout=True, stderr=False).decode("utf-8")
         self.std_err = container.logs(stdout=False, stderr=True).decode("utf-8")
-
-
-def test_that_the_grep_date_test_command_is_produced(test_targets):
-    target = test_targets["tiff"]
-    test = tests.GrepDateTest(target)
-    process = test.generate_process()
-    assert "grep" in process.command
-
-
-@docker_enabled_test
-def test_that_the_grep_date_test_exit_code_is_0_when_it_should_be(test_files):
-    date_file = test_files["date_txt"]
-    target = SingleTarget(date_file)
-    test = tests.GrepDateTest(target)
-    process = test.generate_process()
-    executor = DockerExecutor(process.container, process.command, target.file.url)
-    executor.execute()
-    assert executor.exit_code == "0"
-
-
-@docker_enabled_test
-def test_that_the_grep_date_test_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["good"]
-    target = SingleTarget(tiff_file)
-    test = tests.GrepDateTest(target)
-    process = test.generate_process()
-    executor = DockerExecutor(process.container, process.command, target.file.url)
-    executor.execute()
-    assert executor.exit_code == "1"
-
-
-def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
-    test_files, mocker
-):
-    # 1 is pass, 0 is fail
-    tiff_file = test_files["tiff"]
-    target = SingleTarget(tiff_file)
-    with TemporaryDirectory() as tmp_dir:
-        path_0 = Path(tmp_dir, "code_0.txt")
-        path_1 = Path(tmp_dir, "code_1.txt")
-        path_0.write_text("0")
-        path_1.write_text("1")
-        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
-
-        test = tests.GrepDateTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
-        test_status = test.get_status()
-        assert test_status == TestStatus.PASS
-
-        test = tests.GrepDateTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
-        test_status = test.get_status()
-        assert test_status == TestStatus.FAIL
 
 
 def test_that_the_libtiff_info_test_command_is_produced(test_targets):
@@ -192,114 +138,6 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
         assert test_status == TestStatus.PASS
 
         test = tests.LibTiffInfoTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
-        test_status = test.get_status()
-        assert test_status == TestStatus.FAIL
-
-
-def test_that_the_tiffdatetimetest_command_is_produced(test_targets):
-    target = test_targets["tiff"]
-    test = tests.TiffDateTimeTest(target)
-    process = test.generate_process()
-    assert "grep" in process.command
-
-
-@docker_enabled_test
-def test_that_the_tiffdatetimetest_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["tiff"]
-    target = SingleTarget(tiff_file)
-    test = tests.TiffDateTimeTest(target)
-    process = test.generate_process()
-    executor = DockerExecutor(process.container, process.command, target.file.url)
-    executor.execute()
-    assert executor.exit_code == "1"
-
-
-@docker_enabled_test
-def test_that_the_tiffdatetimetest_exit_code_is_0_when_it_should_be(test_files):
-    tiff_file = test_files["date_in_tag_tiff"]
-    target = SingleTarget(tiff_file)
-    test = tests.TiffDateTimeTest(target)
-    process = test.generate_process()
-    executor = DockerExecutor(process.container, process.command, target.file.url)
-    executor.execute()
-    assert executor.exit_code == "0"
-
-
-def test_that_the_tiffdatetimetest_correctly_interprets_exit_code_0_and_1(
-    test_files, mocker
-):
-    # 1 is pass, 0 is fail
-    tiff_file = test_files["tiff"]
-    target = SingleTarget(tiff_file)
-    with TemporaryDirectory() as tmp_dir:
-        path_0 = Path(tmp_dir, "code_0.txt")
-        path_1 = Path(tmp_dir, "code_1.txt")
-        path_0.write_text("0")
-        path_1.write_text("1")
-        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
-
-        test = tests.TiffDateTimeTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
-        test_status = test.get_status()
-        assert test_status == TestStatus.PASS
-
-        test = tests.TiffDateTimeTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
-        test_status = test.get_status()
-        assert test_status == TestStatus.FAIL
-
-
-def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
-    target = test_targets["tiff"]
-    test = tests.TiffTag306DateTimeTest(target)
-    process = test.generate_process()
-    assert "jq" in process.command
-
-
-@docker_enabled_test
-def test_that_the_tifftag306datetimetest_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["tiff"]
-    target = SingleTarget(tiff_file)
-    test = tests.TiffTag306DateTimeTest(target)
-    process = test.generate_process()
-    executor = DockerExecutor(process.container, process.command, target.file.url)
-    executor.execute()
-    assert executor.exit_code == "1"
-
-
-@docker_enabled_test
-def test_that_the_tifftag306datetimetest_exit_code_is_0_when_it_should_be(test_files):
-    tiff_file = test_files["tiff_dirty_datetime"]
-    target = SingleTarget(tiff_file)
-    test = tests.TiffTag306DateTimeTest(target)
-    process = test.generate_process()
-    executor = DockerExecutor(process.container, process.command, target.file.url)
-    executor.execute()
-    assert executor.exit_code == "0"
-
-
-def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
-    test_files, mocker
-):
-    # 1 is pass, 0 is fail
-    tiff_file = test_files["tiff"]
-    target = SingleTarget(tiff_file)
-    with TemporaryDirectory() as tmp_dir:
-        path_0 = Path(tmp_dir, "code_0.txt")
-        path_1 = Path(tmp_dir, "code_1.txt")
-        path_0.write_text("0")
-        path_1.write_text("1")
-        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
-        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
-
-        test = tests.TiffTag306DateTimeTest(target)
-        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
-        test_status = test.get_status()
-        assert test_status == TestStatus.PASS
-
-        test = tests.TiffTag306DateTimeTest(target)
         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
@@ -408,6 +246,168 @@ def test_that_the_ome_xml_info_test_correctly_interprets_exit_code_0_and_1(
         assert test_status == TestStatus.PASS
 
         test = tests.OmeXmlSchemaTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.FAIL
+
+
+def test_that_the_grep_date_test_command_is_produced(test_targets):
+    target = test_targets["tiff"]
+    test = tests.GrepDateTest(target)
+    process = test.generate_process()
+    assert "grep" in process.command
+
+
+@docker_enabled_test
+def test_that_the_grep_date_test_exit_code_is_0_when_it_should_be(test_files):
+    date_file = test_files["date_txt"]
+    target = SingleTarget(date_file)
+    test = tests.GrepDateTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "0"
+
+
+@docker_enabled_test
+def test_that_the_grep_date_test_exit_code_is_1_when_it_should_be(test_files):
+    tiff_file = test_files["good"]
+    target = SingleTarget(tiff_file)
+    test = tests.GrepDateTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "1"
+
+
+def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
+    test_files, mocker
+):
+    # 1 is pass, 0 is fail
+    tiff_file = test_files["tiff"]
+    target = SingleTarget(tiff_file)
+    with TemporaryDirectory() as tmp_dir:
+        path_0 = Path(tmp_dir, "code_0.txt")
+        path_1 = Path(tmp_dir, "code_1.txt")
+        path_0.write_text("0")
+        path_1.write_text("1")
+        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+        test = tests.GrepDateTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.PASS
+
+        test = tests.GrepDateTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.FAIL
+
+
+def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
+    target = test_targets["tiff"]
+    test = tests.TiffTag306DateTimeTest(target)
+    process = test.generate_process()
+    assert "jq" in process.command
+
+
+@docker_enabled_test
+def test_that_the_tifftag306datetimetest_exit_code_is_1_when_it_should_be(test_files):
+    tiff_file = test_files["tiff"]
+    target = SingleTarget(tiff_file)
+    test = tests.TiffTag306DateTimeTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "1"
+
+
+@docker_enabled_test
+def test_that_the_tifftag306datetimetest_exit_code_is_0_when_it_should_be(test_files):
+    tiff_file = test_files["tiff_dirty_datetime"]
+    target = SingleTarget(tiff_file)
+    test = tests.TiffTag306DateTimeTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "0"
+
+
+def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
+    test_files, mocker
+):
+    # 1 is pass, 0 is fail
+    tiff_file = test_files["tiff"]
+    target = SingleTarget(tiff_file)
+    with TemporaryDirectory() as tmp_dir:
+        path_0 = Path(tmp_dir, "code_0.txt")
+        path_1 = Path(tmp_dir, "code_1.txt")
+        path_0.write_text("0")
+        path_1.write_text("1")
+        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+        test = tests.TiffTag306DateTimeTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.PASS
+
+        test = tests.TiffTag306DateTimeTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.FAIL
+
+
+def test_that_the_tiffdatetimetest_command_is_produced(test_targets):
+    target = test_targets["tiff"]
+    test = tests.TiffDateTimeTest(target)
+    process = test.generate_process()
+    assert "grep" in process.command
+
+
+@docker_enabled_test
+def test_that_the_tiffdatetimetest_exit_code_is_1_when_it_should_be(test_files):
+    tiff_file = test_files["tiff"]
+    target = SingleTarget(tiff_file)
+    test = tests.TiffDateTimeTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "1"
+
+
+@docker_enabled_test
+def test_that_the_tiffdatetimetest_exit_code_is_0_when_it_should_be(test_files):
+    tiff_file = test_files["date_in_tag_tiff"]
+    target = SingleTarget(tiff_file)
+    test = tests.TiffDateTimeTest(target)
+    process = test.generate_process()
+    executor = DockerExecutor(process.container, process.command, target.file.url)
+    executor.execute()
+    assert executor.exit_code == "0"
+
+
+def test_that_the_tiffdatetimetest_correctly_interprets_exit_code_0_and_1(
+    test_files, mocker
+):
+    # 1 is pass, 0 is fail
+    tiff_file = test_files["tiff"]
+    target = SingleTarget(tiff_file)
+    with TemporaryDirectory() as tmp_dir:
+        path_0 = Path(tmp_dir, "code_0.txt")
+        path_1 = Path(tmp_dir, "code_1.txt")
+        path_0.write_text("0")
+        path_1.write_text("1")
+        fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+        pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+        test = tests.TiffDateTimeTest(target)
+        mocker.patch.object(test, "_find_process_outputs", return_value=pass_outputs)
+        test_status = test.get_status()
+        assert test_status == TestStatus.PASS
+
+        test = tests.TiffDateTimeTest(target)
         mocker.patch.object(test, "_find_process_outputs", return_value=fail_outputs)
         test_status = test.get_status()
         assert test_status == TestStatus.FAIL
