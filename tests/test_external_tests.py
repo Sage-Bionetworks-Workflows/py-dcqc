@@ -13,8 +13,8 @@ from dcqc.tests import BaseTest, ExternalTestMixin, Process, TestStatus
 
 
 def test_that_all_external_tests_inherit_from_the_mixin_first():
-    tests = BaseTest.list_subclasses()
-    for test in tests:
+    tests_list = BaseTest.list_subclasses()
+    for test in tests_list:
         if issubclass(test, ExternalTestMixin):
             mro = test.__mro__
             mixin_index = mro.index(ExternalTestMixin)
