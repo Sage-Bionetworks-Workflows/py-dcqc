@@ -15,6 +15,8 @@ class BioFormatsInfoTest(ExternalBaseTest):
             "-nopix",
             "-novalid",
             "-nocore",
+            "-format",
+            "OMETiff",
             f"'{path.name}'",
         ]
         process = Process(
