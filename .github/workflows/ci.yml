@@ -62,7 +62,7 @@ jobs:
         - "3.11"  # newest Python that is stable
         platform:
         - ubuntu-latest
-        # - macos-latest
+        - macos-latest
         # TODO: Debug the Windows issues
         # - windows-latest
     env:
@@ -74,8 +74,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
-      - name: Install setuptools
-        run: sudo -H pip install setuptools
       - uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
       - name: Run tests
