@@ -75,7 +75,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: check python version
-        run: python --version
+        run: echo ${{ matrix.python }}
       - uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
       - name: Run tests
