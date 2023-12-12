@@ -325,7 +325,7 @@ def test_that_the_tifftag306datetimetest_exit_code_is_1_when_it_should_be(test_f
 
 @docker_enabled_test
 def test_that_the_tifftag306datetimetest_exit_code_is_0_when_it_should_be(test_files):
-    tiff_file = test_files["tiff_dirty_datetime"]
+    tiff_file = test_files["dirty_datetime_tiff"]
     target = SingleTarget(tiff_file)
     test = tests.TiffTag306DateTimeTest(target)
     process = test.generate_process()
