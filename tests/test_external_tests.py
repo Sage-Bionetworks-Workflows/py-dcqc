@@ -109,7 +109,7 @@ def test_that_the_libtiff_info_test_exit_code_is_0_when_it_should_be(test_files)
 
 @docker_enabled_test
 def test_that_the_libtiff_info_test_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["bad_txt"]
+    tiff_file = test_files["wrong_file_type_and_md5_txt"]
     target = SingleTarget(tiff_file)
     test = tests.LibTiffInfoTest(target)
     process = test.generate_process()

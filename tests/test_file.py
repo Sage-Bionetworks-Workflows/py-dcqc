@@ -198,7 +198,7 @@ def test_that_a_file_cannot_be_made_relative_to_a_nonexistent_directory(test_fil
 
 def test_that_a_file_cannot_be_made_relative_to_a_another_file(test_files):
     file = test_files["good_txt"]
-    another_file = test_files["bad_txt"]
+    another_file = test_files["wrong_file_type_and_md5_txt"]
     another_file_path = another_file.local_path
     with pytest.raises(ValueError):
         file.serialize_paths_relative_to(another_file_path)
