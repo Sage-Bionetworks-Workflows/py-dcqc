@@ -75,7 +75,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - uses: actions/download-artifact@v3
-        with: {name: python-distribution-files, path: dist/}
+        with: {name: python-distribution-files, path: dist/}\
+      - name: print Python version
+        run: python --version
       - name: Run tests
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
