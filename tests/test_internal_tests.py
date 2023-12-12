@@ -20,7 +20,7 @@ def test_that_the_file_extension_test_works_on_correct_remote_file(test_targets)
 
 
 def test_that_a_tiff_file_with_good_extensions_is_passed(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.FileExtensionTest(target)
     assert test.get_status() == TestStatus.PASS
 

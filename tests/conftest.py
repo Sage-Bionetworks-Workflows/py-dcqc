@@ -107,7 +107,7 @@ def test_files(get_data):
             invalid_xml_ome_tiff_path.as_posix(), invalid_xml_metadata
         ),
         "bad_txt": File(txt_path.as_posix(), bad_metadata),
-        "tiff": File(tiff_path.as_posix(), tiff_metadata),
+        "good_tiff": File(tiff_path.as_posix(), tiff_metadata),
         "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
         "fastq2": File(fastq2_path.as_posix(), fastq_metadata),
         "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),

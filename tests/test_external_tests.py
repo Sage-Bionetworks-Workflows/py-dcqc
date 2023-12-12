@@ -90,7 +90,7 @@ class DockerExecutor:
 
 
 def test_that_the_libtiff_info_test_command_is_produced(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.LibTiffInfoTest(target)
     process = test.generate_process()
     assert "tiffinfo" in process.command
@@ -98,7 +98,7 @@ def test_that_the_libtiff_info_test_command_is_produced(test_targets):
 
 @docker_enabled_test
 def test_that_the_libtiff_info_test_exit_code_is_0_when_it_should_be(test_files):
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     test = tests.LibTiffInfoTest(target)
     process = test.generate_process()
@@ -122,7 +122,7 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     # 0 is pass, 1 is fail
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
@@ -144,7 +144,7 @@ def test_that_the_libtiff_info_test_correctly_interprets_exit_code_0_and_1(
 
 
 def test_that_the_bioformats_info_test_command_is_produced(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.BioFormatsInfoTest(target)
     process = test.generate_process()
     assert "showinf" in process.command
@@ -176,7 +176,7 @@ def test_that_the_bioformats_info_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     # 0 is pass, 1 is fail
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
@@ -198,7 +198,7 @@ def test_that_the_bioformats_info_test_correctly_interprets_exit_code_0_and_1(
 
 
 def test_that_the_ome_xml_schema_test_command_is_produced(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.OmeXmlSchemaTest(target)
     process = test.generate_process()
     assert "xmlvalid" in process.command
@@ -230,7 +230,7 @@ def test_that_the_ome_xml_info_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     # 0 is pass, 1 is fail
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
@@ -252,7 +252,7 @@ def test_that_the_ome_xml_info_test_correctly_interprets_exit_code_0_and_1(
 
 
 def test_that_the_grep_date_test_command_is_produced(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.GrepDateTest(target)
     process = test.generate_process()
     assert "grep" in process.command
@@ -284,7 +284,7 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     # 1 is pass, 0 is fail
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
@@ -306,7 +306,7 @@ def test_that_the_grep_date_test_correctly_interprets_exit_code_0_and_1(
 
 
 def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.TiffTag306DateTimeTest(target)
     process = test.generate_process()
     assert "jq" in process.command
@@ -314,7 +314,7 @@ def test_that_the_tifftag306datetimetest_command_is_produced(test_targets):
 
 @docker_enabled_test
 def test_that_the_tifftag306datetimetest_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     test = tests.TiffTag306DateTimeTest(target)
     process = test.generate_process()
@@ -338,7 +338,7 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     # 1 is pass, 0 is fail
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
@@ -360,7 +360,7 @@ def test_that_the_tifftag306datetimetest_correctly_interprets_exit_code_0_and_1(
 
 
 def test_that_the_tiffdatetimetest_command_is_produced(test_targets):
-    target = test_targets["tiff"]
+    target = test_targets["good_tiff"]
     test = tests.TiffDateTimeTest(target)
     process = test.generate_process()
     assert "grep" in process.command
@@ -368,7 +368,7 @@ def test_that_the_tiffdatetimetest_command_is_produced(test_targets):
 
 @docker_enabled_test
 def test_that_the_tiffdatetimetest_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     test = tests.TiffDateTimeTest(target)
     process = test.generate_process()
@@ -392,7 +392,7 @@ def test_that_the_tiffdatetimetest_correctly_interprets_exit_code_0_and_1(
     test_files, mocker
 ):
     # 1 is pass, 0 is fail
-    tiff_file = test_files["tiff"]
+    tiff_file = test_files["good_tiff"]
     target = SingleTarget(tiff_file)
     with TemporaryDirectory() as tmp_dir:
         path_0 = Path(tmp_dir, "code_0.txt")
