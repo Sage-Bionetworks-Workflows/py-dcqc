@@ -101,7 +101,7 @@ def test_files(get_data):
     test_files = {
         "date_in_tag_tiff": File(tiff_date_in_tag_path.as_posix(), tiff_metadata),
         "good_txt": File(txt_path.as_posix(), good_metadata),
-        "date_txt": File(date_path.as_posix(), date_txt_metadata),
+        "date_string_txt": File(date_path.as_posix(), date_txt_metadata),
         "good_ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
         "invalid_xml_tiff": File(
             invalid_xml_ome_tiff_path.as_posix(), invalid_xml_metadata
@@ -111,7 +111,7 @@ def test_files(get_data):
         "good_fastq1": File(fastq1_path.as_posix(), fastq_metadata),
         "good_fastq2": File(fastq2_path.as_posix(), fastq_metadata),
         "good_jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
-        "synapse": File(syn_path, good_metadata),
+        "good_synapse": File(syn_path, good_metadata),
         "tiff_dirty_datetime": File(
             tiff_dirty_datetime_path.as_posix(), tiff_dirty_datetime_metadata
         ),

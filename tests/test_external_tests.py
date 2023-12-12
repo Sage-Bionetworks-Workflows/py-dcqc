@@ -260,7 +260,7 @@ def test_that_the_grep_date_test_command_is_produced(test_targets):
 
 @docker_enabled_test
 def test_that_the_grep_date_test_exit_code_is_0_when_it_should_be(test_files):
-    date_file = test_files["date_txt"]
+    date_file = test_files["date_string_txt"]
     target = SingleTarget(date_file)
     test = tests.GrepDateTest(target)
     process = test.generate_process()
