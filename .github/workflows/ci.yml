@@ -76,8 +76,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
-      - name: Install setuptools
-        run: sudo -H pip install setuptools
+      - name: Install distutils
+        run: sudo -H pip install distutils
       - name: Run tests
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
