@@ -94,7 +94,7 @@ def test_that_skipped_tests_are_skipped_when_building_suite_from_tests(test_suit
 
 def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targets):
     target_1 = test_targets["good_txt"]
-    target_2 = test_targets["bad"]
+    target_2 = test_targets["bad_txt"]
     test_1 = FileExtensionTest(target_1)
     test_2 = FileExtensionTest(target_2)
     tests = [test_1, test_2]
@@ -103,7 +103,7 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
 
 
 def test_that_a_suite_will_consider_non_required_failed_tests(test_targets):
-    target = test_targets["bad"]
+    target = test_targets["bad_txt"]
     required_tests = []
     skipped_tests = ["LibTiffInfoTest", "TiffDateTimeTest", "TiffTag306DateTimeTest"]
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)
@@ -112,7 +112,7 @@ def test_that_a_suite_will_consider_non_required_failed_tests(test_targets):
 
 
 def test_that_a_suite_will_consider_required_tests_when_failing(test_targets):
-    target = test_targets["bad"]
+    target = test_targets["bad_txt"]
     required_tests = ["FileExtensionTest"]
     skipped_tests = ["LibTiffInfoTest", "TiffDateTimeTest", "TiffTag306DateTimeTest"]
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)

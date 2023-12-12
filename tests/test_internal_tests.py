@@ -26,7 +26,7 @@ def test_that_a_tiff_file_with_good_extensions_is_passed(test_targets):
 
 
 def test_that_the_file_extension_test_works_on_incorrect_files(test_targets):
-    target = test_targets["bad"]
+    target = test_targets["bad_txt"]
     test = tests.FileExtensionTest(target)
     test_status = test.get_status()
     assert test_status == TestStatus.FAIL
@@ -40,7 +40,7 @@ def test_that_the_md5_checksum_test_works_on_a_correct_file(test_targets):
 
 
 def test_that_the_md5_checksum_test_works_on_incorrect_files(test_targets):
-    target = test_targets["bad"]
+    target = test_targets["bad_txt"]
     test = tests.Md5ChecksumTest(target)
     test_status = test.get_status()
     assert test_status == TestStatus.FAIL
