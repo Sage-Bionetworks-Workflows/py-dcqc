@@ -163,7 +163,7 @@ def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_fil
 
 @docker_enabled_test
 def test_that_the_bioformats_info_test_exit_code_is_1_when_it_should_be(test_files):
-    one_tiff_file = test_files["good"]
+    one_tiff_file = test_files["good_txt"]
     target = SingleTarget(one_tiff_file)
     test = tests.BioFormatsInfoTest(target)
     process = test.generate_process()
@@ -217,7 +217,7 @@ def test_that_the_ome_xml_schema_test_exit_code_is_0_when_it_should_be(test_file
 
 @docker_enabled_test
 def test_that_the_ome_xml_schema_test_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["good"]
+    tiff_file = test_files["good_txt"]
     target = SingleTarget(tiff_file)
     test = tests.OmeXmlSchemaTest(target)
     process = test.generate_process()
@@ -271,7 +271,7 @@ def test_that_the_grep_date_test_exit_code_is_0_when_it_should_be(test_files):
 
 @docker_enabled_test
 def test_that_the_grep_date_test_exit_code_is_1_when_it_should_be(test_files):
-    tiff_file = test_files["good"]
+    tiff_file = test_files["good_txt"]
     target = SingleTarget(tiff_file)
     test = tests.GrepDateTest(target)
     process = test.generate_process()

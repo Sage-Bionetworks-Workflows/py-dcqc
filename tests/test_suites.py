@@ -93,7 +93,7 @@ def test_that_skipped_tests_are_skipped_when_building_suite_from_tests(test_suit
 
 
 def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targets):
-    target_1 = test_targets["good"]
+    target_1 = test_targets["good_txt"]
     target_2 = test_targets["bad"]
     test_1 = FileExtensionTest(target_1)
     test_2 = FileExtensionTest(target_2)
@@ -121,7 +121,7 @@ def test_that_a_suite_will_consider_required_tests_when_failing(test_targets):
 
 
 def test_that_a_suite_will_consider_required_tests_when_passing(test_targets):
-    target = test_targets["good"]
+    target = test_targets["good_txt"]
     required_tests = ["Md5ChecksumTest"]
     suite = SuiteABC.from_target(target, required_tests)
     suite_status = suite.compute_status()
@@ -132,7 +132,7 @@ def test_that_status_is_computed_if_not_already_assigned(test_targets):
     with patch.object(
         SuiteABC, "compute_status", return_value=SuiteStatus.GREEN
     ) as patch_compute_status:
-        target = test_targets["good"]
+        target = test_targets["good_txt"]
         required_tests = ["Md5ChecksumTest"]
         suite = SuiteABC.from_target(target, required_tests)
         suite._status = SuiteStatus.NONE
