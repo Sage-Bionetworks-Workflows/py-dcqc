@@ -127,18 +127,16 @@ def test_files(get_data):
 
 @pytest.fixture
 def test_targets(test_files):
-    test_targets = dict()
-    for name, file in test_files.items():
-        test_targets[name] = SingleTarget(file)
+    test_targets = {name: SingleTarget(file) for name, file in test_files.items()}
     yield test_targets
 
 
 @pytest.fixture
 def test_suites(test_targets):
-    test_suites = dict()
-    for name, target in test_targets.items():
-        test_suites[name] = SuiteABC.from_target(target)
-    yield test_suites
+    test_suites_dict = {
+        name: SuiteABC.from_target(target) for name, target in test_targets.items()
+    }
+    return test_suites_dict
 
 
 @pytest.fixture
@@ -171,6 +169,7 @@ def mocked_suites_single_targets():
     return mocked_suites
 
 
+# TODO: Add this once we have multi-targets
 # @pytest.fixture
 # def mocked_suites_multi_targets():
 #     mock_dict_multi = {
