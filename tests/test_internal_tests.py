@@ -101,7 +101,7 @@ def test_that_an_existing_module_can_be_imported(test_targets):
 def test_that_paired_fastq_parity_test_correctly_passes_identical_fastq_files(
     test_files,
 ):
-    fastq1 = test_files["fastq1"]
+    fastq1 = test_files["good_fastq1"]
     target = PairedTarget([fastq1, fastq1])
     test = tests.PairedFastqParityTest(target)
     test_status = test.get_status()
@@ -111,8 +111,8 @@ def test_that_paired_fastq_parity_test_correctly_passes_identical_fastq_files(
 def test_that_paired_fastq_parity_test_correctly_fails_different_fastq_files(
     test_files,
 ):
-    fastq1 = test_files["fastq1"]
-    fastq2 = test_files["fastq2"]
+    fastq1 = test_files["good_fastq1"]
+    fastq2 = test_files["good_fastq2"]
     target = PairedTarget([fastq1, fastq2])
     test = tests.PairedFastqParityTest(target)
     test_status = test.get_status()
@@ -122,7 +122,7 @@ def test_that_paired_fastq_parity_test_correctly_fails_different_fastq_files(
 def test_that_paired_fastq_parity_test_correctly_handles_compressed_fastq_files(
     test_files,
 ):
-    fastq2 = test_files["fastq2"]
+    fastq2 = test_files["good_fastq2"]
     target = PairedTarget([fastq2, fastq2])
     test = tests.PairedFastqParityTest(target)
     test_status = test.get_status()
