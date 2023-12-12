@@ -152,7 +152,7 @@ def test_that_the_bioformats_info_test_command_is_produced(test_targets):
 
 @docker_enabled_test
 def test_that_the_bioformats_info_test_exit_code_is_0_when_it_should_be(test_files):
-    one_tiff_file = test_files["ome_tiff"]
+    one_tiff_file = test_files["good_ome_tiff"]
     target = SingleTarget(one_tiff_file)
     test = tests.BioFormatsInfoTest(target)
     process = test.generate_process()
@@ -206,7 +206,7 @@ def test_that_the_ome_xml_schema_test_command_is_produced(test_targets):
 
 @docker_enabled_test
 def test_that_the_ome_xml_schema_test_exit_code_is_0_when_it_should_be(test_files):
-    tiff_file = test_files["ome_tiff"]
+    tiff_file = test_files["good_ome_tiff"]
     target = SingleTarget(tiff_file)
     test = tests.OmeXmlSchemaTest(target)
     process = test.generate_process()

@@ -102,7 +102,7 @@ def test_files(get_data):
         "date_in_tag_tiff": File(tiff_date_in_tag_path.as_posix(), tiff_metadata),
         "good_txt": File(txt_path.as_posix(), good_metadata),
         "date_txt": File(date_path.as_posix(), date_txt_metadata),
-        "ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
+        "good_ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
         "invalid_xml_tiff": File(
             invalid_xml_ome_tiff_path.as_posix(), invalid_xml_metadata
         ),
