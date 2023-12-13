@@ -58,8 +58,8 @@ jobs:
     strategy:
       matrix:
         python:
-        - '3.8'  # oldest Python that is supported
-        - '3.11'  # newest Python that is stable
+        - "3.8" 
+        - "3.11"  # newest Python that is stable
         platform:
         - ubuntu-latest
         - macos-latest
@@ -75,15 +75,18 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: check python version
-        run: echo ${{ matrix.python }}
+        run: python --version
       - uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
+      - name: Install tox
+        run: python -m pip install tox-gh>=1.2
+      - name: Setup test suite
+        run: tox -vv --notest
       - name: Run tests
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
         run: >-
-          pipx run --spec 'tox~=3.0' tox
-          --installpkg '${{ needs.prepare.outputs.wheel-path }}'
+          tox --installpkg '${{ needs.prepare.outputs.wheel-path }}' 
           -- -rFEx --durations 10 --color yes
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
