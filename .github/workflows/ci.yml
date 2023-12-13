@@ -58,7 +58,7 @@ jobs:
     strategy:
       matrix:
         python:
-        - "3.8"
+        # - "3.8"
         - "3.11"  # newest Python that is stable
         platform:
         - ubuntu-latest
