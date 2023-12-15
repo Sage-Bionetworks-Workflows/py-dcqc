@@ -108,8 +108,8 @@ def test_files(get_data):
         ),
         "wrong_file_type_and_md5_txt": File(txt_path.as_posix(), bad_metadata),
         "good_tiff": File(tiff_path.as_posix(), tiff_metadata),
-        "good_fastq1": File(fastq1_path.as_posix(), fastq_metadata),
-        "good_fastq2": File(fastq2_path.as_posix(), fastq_metadata),
+        "good_fastq": File(fastq1_path.as_posix(), fastq_metadata),
+        "good_compressed_fastq": File(fastq2_path.as_posix(), fastq_metadata),
         "good_jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
         "good_synapse": File(syn_path, good_metadata),
         "dirty_datetime_in_tag_tiff": File(
