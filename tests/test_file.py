@@ -61,13 +61,13 @@ def test_for_an_error_when_requesting_for_an_unregistered_file_type():
 
 
 def test_for_an_error_when_retrieving_missing_metadata_on_a_file(test_files):
-    test_file = test_files["good"]
+    test_file = test_files["good_txt"]
     with pytest.raises(KeyError):
         test_file.get_metadata("foo")
 
 
 def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files):
-    test_file = test_files["good"]
+    test_file = test_files["good_txt"]
     url_before = test_file.url
     local_path = test_file.local_path
     url_after = test_file.url
@@ -82,14 +82,14 @@ def test_for_an_error_when_accessing_local_path_of_an_unstaged_remote_file(test_
 
 
 def test_that_a_local_file_is_not_moved_when_staged_without_a_destination(test_files):
-    test_file = test_files["good"]
+    test_file = test_files["good_txt"]
     path_before = test_file.local_path
     path_after = test_file.stage()
     assert path_before == path_after
 
 
 def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(test_files):
-    test_file = test_files["good"]
+    test_file = test_files["good_txt"]
     with TemporaryDirectory() as tmp_dir:
         original_path = Path(test_file.local_path)
         tmp_dir_path = Path(tmp_dir)
@@ -134,7 +134,7 @@ def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files
 
 
 def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
-    file_1 = test_files["good"]
+    file_1 = test_files["good_txt"]
     file_1_dict = file_1.to_dict()
     file_2 = File.from_dict(file_1_dict)
     file_2_dict = file_2.to_dict()
@@ -151,7 +151,7 @@ def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(get_data
 
 
 def test_that_an_fs_is_created_when_an_fs_path_is_requested(test_files):
-    file = test_files["good"]
+    file = test_files["good_txt"]
     assert file._fs_path is None
     file.fs_path
     assert file._fs_path is not None
@@ -169,7 +169,7 @@ def test_that_file_name_is_cached(test_files):
 
 def test_for_an_error_when_staging_a_file_where_one_already_exists(test_files):
     remote_file = test_files["remote"]
-    existing_file = test_files["good"]
+    existing_file = test_files["good_txt"]
     with pytest.raises(FileExistsError):
         remote_file.stage(existing_file.local_path)
 
@@ -190,15 +190,15 @@ def test_that_an_unset_local_path_is_ignored_during_deserialization(test_files):
 
 
 def test_that_a_file_cannot_be_made_relative_to_a_nonexistent_directory(test_files):
-    file = test_files["good"]
+    file = test_files["good_txt"]
     nonexistent_dir = Path("foobar")
     with pytest.raises(ValueError):
         file.serialize_paths_relative_to(nonexistent_dir)
 
 
 def test_that_a_file_cannot_be_made_relative_to_a_another_file(test_files):
-    file = test_files["good"]
-    another_file = test_files["bad"]
+    file = test_files["good_txt"]
+    another_file = test_files["wrong_file_type_and_md5_txt"]
     another_file_path = another_file.local_path
     with pytest.raises(ValueError):
         file.serialize_paths_relative_to(another_file_path)

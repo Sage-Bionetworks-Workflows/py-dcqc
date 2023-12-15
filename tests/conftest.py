@@ -100,19 +100,19 @@ def test_files(get_data):
     }
     test_files = {
         "date_in_tag_tiff": File(tiff_date_in_tag_path.as_posix(), tiff_metadata),
-        "good": File(txt_path.as_posix(), good_metadata),
-        "date_txt": File(date_path.as_posix(), date_txt_metadata),
-        "ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
+        "good_txt": File(txt_path.as_posix(), good_metadata),
+        "date_string_txt": File(date_path.as_posix(), date_txt_metadata),
+        "good_ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
         "invalid_xml_tiff": File(
             invalid_xml_ome_tiff_path.as_posix(), invalid_xml_metadata
         ),
-        "bad": File(txt_path.as_posix(), bad_metadata),
-        "tiff": File(tiff_path.as_posix(), tiff_metadata),
-        "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
-        "fastq2": File(fastq2_path.as_posix(), fastq_metadata),
-        "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
-        "synapse": File(syn_path, good_metadata),
-        "tiff_dirty_datetime": File(
+        "wrong_file_type_and_md5_txt": File(txt_path.as_posix(), bad_metadata),
+        "good_tiff": File(tiff_path.as_posix(), tiff_metadata),
+        "good_fastq": File(fastq1_path.as_posix(), fastq_metadata),
+        "good_compressed_fastq": File(fastq2_path.as_posix(), fastq_metadata),
+        "good_jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
+        "good_synapse": File(syn_path, good_metadata),
+        "dirty_datetime_in_tag_tiff": File(
             tiff_dirty_datetime_path.as_posix(), tiff_dirty_datetime_metadata
         ),
     }
@@ -127,18 +127,16 @@ def test_files(get_data):
 
 @pytest.fixture
 def test_targets(test_files):
-    test_targets = dict()
-    for name, file in test_files.items():
-        test_targets[name] = SingleTarget(file)
+    test_targets = {name: SingleTarget(file) for name, file in test_files.items()}
     yield test_targets
 
 
 @pytest.fixture
 def test_suites(test_targets):
-    test_suites = dict()
-    for name, target in test_targets.items():
-        test_suites[name] = SuiteABC.from_target(target)
-    yield test_suites
+    test_suites_dict = {
+        name: SuiteABC.from_target(target) for name, target in test_targets.items()
+    }
+    return test_suites_dict
 
 
 @pytest.fixture
@@ -171,6 +169,7 @@ def mocked_suites_single_targets():
     return mocked_suites
 
 
+# TODO: Add this once we have multi-targets
 # @pytest.fixture
 # def mocked_suites_multi_targets():
 #     mock_dict_multi = {
