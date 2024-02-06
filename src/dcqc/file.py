@@ -106,7 +106,7 @@ FileType("*", (), "format_1915")  # To represent all file types
 FileType("TXT", (".txt",), "format_1964")
 FileType("JSON", (".json",), "format_3464")
 FileType("JSON-LD", (".jsonld",), "format_3749")
-FileType("TIFF", (".tif", ".tiff", ".svs", ".scn"), "format_3591")
+FileType("TIFF", (".tif", ".tiff", ".svs", ".scn", ".qptiff"), "format_3591")
 FileType("OME-TIFF", (".ome.tif", ".ome.tiff"), "format_3727")
 FileType("TSV", (".tsv"), "format_3475")
 FileType("CSV", (".csv"), "format_3752")
