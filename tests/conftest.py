@@ -55,15 +55,31 @@ def get_data():
 @pytest.fixture
 def test_files(get_data):
     txt_path = get_data("test.txt")
+    date_path = get_data("test_contains_word_date.txt")
+    ome_tiff_path = get_data("single-channel.ome.tif")
     jsonld_path = get_data("example.jsonld")
     tiff_path = get_data("circuit.tif")
     fastq1_path = get_data("fastq1.fastq")
     fastq2_path = get_data("fastq2.fastq.gz")
     syn_path = "syn://syn50555279"
     tiff_dirty_datetime_path = get_data("test_image_dirty_datetime.tif")
+    tiff_date_in_tag_path = get_data("date_tag.tif")
+    invalid_xml_ome_tiff_path = get_data("invalid_xml.ome.tif")
+    invalid_xml_metadata = {
+        "file_type": "tiff",
+        "md5_checksum": "a2550a887091d51351d547c8beae8f0c",
+    }
     good_metadata = {
         "file_type": "txt",
         "md5_checksum": "14758f1afd44c09b7992073ccf00b43d",
+    }
+    date_txt_metadata = {
+        "file_type": "txt",
+        "md5_checksum": "9cee1b0e8c4d051fabea82b62ae69404",
+    }
+    ome_tiff_metadata = {
+        "file_type": "ome-tiff",
+        "md5_checksum": "293e46687fa6543a2e8189f1698cc5d0",
     }
     bad_metadata = {
         "file_type": "tiff",
@@ -83,14 +99,20 @@ def test_files(get_data):
         "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268",
     }
     test_files = {
-        "good": File(txt_path.as_posix(), good_metadata),
-        "bad": File(txt_path.as_posix(), bad_metadata),
-        "tiff": File(tiff_path.as_posix(), tiff_metadata),
-        "fastq1": File(fastq1_path.as_posix(), fastq_metadata),
-        "fastq2": File(fastq2_path.as_posix(), fastq_metadata),
-        "jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
-        "synapse": File(syn_path, good_metadata),
-        "tiff_dirty_datetime": File(
+        "date_in_tag_tiff": File(tiff_date_in_tag_path.as_posix(), tiff_metadata),
+        "good_txt": File(txt_path.as_posix(), good_metadata),
+        "date_string_txt": File(date_path.as_posix(), date_txt_metadata),
+        "good_ome_tiff": File(ome_tiff_path.as_posix(), ome_tiff_metadata),
+        "invalid_xml_tiff": File(
+            invalid_xml_ome_tiff_path.as_posix(), invalid_xml_metadata
+        ),
+        "wrong_file_type_and_md5_txt": File(txt_path.as_posix(), bad_metadata),
+        "good_tiff": File(tiff_path.as_posix(), tiff_metadata),
+        "good_fastq": File(fastq1_path.as_posix(), fastq_metadata),
+        "good_compressed_fastq": File(fastq2_path.as_posix(), fastq_metadata),
+        "good_jsonld": File(jsonld_path.as_posix(), jsonld_metadata),
+        "good_synapse": File(syn_path, good_metadata),
+        "dirty_datetime_in_tag_tiff": File(
             tiff_dirty_datetime_path.as_posix(), tiff_dirty_datetime_metadata
         ),
     }
@@ -105,18 +127,16 @@ def test_files(get_data):
 
 @pytest.fixture
 def test_targets(test_files):
-    test_targets = dict()
-    for name, file in test_files.items():
-        test_targets[name] = SingleTarget(file)
+    test_targets = {name: SingleTarget(file) for name, file in test_files.items()}
     yield test_targets
 
 
 @pytest.fixture
 def test_suites(test_targets):
-    test_suites = dict()
-    for name, target in test_targets.items():
-        test_suites[name] = SuiteABC.from_target(target)
-    yield test_suites
+    test_suites_dict = {
+        name: SuiteABC.from_target(target) for name, target in test_targets.items()
+    }
+    return test_suites_dict
 
 
 @pytest.fixture
@@ -149,6 +169,7 @@ def mocked_suites_single_targets():
     return mocked_suites
 
 
+# TODO: Add this once we have multi-targets
 # @pytest.fixture
 # def mocked_suites_multi_targets():
 #     mock_dict_multi = {

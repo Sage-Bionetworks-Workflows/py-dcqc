@@ -24,7 +24,7 @@ class TiffSuite(FileSuite):
     file_type = FileType.get_file_type("TIFF")
     add_tests = (
         # tests.LibTiffInfoTest,
-        tests.GrepDateTest,
+        tests.TiffDateTimeTest,
         # tests.TiffTag306DateTimeTest,
     )
 

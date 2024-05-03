@@ -13,6 +13,9 @@ class OmeXmlSchemaTest(ExternalBaseTest):
         command_args = [
             "/opt/bftools/xmlvalid",
             f"'{path.name}'",
+            "|",
+            "grep",
+            "'No validation errors found.'",
         ]
         process = Process(
             container="quay.io/sagebionetworks/bftools:latest",

@@ -2,7 +2,7 @@ from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
-class TiffTag306DateTimeTest(ExternalBaseTest):
+class TiffDateTimeTest(ExternalBaseTest):
     tier = 4
     pass_code = "1"
     target: SingleTarget
@@ -19,7 +19,11 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
             "|",
             "jq",
             "-e",
-            "'.[].ifds[].tags[\"306\"]'",
+            "'.[].ifds[].tags[]'.data",
+            "|",
+            "grep",
+            "-Ei",
+            "'date|time'",
         ]
         process = Process(
             container="ghcr.io/sage-bionetworks-workflows/tifftools:latest",

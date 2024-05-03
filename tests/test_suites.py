@@ -8,9 +8,9 @@ from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
 from dcqc.tests import (
     BaseTest,
     FileExtensionTest,
-    GrepDateTest,
     LibTiffInfoTest,
     TestStatus,
+    TiffDateTimeTest,
     TiffTag306DateTimeTest,
 )
 
@@ -20,7 +20,7 @@ FileType("Unpaired", ())
 
 class RedundantFileSuite(TiffSuite):
     file_type = FileType.get_file_type("None")
-    del_tests = (LibTiffInfoTest, GrepDateTest, TiffTag306DateTimeTest)
+    del_tests = (LibTiffInfoTest, TiffDateTimeTest, TiffTag306DateTimeTest)
 
 
 class DummyTest(BaseTest):
@@ -78,12 +78,12 @@ def test_that_the_generic_file_suite_is_retrieved_for_an_unpaired_file_type():
 
 
 def test_that_the_default_required_tests_are_only_tiers_1_and_2(test_suites):
-    suite = test_suites["jsonld"]
+    suite = test_suites["good_jsonld"]
     assert all(test.tier <= 2 for test in suite.tests)
 
 
 def test_that_skipped_tests_are_skipped_when_building_suite_from_tests(test_suites):
-    suite = test_suites["tiff"]
+    suite = test_suites["good_tiff"]
     tests = suite.tests
     new_suite = SuiteABC.from_tests(tests, skipped_tests=["LibTiffInfoTest"])
     skipped_test_before = suite.tests_by_name["LibTiffInfoTest"]
@@ -93,8 +93,8 @@ def test_that_skipped_tests_are_skipped_when_building_suite_from_tests(test_suit
 
 
 def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targets):
-    target_1 = test_targets["good"]
-    target_2 = test_targets["bad"]
+    target_1 = test_targets["good_txt"]
+    target_2 = test_targets["wrong_file_type_and_md5_txt"]
     test_1 = FileExtensionTest(target_1)
     test_2 = FileExtensionTest(target_2)
     tests = [test_1, test_2]
@@ -103,25 +103,25 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
 
 
 def test_that_a_suite_will_consider_non_required_failed_tests(test_targets):
-    target = test_targets["bad"]
+    target = test_targets["wrong_file_type_and_md5_txt"]
     required_tests = []
-    skipped_tests = ["LibTiffInfoTest", "GrepDateTest", "TiffTag306DateTimeTest"]
+    skipped_tests = ["LibTiffInfoTest", "TiffDateTimeTest", "TiffTag306DateTimeTest"]
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)
     suite_status = suite.compute_status()
     assert suite_status == SuiteStatus.AMBER
 
 
 def test_that_a_suite_will_consider_required_tests_when_failing(test_targets):
-    target = test_targets["bad"]
+    target = test_targets["wrong_file_type_and_md5_txt"]
     required_tests = ["FileExtensionTest"]
-    skipped_tests = ["LibTiffInfoTest", "GrepDateTest", "TiffTag306DateTimeTest"]
+    skipped_tests = ["LibTiffInfoTest", "TiffDateTimeTest", "TiffTag306DateTimeTest"]
     suite = SuiteABC.from_target(target, required_tests, skipped_tests)
     suite_status = suite.compute_status()
     assert suite_status == SuiteStatus.RED
 
 
 def test_that_a_suite_will_consider_required_tests_when_passing(test_targets):
-    target = test_targets["good"]
+    target = test_targets["good_txt"]
     required_tests = ["Md5ChecksumTest"]
     suite = SuiteABC.from_target(target, required_tests)
     suite_status = suite.compute_status()
@@ -132,7 +132,7 @@ def test_that_status_is_computed_if_not_already_assigned(test_targets):
     with patch.object(
         SuiteABC, "compute_status", return_value=SuiteStatus.GREEN
     ) as patch_compute_status:
-        target = test_targets["good"]
+        target = test_targets["good_txt"]
         required_tests = ["Md5ChecksumTest"]
         suite = SuiteABC.from_target(target, required_tests)
         suite._status = SuiteStatus.NONE
