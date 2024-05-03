@@ -41,13 +41,14 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """
 
     # Class attributes
-    tier: ClassVar[int]
-    is_external_test: ClassVar[bool]
-    is_external_test = False
+    tier: int
+    is_external_test: bool = False
 
     # Instance attributes
     type: str
     target: Target
+    failure_reason: str = ""
+    error_reason: str = ""
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
@@ -74,7 +75,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             "tier": self.tier,
             "is_external_test": self.is_external_test,
             "status": self._status.value,
-            "reason": self.reason,
+            "failure_reason": self.failure_reason,
+            "error_reason": self.error_reason,
             "target": self.target.to_dict(),
         }
         return test_dict
@@ -99,8 +101,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
         status = TestStatus(dictionary["status"])
         test._status = status
-        reason = dictionary["reason"]
-        test.reason = reason
+        test.failure_reason = dictionary["failure_reason"]
+        test.error_reason = dictionary["error_reason"]
 
         return test
 
@@ -157,13 +159,17 @@ class Process(SerializableMixin):
 
 
 class ExternalTestMixin(BaseTest):
-    pass_code: ClassVar[str]
-    fail_code: ClassVar[str]
-    reason: ClassVar[str]
-    reason_location: ClassVar[str]
-
     # Class attributes
     is_external_test = True
+
+    # Instance attributes
+    pass_code: int
+    fail_code: int
+    failure_reason_location: str
+
+    process_exit_code: int
+    process_std_out: str
+    process_std_err: str
 
     # Class constants
     STDOUT_PATH: ClassVar[Path]
@@ -198,22 +204,21 @@ class ExternalTestMixin(BaseTest):
             if not path.exists():
                 message = f"Expected process output ({path}) does not exist."
                 raise FileNotFoundError(message)
+
         return outputs
 
     def _interpret_process_outputs(self, outputs: dict[str, Path]) -> TestStatus:
         """Interpret the process output files to yield a test status."""
-        exit_code = outputs["exit_code"].read_text()
-        exit_code = exit_code.strip()
+        exit_code = int(outputs["exit_code"].read_text().strip())
 
         if exit_code == self.pass_code:
             status = TestStatus.PASS
         elif exit_code == self.fail_code:
             status = TestStatus.FAIL
-            # TODO: Include stdout and/or stderr in test json
-            self.reason = outputs[self.reason_location].read_text()
+            self.failure_reason = outputs[self.failure_reason_location].read_text()
         else:
             status = TestStatus.ERROR
-            self.reason = outputs["std_err"].read_text()
+            self.error_reason = outputs["std_err"].read_text()
         return status
 
     # TODO: Include process in serialized test dictionary

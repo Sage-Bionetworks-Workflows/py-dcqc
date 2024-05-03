@@ -49,6 +49,7 @@ class FastqSuite(FileSuite):
 
 class TXTSuite(FileSuite):
     file_type = FileType.get_file_type("TXT")
+    add_tests = tests.GrepDateTest
 
 
 class CSVSuite(FileSuite):
