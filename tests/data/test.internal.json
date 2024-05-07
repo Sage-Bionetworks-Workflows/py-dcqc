@@ -3,6 +3,8 @@
   "tier": 1,
   "is_external_test": false,
   "status": "pending",
+  "failure_reason": "",
+  "error_reason": "",
   "target": {
     "id": "001",
     "files": [

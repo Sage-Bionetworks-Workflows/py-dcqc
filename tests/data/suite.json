@@ -29,13 +29,17 @@
       "type": "Md5ChecksumTest",
       "tier": 1,
       "is_external_test": false,
-      "status": "passed"
+      "status": "passed",
+      "failure_reason": "",
+      "error_reason": ""
     },
     {
       "type": "LibTiffInfoTest",
       "tier": 2,
       "is_external_test": true,
-      "status": "skipped"
+      "status": "skipped",
+      "failure_reason": "",
+      "error_reason": ""
     }
   ]
 }
