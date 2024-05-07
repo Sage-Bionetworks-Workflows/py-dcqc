@@ -3,11 +3,9 @@ from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
 
 
-# TODO: Consider moving the filetype-test association logic
-#       to the file types
 class FileSuite(SuiteABC):
     file_type = FileType.get_file_type("*")
-    # add_tests = (tests.FileExtensionTest, tests.Md5ChecksumTest)
+    add_tests = (tests.FileExtensionTest, tests.Md5ChecksumTest)
 
 
 class JsonSuite(FileSuite):

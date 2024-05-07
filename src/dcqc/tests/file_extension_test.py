@@ -13,5 +13,6 @@ class FileExtensionTest(InternalBaseTest):
             file_extensions = file_type.file_extensions
             if not file.name.endswith(file_extensions):
                 status = TestStatus.FAIL
+                self.failure_reason = f"{file.name} does not have one of the expected extensions ({file_extensions}) for file type: {file_type.name}"
                 break
         return status
