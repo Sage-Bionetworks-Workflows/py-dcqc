@@ -4,7 +4,9 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 class BioFormatsInfoTest(ExternalBaseTest):
     tier = 2
-    pass_code = "0"
+    pass_code = 0
+    fail_code = 1
+    failure_reason_location = "std_err"
     target: SingleTarget
 
     def generate_process(self) -> Process:

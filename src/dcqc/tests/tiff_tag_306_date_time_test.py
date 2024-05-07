@@ -4,7 +4,9 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 class TiffTag306DateTimeTest(ExternalBaseTest):
     tier = 4
-    pass_code = "1"
+    pass_code = 1
+    fail_code = 0
+    failure_reason_location = "std_out"
     target: SingleTarget
 
     def generate_process(self) -> Process:

@@ -69,6 +69,7 @@ def test_create_tests(get_data, get_output):
 
 def test_create_process(get_data, get_output):
     input_json = get_data("test.external.json")
+    print(input_json)
     output_path = get_output("create_process") / "process.json"
     output_path.unlink(missing_ok=True)
 
