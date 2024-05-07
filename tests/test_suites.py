@@ -85,9 +85,9 @@ def test_that_the_default_required_tests_are_only_tiers_1_and_2(test_suites):
 def test_that_skipped_tests_are_skipped_when_building_suite_from_tests(test_suites):
     suite = test_suites["good_tiff"]
     tests = suite.tests
-    new_suite = SuiteABC.from_tests(tests, skipped_tests=["LibTiffInfoTest"])
-    skipped_test_before = suite.tests_by_name["LibTiffInfoTest"]
-    skipped_test_after = new_suite.tests_by_name["LibTiffInfoTest"]
+    new_suite = SuiteABC.from_tests(tests, skipped_tests=["TiffDateTimeTest"])
+    skipped_test_before = suite.tests_by_name["TiffDateTimeTest"]
+    skipped_test_after = new_suite.tests_by_name["TiffDateTimeTest"]
     assert skipped_test_before.get_status(compute_ok=False) != TestStatus.SKIP
     assert skipped_test_after.get_status(compute_ok=False) == TestStatus.SKIP
 
