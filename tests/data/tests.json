@@ -4,6 +4,8 @@
     "tier": 1,
     "is_external_test": false,
     "status": "pending",
+    "failure_reason": "",
+    "error_reason": "",
     "target": {
       "id": "001",
       "files": [
@@ -25,6 +27,8 @@
     "tier": 2,
     "is_external_test": true,
     "status": "pending",
+    "failure_reason": "",
+    "error_reason": "",
     "target": {
       "id": "001",
       "files": [
@@ -46,6 +50,8 @@
     "tier": 1,
     "is_external_test": false,
     "status": "passed",
+    "failure_reason": "",
+    "error_reason": "",
     "target": {
       "id": "001",
       "files": [
