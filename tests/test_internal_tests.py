@@ -52,6 +52,10 @@ class TestFileExtensionTest:
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
+        assert (
+            self.bad_txt_test.failure_reason
+            == f"File extension does not match one of: {self.bad_txt_target.get_file_type().file_extensions}"
+        )
 
 
 class Md5ChecksumTest:
@@ -67,6 +71,10 @@ class Md5ChecksumTest:
 
     def test_that_the_md5_checksum_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
+        assert (
+            self.bad_txt_test.failure_reason
+            == "Computed MD5 checksum does not match provided value"
+        )
 
 
 class TestJsonLoadTest:
@@ -82,6 +90,10 @@ class TestJsonLoadTest:
 
     def test_that_the_json_load_test_works_on_incorrect_files(self):
         assert self.good_txt_test.get_status() == TestStatus.FAIL
+        assert (
+            self.good_txt_test.failure_reason
+            == "File content is unable to be loaded as JSON"
+        )
 
 
 class TestJsonLdLoadTest:
@@ -97,6 +109,10 @@ class TestJsonLdLoadTest:
 
     def test_that_the_jsonld_load_test_works_on_incorrect_files(self):
         assert self.good_txt_test.get_status() == TestStatus.FAIL
+        assert (
+            self.good_txt_test.failure_reason
+            == "File content is unable to be loaded as JSON-LD"
+        )
 
 
 class TestPairedFastqParityTest:
@@ -104,6 +120,7 @@ class TestPairedFastqParityTest:
     def setup_method(self, test_files):
         self.fastq1_file = test_files["good_fastq"]
         self.fastq2_file = test_files["good_compressed_fastq"]
+        self.good_txt_file = test_files["good_txt"]
         self.good_paired_target = PairedTarget([self.fastq1_file, self.fastq1_file])
         self.good_paired_test = tests.PairedFastqParityTest(self.good_paired_target)
         self.bad_paired_target = PairedTarget([self.fastq1_file, self.fastq2_file])
@@ -114,18 +131,24 @@ class TestPairedFastqParityTest:
         self.good_compressed_paired_test = tests.PairedFastqParityTest(
             self.good_compressed_paired_target
         )
+        self.good_txt_target = PairedTarget([self.good_txt_file, self.good_txt_file])
+        self.good_txt_test = tests.PairedFastqParityTest(self.good_txt_target)
 
     def test_that_paired_fastq_parity_test_correctly_passes_identical_fastq_files(
         self,
     ):
         assert self.good_paired_test.get_status() == TestStatus.PASS
 
-    def test_that_paired_fastq_parity_test_correctly_fails_different_fastq_files(
-        self,
-    ):
-        assert self.bad_paired_test.get_status() == TestStatus.FAIL
-
     def test_that_paired_fastq_parity_test_correctly_handles_compressed_fastq_files(
         self,
     ):
         assert self.good_compressed_paired_test.get_status() == TestStatus.PASS
+
+    def test_that_paired_fastq_parity_test_correctly_fails_different_fastq_files(
+        self,
+    ):
+        assert self.bad_paired_test.get_status() == TestStatus.FAIL
+        assert (
+            self.bad_paired_test.failure_reason
+            == "FASTQ files do not have the same number of lines"
+        )
