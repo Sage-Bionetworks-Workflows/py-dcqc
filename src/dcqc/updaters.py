@@ -6,6 +6,7 @@ from typing import List
 
 from dcqc.parsers import CsvParser
 from dcqc.suites.suite_abc import SuiteABC
+from dcqc.tests.base_test import TestStatus
 
 
 @dataclass
@@ -19,31 +20,39 @@ class CsvUpdater:
         self.input_path = input_path
 
     def update(self, suites: List[SuiteABC]):
-        suite_dict = defaultdict(list)
-        # {url: [list_of_statuses]} data structure to allow for multi-file targets
+        suite_dict = {}
         # TODO add support for suites with multiple files in them (multi)
         for suite in suites:
             url = suite.target.files[0].url
-            status = suite.get_status()
-            suite_dict[url].append(status.value)
-        # Evaluate dcqc_status for each url
-        collapsed_dict = {}
-        for url, statuses in suite_dict.items():
-            if "GREY" in statuses:
-                collapsed_dict[url] = "GREY"
-            elif "RED" in statuses:
-                collapsed_dict[url] = "RED"
-            elif "AMBER" in statuses:
-                collapsed_dict[url] = "AMBER"
-            elif "GREEN" in statuses:
-                collapsed_dict[url] = "GREEN"
-            else:
-                collapsed_dict[url] = "NONE"
+            suite_dict[url] = {
+                "status": suite.get_status().value,
+                "required_tests": suite.required_tests,
+                "skipped_tests": suite.skipped_tests,
+                "failed_tests": [],
+                "errored_tests": [],
+            }
+            for test in suite.tests:
+                if test._status == TestStatus.FAIL:
+                    suite_dict[url]["failed_tests"].append(test.type)
+                if test._status == TestStatus.ERROR:
+                    suite_dict[url]["errored_tests"].append(test.type)
         # Create CSV data structure
         row_list = []
         parser = CsvParser(self.input_path)
         for _, csv_data in parser.list_rows():
-            csv_data["dcqc_status"] = collapsed_dict[csv_data["url"]]
+            csv_data["dcqc_status"] = suite_dict[csv_data["url"]]["status"]
+            csv_data["dcqc_required_tests"] = ",".join(
+                suite_dict[csv_data["url"]]["required_tests"]
+            )
+            csv_data["dcqc_skipped_tests"] = ",".join(
+                suite_dict[csv_data["url"]]["skipped_tests"]
+            )
+            csv_data["dcqc_failed_tests"] = ",".join(
+                suite_dict[csv_data["url"]]["failed_tests"]
+            )
+            csv_data["dcqc_errored_tests"] = ",".join(
+                suite_dict[csv_data["url"]]["errored_tests"]
+            )
             row_list.append(csv_data)
 
         if row_list:
