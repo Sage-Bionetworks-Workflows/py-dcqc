@@ -21,9 +21,9 @@ class JsonLdSuite(JsonSuite):
 class TiffSuite(FileSuite):
     file_type = FileType.get_file_type("TIFF")
     add_tests = (
-        # tests.LibTiffInfoTest,
+        tests.LibTiffInfoTest,
         tests.TiffDateTimeTest,
-        # tests.TiffTag306DateTimeTest,
+        tests.TiffTag306DateTimeTest,
     )
 
 
@@ -47,7 +47,6 @@ class FastqSuite(FileSuite):
 
 class TXTSuite(FileSuite):
     file_type = FileType.get_file_type("TXT")
-    add_tests = (tests.GrepDateTest,)
 
 
 class CSVSuite(FileSuite):
