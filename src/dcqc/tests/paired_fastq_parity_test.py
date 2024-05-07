@@ -18,6 +18,7 @@ class PairedFastqParityTest(InternalBaseTest):
             try:
                 count = self._count_fastq_lines(path)
             except Exception:
+                self.failure_reason = "Unable to count FASTQ lines"
                 return TestStatus.FAIL
             counts.append(count)
 
@@ -26,6 +27,7 @@ class PairedFastqParityTest(InternalBaseTest):
             status = TestStatus.PASS
         else:
             status = TestStatus.FAIL
+            self.failure_reason = "FASTQ files do not have the same number of lines"
         return status
 
     def _count_fastq_lines(self, path: Path) -> int:
