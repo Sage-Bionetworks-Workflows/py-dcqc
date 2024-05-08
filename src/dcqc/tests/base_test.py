@@ -167,10 +167,6 @@ class ExternalTestMixin(BaseTest):
     fail_code: int
     failure_reason_location: str
 
-    process_exit_code: int
-    process_std_out: str
-    process_std_err: str
-
     # Class constants
     STDOUT_PATH: ClassVar[Path]
     STDOUT_PATH = Path("std_out.txt")
