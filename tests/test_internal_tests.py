@@ -52,9 +52,9 @@ class TestFileExtensionTest:
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
-        assert (
-            self.bad_txt_test.failure_reason
-            == f"File extension does not match one of: {self.bad_txt_target.get_file_type().file_extensions}"
+        assert self.bad_txt_test.failure_reason == (
+            "File extension does not match one of: "
+            f"{self.bad_txt_target.get_file_type().file_extensions}"
         )
 
 

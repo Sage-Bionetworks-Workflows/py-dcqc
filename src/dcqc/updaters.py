@@ -19,7 +19,7 @@ class CsvUpdater:
         self.input_path = input_path
 
     def update(self, suites: List[SuiteABC]):
-        suite_dict = {}
+        suite_dict: dict[str, dict] = {}
         # TODO add support for suites with multiple files in them (multi)
         for suite in suites:
             url = suite.target.files[0].url
