@@ -1,4 +1,3 @@
-from collections import defaultdict
 from csv import DictWriter
 from dataclasses import dataclass
 from pathlib import Path
