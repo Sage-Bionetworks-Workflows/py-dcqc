@@ -225,16 +225,16 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         for test in self.tests:
             test_name = test.type
             test_status = test.get_status()
+            # if test errors, always return grey immediately
             if test_status == TestStatus.ERROR:
                 self._status = SuiteStatus.GREY
                 return self._status
-            if test_name in self.required_tests:
-                if test_status == TestStatus.FAIL:
-                    self._status = SuiteStatus.RED
-                    return self._status
-            else:
-                if test_status == TestStatus.FAIL:
-                    self._status = SuiteStatus.AMBER
+            # if required test failed, red takes precedence over amber
+            if test_status == TestStatus.FAIL and test_name in self.required_tests:
+                self._status = SuiteStatus.RED
+            # if test failed not required test, amber
+            if test_status == TestStatus.FAIL and self._status != SuiteStatus.RED:
+                self._status = SuiteStatus.AMBER
         return self._status
 
     def to_dict(self) -> SerializedObject:
