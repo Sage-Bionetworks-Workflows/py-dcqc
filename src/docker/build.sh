@@ -8,7 +8,7 @@ TARBALL_PATH=$(ls dist/*.tar.gz)
 export TARBALL_PATH
 
 docker build \
-    -t bwmac03570/dcqc \
+    -t dcqc \
     -f "${SCRIPT_DIR}/Dockerfile" \
     --platform linux/amd64 \
     --build-arg TARBALL_PATH \
