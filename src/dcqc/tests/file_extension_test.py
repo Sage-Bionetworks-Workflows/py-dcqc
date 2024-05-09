@@ -3,6 +3,8 @@ from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
 class FileExtensionTest(InternalBaseTest):
+    """Tests if a file has a valid extension for its file type."""
+
     tier = 1
     target: SingleTarget
 

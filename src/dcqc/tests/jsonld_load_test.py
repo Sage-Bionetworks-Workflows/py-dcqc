@@ -5,6 +5,8 @@ from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
 class JsonLdLoadTest(InternalBaseTest):
+    """Tests if a file can be loaded as JSON-LD."""
+
     tier = 2
     target: SingleTarget
 

@@ -3,6 +3,8 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
 class BioFormatsInfoTest(ExternalBaseTest):
+    """Tests if a file is valid OME-TIFF."""
+
     tier = 2
     pass_code = 0
     fail_code = 1

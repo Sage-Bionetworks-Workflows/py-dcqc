@@ -3,6 +3,8 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
 class OmeXmlSchemaTest(ExternalBaseTest):
+    """Tests if OME-TIFF file has valid XML metadata."""
+
     tier = 2
     pass_code = 0
     fail_code = 1

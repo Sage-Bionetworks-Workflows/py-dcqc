@@ -3,6 +3,10 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
 class TiffDateTimeTest(ExternalBaseTest):
+    """Tests if a TIFF file has the word "date" or "time" in its metadata.
+    Used for detecting potential PHI in files.
+    """
+
     tier = 4
     pass_code = 1
     fail_code = 0

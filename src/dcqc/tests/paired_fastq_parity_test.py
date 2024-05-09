@@ -7,6 +7,8 @@ from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
 class PairedFastqParityTest(InternalBaseTest):
+    """Test that paired FASTQ files have the same number of lines."""
+
     tier = 2
     target: PairedTarget
 

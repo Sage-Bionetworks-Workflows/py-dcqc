@@ -3,6 +3,10 @@ from dcqc.tests.base_test import ExternalBaseTest, Process
 
 
 class GrepDateTest(ExternalBaseTest):
+    """Tests if a file has the word "date" or "time" in it.
+    Used for dtecting potential PHI in files.
+    """
+
     tier = 4
     pass_code = 1
     fail_code = 0

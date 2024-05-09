@@ -18,6 +18,8 @@ Target = TypeVar("Target", bound=BaseTarget)
 
 
 class TestStatus(Enum):
+    """Enum for test statuses."""
+
     NONE = "pending"
     FAIL = "failed"
     PASS = "passed"
@@ -55,7 +57,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         self.target = target
         self._status = TestStatus.SKIP if skip else TestStatus.NONE
 
-    def skip(self):
+    def skip(self) -> None:
         """Force the test to be skipped."""
         self._status = TestStatus.SKIP
 
@@ -118,13 +120,15 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return module
 
     @classmethod
-    def get_base_class(cls):
+    def get_base_class(cls) -> type[BaseTest]:
         """Retrieve base class."""
         return BaseTest
 
 
 @dataclass
 class Process(SerializableMixin):
+    """Class for composing external processes"""
+
     container: str
     command_args: InitVar[Sequence[str]]
     cpus: int = 1
@@ -159,6 +163,8 @@ class Process(SerializableMixin):
 
 
 class ExternalTestMixin(BaseTest):
+    """Class Mixin for external tests."""
+
     # Class attributes
     is_external_test = True
 

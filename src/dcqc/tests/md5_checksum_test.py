@@ -6,6 +6,8 @@ from dcqc.tests.base_test import InternalBaseTest, TestStatus
 
 
 class Md5ChecksumTest(InternalBaseTest):
+    """Tests if a file has the expected MD5 checksum."""
+
     tier = 1
     target: SingleTarget
 

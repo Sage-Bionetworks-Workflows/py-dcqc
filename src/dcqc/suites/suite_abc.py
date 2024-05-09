@@ -15,6 +15,8 @@ Target = TypeVar("Target", bound=BaseTarget)
 
 
 class SuiteStatus(Enum):
+    """Status of a suite."""
+
     NONE = "NONE"  # status not yet evaluated
     GREEN = "GREEN"  # all tests passed
     RED = "RED"  # one or more required tests failed
@@ -207,7 +209,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return registry[name]
 
     @property
-    def tests_by_name(self):
+    def tests_by_name(self) -> dict[str, BaseTest]:
         return {test.type: test for test in self.tests}
 
     def compute_tests(self) -> None:
@@ -291,7 +293,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return suite
 
     @classmethod
-    def get_base_class(cls):
+    def get_base_class(cls) -> type[SuiteABC]:
         """Retrieve base class."""
         return SuiteABC
 

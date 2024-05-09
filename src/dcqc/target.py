@@ -86,7 +86,7 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
         return target
 
     @classmethod
-    def get_base_class(cls):
+    def get_base_class(cls) -> type[BaseTarget]:
         """Retrieve base class."""
         return BaseTarget
 

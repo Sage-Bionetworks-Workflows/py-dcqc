@@ -194,6 +194,8 @@ When contributing an internal test be sure to do the following:
 
 1. Follow the steps above to set up `py-dcqc` and create your contribution.
 
+1. Include a class docstring that describes the purpose of the test.
+
 1. Include the following class attributes:
 
    - `tier`: An `int` value describing the complexity of the test contributed. `tier` values include:
@@ -212,6 +214,8 @@ In `py-dcqc`, any test where the primary business logic is executed outside of t
 When contributing an internal test be sure to do the following:
 
 1. Follow the steps above to set up `py-dcqc` and create your contribution.
+
+1. Include a class docstring that describes the purpose of the test.
 
 1. Include the following class attributes:
 

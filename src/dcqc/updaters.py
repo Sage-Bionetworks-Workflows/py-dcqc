@@ -10,6 +10,8 @@ from dcqc.tests.base_test import TestStatus
 
 @dataclass
 class CsvUpdater:
+    """Updates the CSV manifest file with DCQC results."""
+
     input_path: Path
     output_path: Path
     parser: CsvParser
@@ -18,8 +20,8 @@ class CsvUpdater:
         self.output_path = output_path
         self.input_path = input_path
 
-    def update(self, suites: List[SuiteABC]):
-        suite_dict: dict[str, dict] = {}
+    def update(self, suites: List[SuiteABC]) -> None:
+        suite_dict: dict[str, dict[str, str]] = {}
         # TODO add support for suites with multiple files in them (multi)
         for suite in suites:
             url = suite.target.files[0].url
