@@ -27,6 +27,15 @@ class TestStatus(Enum):
     ERROR = "error"
 
 
+class TestTier(Enum):
+    """Enum for test tiers."""
+
+    FILE_INTEGRITY = 1
+    INTERNAL_CONFORMANCE = 2
+    EXTERNAL_CONFORMANCE = 3
+    SUBJECTIVE_CONFORMANCE = 4
+
+
 # TODO: Look into the @typing.final decorator
 class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """Abstract base class for QC tests.
@@ -43,7 +52,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """
 
     # Class attributes
-    tier: int
+    tier: TestTier
     is_external_test: bool = False
 
     # Instance attributes
@@ -73,7 +82,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     def to_dict(self) -> SerializedObject:
         test_dict = {
             "type": self.type,
-            "tier": self.tier,
+            "tier": self.tier.value,
             "is_external_test": self.is_external_test,
             "status": self._status.value,
             "status_reason": self.status_reason,

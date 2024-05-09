@@ -166,7 +166,7 @@ def list_tests():
                 "file_type": file_type_name,
                 "edam_iri": file_type.edam_iri,
                 "test_name": test_cls.__name__,
-                "test_tier": test_cls.tier,
+                "test_tier": test_cls.tier.value,
                 "test_type": "external" if test_cls.is_external_test else "internal",
             }
             rows.append(test_dict)

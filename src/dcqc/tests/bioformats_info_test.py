@@ -1,11 +1,11 @@
 from dcqc.target import SingleTarget
-from dcqc.tests.base_test import ExternalBaseTest, Process
+from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 
 
 class BioFormatsInfoTest(ExternalBaseTest):
     """Tests if a file is valid OME-TIFF."""
 
-    tier = 2
+    tier = TestTier.INTERNAL_CONFORMANCE
     pass_code = 0
     fail_code = 1
     failure_reason_location = "std_err"

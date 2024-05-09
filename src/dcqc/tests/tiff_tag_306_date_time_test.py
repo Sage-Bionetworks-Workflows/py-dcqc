@@ -1,5 +1,5 @@
 from dcqc.target import SingleTarget
-from dcqc.tests.base_test import ExternalBaseTest, Process
+from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 
 
 class TiffTag306DateTimeTest(ExternalBaseTest):
@@ -7,7 +7,7 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
     Used for detecting potential PHI in files.
     """
 
-    tier = 4
+    tier = TestTier.SUBJECTIVE_CONFORMANCE
     pass_code = 1
     fail_code = 0
     failure_reason_location = "std_out"
@@ -19,7 +19,8 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
         command_args = [
             "tifftools",
             "dump",
-            f"'{path.name}'",
+            "bad_file.file"
+            # f"'{path.name}'",
             "--json",
             "--silent",
             "|",

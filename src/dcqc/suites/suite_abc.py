@@ -174,7 +174,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     @classmethod
     def _default_required_tests(cls) -> list[str]:
         test_classes = cls.list_test_classes()
-        required_tests = filter(lambda test: test.tier <= 2, test_classes)
+        required_tests = filter(lambda test: test.tier.value <= 2, test_classes)
         required_test_names = [test.__name__ for test in required_tests]
         return required_test_names
 

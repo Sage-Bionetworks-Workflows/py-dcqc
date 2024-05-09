@@ -2,13 +2,13 @@ import json
 from pathlib import Path
 
 from dcqc.target import SingleTarget
-from dcqc.tests.base_test import InternalBaseTest, TestStatus
+from dcqc.tests.base_test import InternalBaseTest, TestStatus, TestTier
 
 
 class JsonLoadTest(InternalBaseTest):
     """Tests if a file can be loaded as JSON."""
 
-    tier = 2
+    tier = TestTier.INTERNAL_CONFORMANCE
     target: SingleTarget
 
     def compute_status(self) -> TestStatus:

@@ -198,10 +198,11 @@ When contributing an internal test be sure to do the following:
 
 1. Include the following class attributes:
 
-   - `tier`: An `int` value describing the complexity of the test contributed. `tier` values include:
-     - `1`: File Integrity
-     - `2`: Internal Conformance
-     - `3`: External Conformance
+   - `tier`: A `TestTier` enum describing the complexity of the test contributed. Valid `tier` values include:
+     - `FILE_INTEGRITY`
+     - `INTERNAL_CONFORMANCE`
+     - `EXTERNAL_CONFORMANCE`
+     - `SUBJECTIVE_CONFORMANCE`
    - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
 
 1. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
@@ -219,11 +220,11 @@ When contributing an internal test be sure to do the following:
 
 1. Include the following class attributes:
 
-   - `tier`: An `int` value describing the complexity of the test contributed. `tier` values include:
-     - `1`: File Integrity
-     - `2`: Internal Conformance
-     - `3`: External Conformance
-     - `4`: Subjective Conformance
+   - `tier`: A `TestTier` enum describing the complexity of the test contributed. Valid `tier` values include:
+     - `FILE_INTEGRITY`
+     - `INTERNAL_CONFORMANCE`
+     - `EXTERNAL_CONFORMANCE`
+     - `SUBJECTIVE_CONFORMANCE`
    - `pass_code`: The exit code that will be returned by the command indicating a passed test.
    - `fail_code`: The exit code that will be returned by the command indicating a failed test.
    - `failure_reason_location`: The file (either `"std_out"` or `"std_err"`) that will contain the reason for a failed test.
