@@ -19,8 +19,7 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
         command_args = [
             "tifftools",
             "dump",
-            "bad_file.file"
-            # f"'{path.name}'",
+            f"'{path.name}'",
             "--json",
             "--silent",
             "|",
