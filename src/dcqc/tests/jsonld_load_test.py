@@ -16,7 +16,7 @@ class JsonLdLoadTest(InternalBaseTest):
             status = TestStatus.PASS
         else:
             status = TestStatus.FAIL
-            self.failure_reason = "File content is unable to be loaded as JSON-LD"
+            self.status_reason = "File content is unable to be loaded as JSON-LD"
         return status
 
     def _can_be_loaded(self, path: Path) -> bool:

@@ -205,7 +205,7 @@ When contributing an internal test be sure to do the following:
    - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
 
 1. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
-   - For failing cases be sure to include a line setting the class' `failure_reason` to a helpful string that will tell users why the test failed before returning the `status`.
+   - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
 
 ### Contributing External Tests
 

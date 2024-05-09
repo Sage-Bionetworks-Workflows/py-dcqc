@@ -49,8 +49,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     # Instance attributes
     type: str
     target: Target
-    failure_reason: str = ""
-    error_reason: str = ""
+    status_reason: str = ""
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
@@ -77,8 +76,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             "tier": self.tier,
             "is_external_test": self.is_external_test,
             "status": self._status.value,
-            "failure_reason": self.failure_reason,
-            "error_reason": self.error_reason,
+            "status_reason": self.status_reason,
             "target": self.target.to_dict(),
         }
         return test_dict
@@ -103,8 +101,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
         status = TestStatus(dictionary["status"])
         test._status = status
-        test.failure_reason = dictionary["failure_reason"]
-        test.error_reason = dictionary["error_reason"]
+        test.status_reason = dictionary["status_reason"]
 
         return test
 
@@ -217,10 +214,10 @@ class ExternalTestMixin(BaseTest):
             status = TestStatus.PASS
         elif exit_code == self.fail_code:
             status = TestStatus.FAIL
-            self.failure_reason = outputs[self.failure_reason_location].read_text()
+            self.status_reason = outputs[self.failure_reason_location].read_text()
         else:
             status = TestStatus.ERROR
-            self.error_reason = outputs["std_err"].read_text()
+            self.status_reason = outputs["std_err"].read_text()
         return status
 
     # TODO: Include process in serialized test dictionary

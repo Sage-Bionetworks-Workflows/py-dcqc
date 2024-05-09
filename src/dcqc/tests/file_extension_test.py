@@ -15,7 +15,7 @@ class FileExtensionTest(InternalBaseTest):
             file_extensions = file_type.file_extensions
             if not file.name.endswith(file_extensions):
                 status = TestStatus.FAIL
-                self.failure_reason = (
+                self.status_reason = (
                     f"File extension does not match one of: {file_extensions}"
                 )
                 break

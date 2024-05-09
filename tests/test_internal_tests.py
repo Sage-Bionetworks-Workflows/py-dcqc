@@ -52,7 +52,7 @@ class TestFileExtensionTest:
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
-        assert self.bad_txt_test.failure_reason == (
+        assert self.bad_txt_test.status_reason == (
             "File extension does not match one of: "
             f"{self.bad_txt_target.get_file_type().file_extensions}"
         )
@@ -72,7 +72,7 @@ class Md5ChecksumTest:
     def test_that_the_md5_checksum_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
         assert (
-            self.bad_txt_test.failure_reason
+            self.bad_txt_test.status_reason
             == "Computed MD5 checksum does not match provided value"
         )
 
@@ -91,7 +91,7 @@ class TestJsonLoadTest:
     def test_that_the_json_load_test_works_on_incorrect_files(self):
         assert self.good_txt_test.get_status() == TestStatus.FAIL
         assert (
-            self.good_txt_test.failure_reason
+            self.good_txt_test.status_reason
             == "File content is unable to be loaded as JSON"
         )
 
@@ -110,7 +110,7 @@ class TestJsonLdLoadTest:
     def test_that_the_jsonld_load_test_works_on_incorrect_files(self):
         assert self.good_txt_test.get_status() == TestStatus.FAIL
         assert (
-            self.good_txt_test.failure_reason
+            self.good_txt_test.status_reason
             == "File content is unable to be loaded as JSON-LD"
         )
 
@@ -149,6 +149,6 @@ class TestPairedFastqParityTest:
     ):
         assert self.bad_paired_test.get_status() == TestStatus.FAIL
         assert (
-            self.bad_paired_test.failure_reason
+            self.bad_paired_test.status_reason
             == "FASTQ files do not have the same number of lines"
         )
