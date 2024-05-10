@@ -15,11 +15,13 @@ Target = TypeVar("Target", bound=BaseTarget)
 
 
 class SuiteStatus(Enum):
+    """Status of a suite."""
+
     NONE = "NONE"  # status not yet evaluated
     GREEN = "GREEN"  # all tests passed
     RED = "RED"  # one or more required tests failed
     AMBER = "AMBER"  # all required tests passed, but one or more optional tests failed
-    # TODO GREY = "GREY" # error occurred
+    GREY = "GREY"  # error occurred
 
 
 # TODO: Consider the Composite design pattern once
@@ -172,7 +174,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     @classmethod
     def _default_required_tests(cls) -> list[str]:
         test_classes = cls.list_test_classes()
-        required_tests = filter(lambda test: test.tier <= 2, test_classes)
+        required_tests = filter(lambda test: test.tier.value <= 2, test_classes)
         required_test_names = [test.__name__ for test in required_tests]
         return required_test_names
 
@@ -207,7 +209,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return registry[name]
 
     @property
-    def tests_by_name(self):
+    def tests_by_name(self) -> dict[str, BaseTest]:
         return {test.type: test for test in self.tests}
 
     def compute_tests(self) -> None:
@@ -225,13 +227,16 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         for test in self.tests:
             test_name = test.type
             test_status = test.get_status()
-            if test_name in self.required_tests:
-                if test_status == TestStatus.FAIL:
-                    self._status = SuiteStatus.RED
-                    return self._status
-            else:
-                if test_status == TestStatus.FAIL:
-                    self._status = SuiteStatus.AMBER
+            # if test errors, always return grey immediately
+            if test_status == TestStatus.ERROR:
+                self._status = SuiteStatus.GREY
+                return self._status
+            # if required test failed, red takes precedence over amber
+            if test_status == TestStatus.FAIL and test_name in self.required_tests:
+                self._status = SuiteStatus.RED
+            # if test failed not required test, amber
+            if test_status == TestStatus.FAIL and self._status != SuiteStatus.RED:
+                self._status = SuiteStatus.AMBER
         return self._status
 
     def to_dict(self) -> SerializedObject:

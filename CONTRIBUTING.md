@@ -43,18 +43,18 @@ that any documentation update is done in the same way was a code contribution.
 The documentation is written using [CommonMark] with [MyST] extensions.
 
 :::{tip}
-   Please notice that the [GitHub web interface] provides a quick way of
-   propose changes in `dcqc`'s files. While this mechanism can
-   be tricky for normal code contributions, it works perfectly fine for
-   contributing to the docs, and can be quite handy.
+Please notice that the [GitHub web interface] provides a quick way of
+propose changes in `dcqc`'s files. While this mechanism can
+be tricky for normal code contributions, it works perfectly fine for
+contributing to the docs, and can be quite handy.
 
-   If you are interested in trying this method out, please navigate to
-   the `docs` folder in the source [repository], find which file you
-   would like to propose changes and click in the little pencil icon at the
-   top, to open [GitHub's code editor]. Once you finish editing the file,
-   please write a message in the form at the bottom of the page describing
-   which changes have you made and what are the motivations behind them and
-   submit your proposal.
+If you are interested in trying this method out, please navigate to
+the `docs` folder in the source [repository], find which file you
+would like to propose changes and click in the little pencil icon at the
+top, to open [GitHub's code editor]. Once you finish editing the file,
+please write a message in the form at the bottom of the page describing
+which changes have you made and what are the motivations behind them and
+submit your proposal.
 :::
 
 When working on documentation changes in your local machine, you can
@@ -91,7 +91,7 @@ This often provides additional considerations and avoids unnecessary work.
 
 1. Create an user account on GitHub if you do not already have one.
 
-2. Fork the project [repository]: click on the *Fork* button near the top of the
+2. Fork the project [repository]: click on the _Fork_ button near the top of the
    page. This creates a copy of the code under your account on GitHub.
 
 3. Clone this copy to your local disk:
@@ -108,7 +108,7 @@ This often provides additional considerations and avoids unnecessary work.
    ```
 
    to create an isolated virtual environment containing package dependencies,
-   including those needed for development (*e.g.* testing, documentation).
+   including those needed for development (_e.g._ testing, documentation).
 
 5. Install [pre-commit] hooks:
 
@@ -186,34 +186,79 @@ This often provides additional considerations and avoids unnecessary work.
    the PR as a draft first and mark it as ready for review after the feedbacks
    from the continuous integration (CI) system or any required fixes.
 
-### Special Considerations for Contributing External Tests
+### Contributing Internal Tests
 
-In `py-dcqc`, any test where the primary business logic is executed outside of this package itself is considered to be external. One example is the `LibTiffInfoTest`. For these tests, `py-dcqc` is responsible for packaging up a Nextflow process which is then executed in an [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow run. Such tests are not possible to run in `py-dcqc` alone at this time. This makes contributing, testing, debugging, and using external tests a little more complicated that internal tests such as the `Md5ChecksumTest` which has all of its logic built into this package.
+In `py-dcqc`, any test where the primary business logic is executed within the package itself is considered internal. One example is the `Md5ChecksumTest`.
 
-When contributing an external test, following these steps may be helpful:
+When contributing an internal test be sure to do the following:
 
 1. Follow the steps above to set up `py-dcqc` and create your contribution.
 
-2. Follow the instructions in the [README.md](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/README.md)
+1. Include a class docstring that describes the purpose of the test.
+
+1. Include the following class attributes:
+
+   - `tier`: A `TestTier` enum describing the complexity of the test contributed. Valid `tier` values include:
+     - `FILE_INTEGRITY`
+     - `INTERNAL_CONFORMANCE`
+     - `EXTERNAL_CONFORMANCE`
+     - `SUBJECTIVE_CONFORMANCE`
+   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
+
+1. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
+   - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
+
+### Contributing External Tests
+
+In `py-dcqc`, any test where the primary business logic is executed outside of this package itself is considered to be external. One example is the `LibTiffInfoTest`. For these tests, `py-dcqc` is responsible for packaging up a Nextflow process which is then executed in an [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow run. Such tests are not possible to run in `py-dcqc` alone at this time. This makes contributing, testing, debugging, and using external tests a little more complicated that internal tests such as the `Md5ChecksumTest` which has all of its logic built into this package.
+
+When contributing an internal test be sure to do the following:
+
+1. Follow the steps above to set up `py-dcqc` and create your contribution.
+
+1. Include a class docstring that describes the purpose of the test.
+
+1. Include the following class attributes:
+
+   - `tier`: A `TestTier` enum describing the complexity of the test contributed. Valid `tier` values include:
+     - `FILE_INTEGRITY`
+     - `INTERNAL_CONFORMANCE`
+     - `EXTERNAL_CONFORMANCE`
+     - `SUBJECTIVE_CONFORMANCE`
+   - `pass_code`: The exit code that will be returned by the command indicating a passed test.
+   - `fail_code`: The exit code that will be returned by the command indicating a failed test.
+   - `failure_reason_location`: The file (either `"std_out"` or `"std_err"`) that will contain the reason for a failed test.
+   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
+
+1. If possible, contribute an external test that returns different codes when it fails and when it errors out. Currently, a limitation of DCQC is that several external tests return the same `exit_code` when they fail and encounter an error. This will be addressed in future work that will add finer grained result interpretation.
+
+### Testing Your Changes
+
+1. Follow the instructions in the [README.md](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/README.md)
    file in the `nf-dcqc` respository to set up the workflow on your local machine.
+
    - Run `git checkout dev` to switch to the developer branch
 
-3. Build your local version of `py-dcqc` with your new changes with:
+1. Build your local version of `py-dcqc` with your new changes with:
+
    ```console
    src/docker/build.sh
    ```
+
    NOTE: This step assumes that you have docker installed and that it is running, and that you have `pipx` installed.
 
-4. Follow `nf-dcqc` instructions to create a `nextflow run` command that tests your contribution.
+1. Follow `nf-dcqc` instructions to create a `nextflow run` command that tests your contribution.
+
    - You should include at least two files in your `nf-dcqc` input file ([example](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/testdata/input_full.csv)), one that you expect to pass your contributed test, and one that you expect to fail.
    - Include the `local` profile so that the workflow leverages your locally built `py-orca` container
 
    Example command (executed from within your local `nf-dcqc` repo clone):
+
    ```
    nextflow run main.nf -profile local,docker --input path/to/your/input.csv -- outdir output --required_tests <YOUR_TEST_NAME>
    ```
 
-5. Examine the final `suites.json` that is exported by the Nextflow workflow, if your contributed test bahaved as
+1. Examine the final `output.csv` and `suites.json` files exported by the Nextflow workflow, if your contributed test bahaved as
    expected, you're done! If not, debug and make changes to your contribution and re-run the workflow.
 
 ### Troubleshooting
@@ -291,7 +336,8 @@ on [PyPI], the following steps can be used to release a new version for
 6. Run `tox -e publish -- --repository pypi` and check that everything was
    uploaded to [PyPI] correctly.
 
-[^contrib1]: Even though, these resources focus on open source projects and
+[^contrib1]:
+    Even though, these resources focus on open source projects and
     communities, the general ideas behind collaborating with other developers
     to collectively create software are general and can be applied to all sorts
     of environments, including private companies and proprietary code bases.

@@ -1,10 +1,14 @@
 from dcqc.target import SingleTarget
-from dcqc.tests.base_test import ExternalBaseTest, Process
+from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 
 
 class BioFormatsInfoTest(ExternalBaseTest):
-    tier = 2
-    pass_code = "0"
+    """Tests if a file is valid OME-TIFF."""
+
+    tier = TestTier.INTERNAL_CONFORMANCE
+    pass_code = 0
+    fail_code = 1
+    failure_reason_location = "std_err"
     target: SingleTarget
 
     def generate_process(self) -> Process:

@@ -2,11 +2,13 @@ import hashlib
 from pathlib import Path
 
 from dcqc.target import SingleTarget
-from dcqc.tests.base_test import InternalBaseTest, TestStatus
+from dcqc.tests.base_test import InternalBaseTest, TestStatus, TestTier
 
 
 class Md5ChecksumTest(InternalBaseTest):
-    tier = 1
+    """Tests if a file has the expected MD5 checksum."""
+
+    tier = TestTier.FILE_INTEGRITY
     target: SingleTarget
 
     def compute_status(self) -> TestStatus:
@@ -17,6 +19,7 @@ class Md5ChecksumTest(InternalBaseTest):
             status = TestStatus.PASS
         else:
             status = TestStatus.FAIL
+            self.status_reason = "Computed MD5 checksum does not match provided value"
         return status
 
     def _compute_md5_checksum(self, path: Path) -> str:

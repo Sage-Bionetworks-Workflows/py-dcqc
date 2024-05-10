@@ -3,11 +3,13 @@ from pathlib import Path
 from typing import TextIO
 
 from dcqc.target import PairedTarget
-from dcqc.tests.base_test import InternalBaseTest, TestStatus
+from dcqc.tests.base_test import InternalBaseTest, TestStatus, TestTier
 
 
 class PairedFastqParityTest(InternalBaseTest):
-    tier = 2
+    """Test that paired FASTQ files have the same number of lines."""
+
+    tier = TestTier.INTERNAL_CONFORMANCE
     target: PairedTarget
 
     def compute_status(self) -> TestStatus:
@@ -18,6 +20,7 @@ class PairedFastqParityTest(InternalBaseTest):
             try:
                 count = self._count_fastq_lines(path)
             except Exception:
+                self.status_reason = "Unable to count FASTQ lines"
                 return TestStatus.FAIL
             counts.append(count)
 
@@ -26,6 +29,7 @@ class PairedFastqParityTest(InternalBaseTest):
             status = TestStatus.PASS
         else:
             status = TestStatus.FAIL
+            self.status_reason = "FASTQ files do not have the same number of lines"
         return status
 
     def _count_fastq_lines(self, path: Path) -> int:

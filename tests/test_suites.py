@@ -79,7 +79,7 @@ def test_that_the_generic_file_suite_is_retrieved_for_an_unpaired_file_type():
 
 def test_that_the_default_required_tests_are_only_tiers_1_and_2(test_suites):
     suite = test_suites["good_jsonld"]
-    assert all(test.tier <= 2 for test in suite.tests)
+    assert all(test.tier.value <= 2 for test in suite.tests)
 
 
 def test_that_skipped_tests_are_skipped_when_building_suite_from_tests(test_suites):

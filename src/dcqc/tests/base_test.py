@@ -18,10 +18,22 @@ Target = TypeVar("Target", bound=BaseTarget)
 
 
 class TestStatus(Enum):
+    """Enum for test statuses."""
+
     NONE = "pending"
     FAIL = "failed"
     PASS = "passed"
     SKIP = "skipped"
+    ERROR = "error"
+
+
+class TestTier(Enum):
+    """Enum for test tiers."""
+
+    FILE_INTEGRITY = 1
+    INTERNAL_CONFORMANCE = 2
+    EXTERNAL_CONFORMANCE = 3
+    SUBJECTIVE_CONFORMANCE = 4
 
 
 # TODO: Look into the @typing.final decorator
@@ -40,20 +52,20 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """
 
     # Class attributes
-    tier: ClassVar[int]
-    is_external_test: ClassVar[bool]
-    is_external_test = False
+    tier: TestTier
+    is_external_test: bool = False
 
     # Instance attributes
     type: str
     target: Target
+    status_reason: str = ""
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
         self.target = target
         self._status = TestStatus.SKIP if skip else TestStatus.NONE
 
-    def skip(self):
+    def skip(self) -> None:
         """Force the test to be skipped."""
         self._status = TestStatus.SKIP
 
@@ -70,9 +82,10 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     def to_dict(self) -> SerializedObject:
         test_dict = {
             "type": self.type,
-            "tier": self.tier,
+            "tier": self.tier.value,
             "is_external_test": self.is_external_test,
             "status": self._status.value,
+            "status_reason": self.status_reason,
             "target": self.target.to_dict(),
         }
         return test_dict
@@ -97,6 +110,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
         status = TestStatus(dictionary["status"])
         test._status = status
+        test.status_reason = dictionary["status_reason"]
 
         return test
 
@@ -119,6 +133,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
 @dataclass
 class Process(SerializableMixin):
+    """Class for composing external processes"""
+
     container: str
     command_args: InitVar[Sequence[str]]
     cpus: int = 1
@@ -153,9 +169,15 @@ class Process(SerializableMixin):
 
 
 class ExternalTestMixin(BaseTest):
-    pass_code: ClassVar[str]
+    """Class Mixin for external tests."""
+
     # Class attributes
     is_external_test = True
+
+    # Instance attributes
+    pass_code: int
+    fail_code: int
+    failure_reason_location: str
 
     # Class constants
     STDOUT_PATH: ClassVar[Path]
@@ -190,16 +212,21 @@ class ExternalTestMixin(BaseTest):
             if not path.exists():
                 message = f"Expected process output ({path}) does not exist."
                 raise FileNotFoundError(message)
+
         return outputs
 
     def _interpret_process_outputs(self, outputs: dict[str, Path]) -> TestStatus:
         """Interpret the process output files to yield a test status."""
-        exit_code = outputs["exit_code"].read_text()
-        exit_code = exit_code.strip()
+        exit_code = int(outputs["exit_code"].read_text().strip())
+
         if exit_code == self.pass_code:
             status = TestStatus.PASS
-        else:
+        elif exit_code == self.fail_code:
             status = TestStatus.FAIL
+            self.status_reason = outputs[self.failure_reason_location].read_text()
+        else:
+            status = TestStatus.ERROR
+            self.status_reason = outputs["std_err"].read_text()
         return status
 
     # TODO: Include process in serialized test dictionary

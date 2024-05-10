@@ -10,5 +10,6 @@ export TARBALL_PATH
 docker build \
     -t dcqc \
     -f "${SCRIPT_DIR}/Dockerfile" \
+    --platform linux/amd64 \
     --build-arg TARBALL_PATH \
     "${SCRIPT_DIR}/../.."

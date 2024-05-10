@@ -57,3 +57,5 @@ MANIFEST
 .venv*/
 .conda*/
 .python-version
+
+debugging/

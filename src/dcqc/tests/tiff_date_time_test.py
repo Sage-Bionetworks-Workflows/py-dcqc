@@ -1,10 +1,16 @@
 from dcqc.target import SingleTarget
-from dcqc.tests.base_test import ExternalBaseTest, Process
+from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 
 
 class TiffDateTimeTest(ExternalBaseTest):
-    tier = 4
-    pass_code = "1"
+    """Tests if a TIFF file has the word "date" or "time" in its metadata.
+    Used for detecting potential PHI in files.
+    """
+
+    tier = TestTier.SUBJECTIVE_CONFORMANCE
+    pass_code = 1
+    fail_code = 0
+    failure_reason_location = "std_out"
     target: SingleTarget
 
     def generate_process(self) -> Process:
