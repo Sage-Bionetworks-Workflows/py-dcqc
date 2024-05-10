@@ -24,6 +24,7 @@ from warnings import warn
 from fs.base import FS
 
 from dcqc.mixins import SerializableMixin, SerializedObject
+
 from dcqc.utils import is_url_local, open_parent_fs
 
 
