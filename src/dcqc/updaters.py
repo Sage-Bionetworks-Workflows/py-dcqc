@@ -1,7 +1,7 @@
 from csv import DictWriter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 from dcqc.parsers import CsvParser
 from dcqc.suites.suite_abc import SuiteABC
@@ -21,7 +21,7 @@ class CsvUpdater:
         self.input_path = input_path
 
     def update(self, suites: List[SuiteABC]) -> None:
-        suite_dict: dict[str, dict[str, str]] = {}
+        suite_dict: dict[str, dict[str, Any]] = {}
         # TODO add support for suites with multiple files in them (multi)
         for suite in suites:
             url = suite.target.files[0].url
@@ -37,6 +37,7 @@ class CsvUpdater:
                     suite_dict[url]["failed_tests"].append(test.type)
                 if test._status == TestStatus.ERROR:
                     suite_dict[url]["errored_tests"].append(test.type)
+
         # Create CSV data structure
         row_list = []
         parser = CsvParser(self.input_path)

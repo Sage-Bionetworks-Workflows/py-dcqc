@@ -126,7 +126,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return module
 
     @classmethod
-    def get_base_class(cls) -> type[BaseTest]:
+    def get_base_class(cls):
         """Retrieve base class."""
         return BaseTest
 

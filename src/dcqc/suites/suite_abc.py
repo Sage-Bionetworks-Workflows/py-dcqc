@@ -293,7 +293,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return suite
 
     @classmethod
-    def get_base_class(cls) -> type[SuiteABC]:
+    def get_base_class(cls):
         """Retrieve base class."""
         return SuiteABC
 
