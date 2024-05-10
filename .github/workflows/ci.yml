@@ -54,6 +54,10 @@ jobs:
           name: python-distribution-files
           path: dist/
           retention-days: 1
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@1.1.0
+        with:
+          time_elapsed: 44
 
   test:
     needs: prepare
