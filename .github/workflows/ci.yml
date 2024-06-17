@@ -45,8 +45,6 @@ jobs:
         run: |
           echo "wheel=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
           echo "tarball=$(ls dist/*.tar.gz)" >> $GITHUB_OUTPUT
-      - name: get requests version
-        run: pip show requests
       - name: Store the distribution files for use in other stages
         # `tests`, `pypi-publish`, and `docker-publish` will use the same
         # pre-built distributions, so we make sure to release the exact
