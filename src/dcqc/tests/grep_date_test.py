@@ -25,7 +25,7 @@ class GrepDateTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="quay.io/biocontainers/coreutils:8.30--h14c3975_1000",
+            container="quay.io/biocontainers/coreutils:9.3",
             command_args=command_args,
         )
         return process

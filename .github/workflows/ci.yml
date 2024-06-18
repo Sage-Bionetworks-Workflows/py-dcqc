@@ -58,6 +58,7 @@ jobs:
         uses: gautamkrishnar/keepalive-workflow@1.1.0
         with:
           time_elapsed: 44
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: prepare
