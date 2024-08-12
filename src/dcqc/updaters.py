@@ -10,7 +10,7 @@ from dcqc.tests.base_test import TestStatus
 
 @dataclass
 class CsvUpdater:
-    """Updates the CSV manifest file with DCQC results."""
+    """Updates the CSV manifest file with DCQC results.test"""
 
     input_path: Path
     output_path: Path
