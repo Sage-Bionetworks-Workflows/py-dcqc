@@ -12,7 +12,9 @@
 - Include details such as:
     - How you debugged the problem
     - Why you chose this solution
-    - Any important design decisions
+    - Does the solution make any impact beyond the immediate problem
+    - Was there any necessarytechnical debt incurred
+    - Any important design decisions/links todesign documentation
 
 # **Testing:**
 
