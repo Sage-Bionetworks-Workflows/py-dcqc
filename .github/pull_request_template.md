@@ -13,8 +13,8 @@
     - How you debugged the problem
     - Why you chose this solution
     - Does the solution make any impact beyond the immediate problem
-    - Was there any necessarytechnical debt incurred
-    - Any important design decisions/links todesign documentation
+    - Any necessary technical debt incurred
+    - Any important design decisions/links to design documentation (if applicable)
 
 # **Testing:**
 
@@ -22,4 +22,4 @@
 - Include details such as:
     - How you tested the solution
     - Any relevant test results (Do not include any test results that may contain sensitive information)
-    - Any automated tests that were added to the code base
+    - Any automated tests that were added to the codebase
