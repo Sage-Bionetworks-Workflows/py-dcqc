@@ -21,5 +21,5 @@
 - Describe any testing that was performed to validate the solution.
 - Include details such as:
     - How you tested the solution
-    - Any relevant test results
+    - Any relevant test results (Do not include any test results that may contain sensitive information)
     - Any automated tests that were added to the code base
