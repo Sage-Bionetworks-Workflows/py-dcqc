@@ -85,7 +85,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
         Args:
             target: A QC target.
-            required_tests: List of requires tests.
+            required_tests: List of required tests.
                 Defaults to None, which requires tier-1
                 and tier-2 tests.
             skipped_tests: List of skipped tests.
@@ -112,7 +112,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
         Args:
             tests: Set of tests with the same target.
-            required_tests: List of requires tests.
+            required_tests: List of required tests.
                 Defaults to None, which requires tier-1
                 and tier-2 tests.
             skipped_tests: List of skipped tests.
