@@ -134,7 +134,7 @@ This often provides additional considerations and avoids unnecessary work.
 
 3. Add yourself to the list of contributors in `AUTHORS.md`.
 
-4. When you’re done editing, do:
+4. When you're done editing, do:
 
    ```console
    git add <MODIFIED FILES>
@@ -186,9 +186,11 @@ This often provides additional considerations and avoids unnecessary work.
    the PR as a draft first and mark it as ready for review after the feedbacks
    from the continuous integration (CI) system or any required fixes.
 
-### Contributing Internal Tests
+### Contributing New Tests
 
-In `py-dcqc`, any test where the primary business logic is executed within the package itself is considered internal. One example is the `Md5ChecksumTest`.
+#### Contributing Internal Tests
+
+In `py-dcqc`, any test where the primary business logic is executed within the package itself is considered "internal". One example is the `Md5ChecksumTest`.
 
 When contributing an internal test be sure to do the following:
 
@@ -198,17 +200,17 @@ When contributing an internal test be sure to do the following:
 
 1. Include the following class attributes:
 
-   - `tier`: A `TestTier` enum describing the complexity of the test contributed. Valid `tier` values include:
-     - `FILE_INTEGRITY`
-     - `INTERNAL_CONFORMANCE`
-     - `EXTERNAL_CONFORMANCE`
-     - `SUBJECTIVE_CONFORMANCE`
+   - `tier`: A `TestTier` enum describing the complexity of the validation. Valid `tier` values include:
+     - `FILE_INTEGRITY`: Validates basic file integrity and availability. Requires additional information for MD5 verification, file extension validation, format-specific checks, and decompression verification.
+     - `INTERNAL_CONFORMANCE`: Ensures file internal consistency and format compliance. Only needs the files themselves and their format specification for validation against schema and internal metadata checks.
+     - `EXTERNAL_CONFORMANCE`: Verifies file features against separately submitted metadata. Uses additional information while remaining objective/quantitative for validating channel counts, file sizes, nomenclature, and required companion files.
+     - `SUBJECTIVE_CONFORMANCE`: Evaluates files using qualitative criteria that may need expert review. Uses metrics, heuristics, or models for tasks like sample swap detection, PHI detection, and outlier identification.
    - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
 
 1. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
    - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
 
-### Contributing External Tests
+#### Contributing External Tests
 
 In `py-dcqc`, any test where the primary business logic is executed outside of this package itself is considered to be external. One example is the `LibTiffInfoTest`. For these tests, `py-dcqc` is responsible for packaging up a Nextflow process which is then executed in an [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow run. Such tests are not possible to run in `py-dcqc` alone at this time. This makes contributing, testing, debugging, and using external tests a little more complicated that internal tests such as the `Md5ChecksumTest` which has all of its logic built into this package.
 
@@ -220,7 +222,7 @@ When contributing an internal test be sure to do the following:
 
 1. Include the following class attributes:
 
-   - `tier`: A `TestTier` enum describing the complexity of the test contributed. Valid `tier` values include:
+   - `tier`: A `TestTier` enum describing the complexity of the validation. Valid `tier` values include:
      - `FILE_INTEGRITY`
      - `INTERNAL_CONFORMANCE`
      - `EXTERNAL_CONFORMANCE`
