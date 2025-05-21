@@ -47,17 +47,34 @@ Tests are individual validation checks that can be run on targets. There are two
    - File extension validation
    - Metadata consistency checks
    - Format validation
-   
+
 2. **External Tests**: Tests that utilize external tools or processes
    - File integrity checks (MD5, checksums)
    - Format-specific validation tools
    - Custom validation scripts
 
 Tests are further organized into tiers:
-- Tier 1: File Integrity - Basic file integrity checks
-- Tier 2: Internal Conformance - Format and metadata conformance checks run internally
-- Tier 3: External Conformance - Format validation using external tools
-- Tier 4: Subjective Conformance - Checks that may require human judgment
+- Tier 1 - File Integrity: Checking that the file is whole and "available". These tests verify basic file integrity and usually require additional information, including:
+  - MD5 checksum verification
+  - Expected file extension checks
+  - Format-specific checks (e.g., first/last bytes)
+  - Decompression checks if applicable
+
+- Tier 2 - Internal Conformance: Checking that the file is internally consistent and compliant with its stated format. These tests only need the files themselves and their format specification:
+  - File format validation using available tools
+  - Internal metadata validation against schema (e.g., OME XML)
+  - Additional checks on internal metadata
+
+- Tier 3 - External Conformance: Checking that file features are consistent with separately submitted metadata. These tests use additional information but remain objective/quantitative:
+  - Channel count consistency
+  - File/image size consistency
+  - Antibody nomenclature conformance
+  - Secondary file presence (e.g., CRAI file for CRAM)
+
+- Tier 4 - Subjective Conformance: Checking files against qualitative criteria that may need expert review. These tests often involve metrics, heuristics, or sophisticated models:
+  - Sample swap detection
+  - PHI detection in images and metadata
+  - Outlier detection using metrics (e.g., file size)
 
 ### Suites
 
