@@ -35,11 +35,8 @@ jobs:
       - name: install pipenv
         run: pip install pipenv
 
-      - name: create pipenv shell
-        run: pipenv shell
-
       - name: install dependencies
-        run: pipenv install --ignore-pipfile
+        run: pipenv install --ignore-pipfile -dev
 
       - name: pytest
-        run: pytest
+        run: pipenv run pytest
