@@ -32,7 +32,13 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: pipenv
+      - name: install pipenv
+        run: pip3 install pipenv
+
+      - name: create env
+        run: pipenv shell
+
+      - name: install python dev packages
         run: pipenv install --ignore-pipfile --dev
 
       - name: pytest
