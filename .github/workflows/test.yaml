@@ -31,6 +31,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - uses: "gabrielfalcao/pyenv-action@v18"
+
       - name: install pipenv
         run: pip3 install pipenv
 
