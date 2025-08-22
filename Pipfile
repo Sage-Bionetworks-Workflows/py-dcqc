@@ -8,6 +8,3 @@ dcqc = {editable = true, path = ".", extras = ["all"]}
 
 [dev-packages]
 dcqc = {editable = true, path = ".", extras = ["testing", "dev"]}
-
-[requires]
-python_version = "3.11"
