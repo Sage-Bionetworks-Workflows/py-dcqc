@@ -1,0 +1,82 @@
+name: Testing
+on: [pull_request]
+
+jobs:
+
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      wheel-path: ${{ steps.distribution-paths.outputs.wheel }}
+      tarball-path: ${{ steps.distribution-paths.outputs.tarball }}
+    steps:
+      - uses: actions/checkout@v3
+        with: { fetch-depth: 0 } # deep clone for setuptools-scm
+      - uses: actions/setup-python@v4
+        with: { python-version: "3.11" }
+      - name: Run static analysis and format checkers
+        run: pipx run pre-commit run --all-files --show-diff-on-failure
+      - name: Install tox-gh plugin
+        run: python -m pip install tox-gh>=1.2
+      - name: Build package distribution files
+        run: tox -e clean,build
+      - name: Record the paths of wheel and source tarball distributions
+        id: distribution-paths
+        run: |
+          echo "wheel=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
+          echo "tarball=$(ls dist/*.tar.gz)" >> $GITHUB_OUTPUT
+      - name: Store the distribution files for use in other stages
+        # `tests`, `pypi-publish`, and `docker-publish` will use the same
+        # pre-built distributions, so we make sure to release the exact
+        # same package that was tested
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-distribution-files
+          path: dist/
+          retention-days: 1
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@1.1.0
+        with:
+          time_elapsed: 44
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    needs: prepare
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        platform:
+          - ubuntu-latest
+          - macos-latest
+        # TODO: Debug the Windows issues
+        # - windows-latest
+    env:
+      OS: ${{ matrix.platform }}
+      PYTHON: ${{ matrix.python }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@v3
+        with: { name: python-distribution-files, path: dist/ }
+      - name: Install tox-gh plugin
+        run: python -m pip install tox-gh>=1.2
+      - name: Setup test suite
+        run: tox -vv --notest
+      - name: Run tests
+        env:
+          SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
+        run: >-
+          tox --installpkg '${{ needs.prepare.outputs.wheel-path }}'
+          -- -rFEx --durations 10 --color yes
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          # CodeCov can be flaky, so this step is not required for success
+          fail_ci_if_error: false
+          files: coverage.xml
+          # Using matrix pattern from `codecov/codecov-action` README:
+          # https://github.com/codecov/codecov-action#example-workflowyml-with-codecov-action
+          env_vars: OS,PYTHON
+          verbose: true
