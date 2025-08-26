@@ -77,5 +77,3 @@ jobs:
           # https://github.com/codecov/codecov-action#example-workflowyml-with-codecov-action
           env_vars: OS,PYTHON
           verbose: true
-
-
