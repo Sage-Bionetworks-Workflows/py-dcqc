@@ -21,6 +21,7 @@ jobs:
         python-version: ["3.10", "3.11"]
         platform:
           - ubuntu-latest
+          - macos-latest
     env:
       OS: ${{ matrix.platform }}
       PYTHON: ${{ matrix.python }}
