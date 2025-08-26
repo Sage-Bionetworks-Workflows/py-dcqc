@@ -40,5 +40,5 @@ jobs:
 
       - name: pytest
         env:
-          SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN2 }}
+          SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
         run: pipenv run pytest
