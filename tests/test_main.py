@@ -31,7 +31,7 @@ def check_command_result(result: Result):
 
 @pytest.mark.slow
 def test_that_the_module_cli_behaves_the_same_as_the_plain_cli():
-    module_cli = check_output(["python3", "-m", "dcqc", "--help"])
+    module_cli = check_output(["python", "-m", "dcqc", "--help"])
     plain_cli = check_output(["dcqc", "--help"])
     assert module_cli == plain_cli
 
