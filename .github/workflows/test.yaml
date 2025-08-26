@@ -8,9 +8,8 @@ jobs:
   static_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with: { fetch-depth: 0 } # deep clone for setuptools-scm
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
       - name: Run static analysis and format checkers
         run: pipx run pre-commit run --all-files --show-diff-on-failure
