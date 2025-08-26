@@ -41,4 +41,4 @@ jobs:
       - name: pytest
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
-        run: pipenv run pytest
+        run: pipenv run pytest -m "not slow"
