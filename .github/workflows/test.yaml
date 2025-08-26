@@ -42,5 +42,4 @@ jobs:
         env:
           SYNAPSE_AUTH_TOKEN: ${{ secrets.SYNAPSE_AUTH_TOKEN }}
         run: |
-          pip install exceptiongroup
           pipenv run pytest -m "not slow"
