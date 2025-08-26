@@ -1,5 +1,4 @@
 import json
-import os
 
 import pytest
 from fs import open_fs
@@ -18,10 +17,6 @@ def acceptance_test_folder_url(run_id):
 
     This is done to avoid clashes between concurrent tests.
     """
-    auth_token = os.environ.get("SYNAPSE_AUTH_TOKEN")
-    assert auth_token is not None
-    assert isinstance(auth_token, str)
-    assert len(auth_token) > 0
     fs = open_fs(PARENT_FOLDER_URL)
     fs.makedir(run_id)
     yield f"{PARENT_FOLDER_URL}/{run_id}"
