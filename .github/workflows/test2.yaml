@@ -77,3 +77,20 @@ jobs:
           # https://github.com/codecov/codecov-action#example-workflowyml-with-codecov-action
           env_vars: OS,PYTHON
           verbose: true
+
+  pypi-publish:
+    needs: [prepare, test]
+    #if: ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with: { python-version: "3.11" }
+      - uses: actions/download-artifact@v4
+        with: { name: python-distribution-files, path: dist/ }
+      - name: Publish Python Package to PyPI
+        env:
+          TWINE_REPOSITORY: pypi
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: pipx run --spec 'tox!=3.0' tox -e publish
