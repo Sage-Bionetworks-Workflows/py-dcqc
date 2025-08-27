@@ -46,6 +46,7 @@ repos:
     additional_dependencies: [flake8-bugbear, flake8-pyproject]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
+  # TODO: update mypy: https://sagebionetworks.jira.com/browse/ORCA-350
   rev: 'v0.991'
   hooks:
   - id: mypy
