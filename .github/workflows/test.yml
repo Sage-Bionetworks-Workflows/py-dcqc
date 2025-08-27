@@ -54,6 +54,7 @@ jobs:
           name: python-distribution-files
           path: dist/
           retention-days: 1
+      # TODO: Fix or remove: https://sagebionetworks.jira.com/browse/ORCA-347
       #- name: Keepalive Workflow
       #  uses: gautamkrishnar/keepalive-workflow@1.1.0
       #  with:
@@ -70,8 +71,7 @@ jobs:
         platform:
           - ubuntu-latest
           - macos-latest
-        # TODO: Debug the Windows issues
-        # - windows-latest
+          - windows-latest
     env:
       OS: ${{ matrix.platform }}
       PYTHON: ${{ matrix.python }}
