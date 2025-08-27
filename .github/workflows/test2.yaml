@@ -97,6 +97,7 @@ jobs:
 
 
   docker-publish:
+    permissions: write-all
     needs: [prepare, test]
     #if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
