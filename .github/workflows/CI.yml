@@ -66,8 +66,13 @@ jobs:
     strategy:
       matrix:
         python:
+        # TODO: Sunset 3.10: https://sagebionetworks.jira.com/browse/ORCA-352
+        # TODO: Allow more recent Python versions: https://sagebionetworks.jira.com/browse/ORCA-346
           - "3.10"
           - "3.11"
+          #- "3.12"
+          #- "3.13"
+          #- "3.14"
         platform:
           - ubuntu-latest
           - macos-latest
