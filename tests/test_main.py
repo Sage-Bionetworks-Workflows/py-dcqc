@@ -27,6 +27,7 @@ def check_command_result(result: Result):
     assert result.exit_code == 0
 
 
+# TODO: Fix this test: https://sagebionetworks.jira.com/browse/ORCA-349
 """
 @pytest.mark.slow
 def test_that_the_module_cli_behaves_the_same_as_the_plain_cli():
