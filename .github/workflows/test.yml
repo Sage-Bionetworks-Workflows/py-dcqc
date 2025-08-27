@@ -17,11 +17,11 @@ on:
     # (useful to check if updates on dependencies break the package)
     - cron: "0 0 1,16 * *"
 
-#concurrency:
-  #group: >-
-  #  ${{ github.workflow }}-${{ github.ref_type }}-
-  #  ${{ github.event.pull_request.number || github.sha }}
-  #cancel-in-progress: false
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.ref_type }}-
+    ${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: false
 
 jobs:
   prepare:
@@ -70,6 +70,8 @@ jobs:
         platform:
           - ubuntu-latest
           - macos-latest
+        # TODO: Debug the Windows issues
+        # - windows-latest
     env:
       OS: ${{ matrix.platform }}
       PYTHON: ${{ matrix.python }}
