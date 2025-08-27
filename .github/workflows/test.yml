@@ -71,7 +71,8 @@ jobs:
         platform:
           - ubuntu-latest
           - macos-latest
-          - windows-latest
+          # TODO: Fix or remove Windows testing:  https://sagebionetworks.jira.com/browse/ORCA-348
+          #- windows-latest
     env:
       OS: ${{ matrix.platform }}
       PYTHON: ${{ matrix.python }}
