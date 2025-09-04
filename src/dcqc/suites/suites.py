@@ -77,3 +77,9 @@ class HDF5Suite(FileSuite):
     """Suite class for HDF5 files."""
 
     file_type = FileType.get_file_type("HDF5")
+
+
+class H5ADSuite(FileSuite):
+    """Suite class for H5AD files."""
+
+    file_type = FileType.get_file_type("H5AD")

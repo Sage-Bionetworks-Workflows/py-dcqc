@@ -112,7 +112,8 @@ FileType("TSV", (".tsv"), "format_3475")
 FileType("CSV", (".csv"), "format_3752")
 FileType("BAM", (".bam"), "format_2572")
 FileType("FASTQ", (".fastq", ".fastq.gz", ".fq", ".fq.gz"), "format_1930")
-FileType("HDF5", (".hdf", ".hdf5", ".h5", ".he5", ".h5ad"), "format_3590")
+FileType("HDF5", (".hdf", ".hdf5", ".h5", ".he5"), "format_3590")
+FileType("H5AD", (".h5ad"), "format_3590")
 
 
 # TODO: Leverage post-init function in dataclasses
