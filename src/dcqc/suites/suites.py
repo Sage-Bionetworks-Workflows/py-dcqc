@@ -79,7 +79,10 @@ class HDF5Suite(FileSuite):
     file_type = FileType.get_file_type("HDF5")
 
 
-class H5ADSuite(FileSuite):
-    """Suite class for H5AD files."""
+class H5ADSuite(HDF5Suite):
+    """
+    Suite class for H5AD files.
+    H5AD files are subtype of HDF5 files.
+    """
 
     file_type = FileType.get_file_type("H5AD")
