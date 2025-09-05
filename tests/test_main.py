@@ -137,6 +137,20 @@ def test_qc_file(get_data):
     check_command_result(result)
 
 
+def test_qc_file_h5ad(get_data):
+    h5ad_path = get_data("example.h5ad")
+    args = [
+        "qc-file",
+        "-t",
+        "h5ad",
+        "-m",
+        '{"md5_checksum": "0202e65ddc114d97f0794366503d574f"}',
+        h5ad_path,
+    ]
+    result = run_command(args)
+    check_command_result(result)
+
+
 def test_update_csv(get_data, get_output):
     suites_path = get_data("suites.json")
     input_path = get_data("input.csv")
