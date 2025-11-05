@@ -146,16 +146,14 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v4
         with:
-          images: |
-            sagebionetworks/dcqc
-            ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=ref,event=branch
             type=sha
-      - name: Publish Python Package to Docker Hub and GHCR
+      - name: Publish Python Package to GHCR
         uses: docker/build-push-action@v3
         with:
           platforms: linux/amd64,linux/arm64
