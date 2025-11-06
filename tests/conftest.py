@@ -65,6 +65,8 @@ def test_files(get_data):
     tiff_dirty_datetime_path = get_data("test_image_dirty_datetime.tif")
     tiff_date_in_tag_path = get_data("date_tag.tif")
     invalid_xml_ome_tiff_path = get_data("invalid_xml.ome.tif")
+    htan_good_h5ad_path = get_data("htan_good.h5ad")
+    htan_bad_h5ad_path = get_data("htan_bad.h5ad")
     invalid_xml_metadata = {
         "file_type": "tiff",
         "md5_checksum": "a2550a887091d51351d547c8beae8f0c",
@@ -98,6 +100,14 @@ def test_files(get_data):
         "file_type": "tiff",
         "md5_checksum": "28a9ee7d0e994d494068ce8d6cda0268",
     }
+    htan_good_h5ad_metadata = {
+        "file_type": "h5ad",
+        "md5_checksum": "ba11278e2c19b10851a66587e17ec97f",
+    }
+    htan_bad_h5ad_metadata = {
+        "file_type": "h5ad",
+        "md5_checksum": "e6f5e1a812c699af489352652cf0238d",
+    }
     test_files = {
         "date_in_tag_tiff": File(tiff_date_in_tag_path.as_posix(), tiff_metadata),
         "good_txt": File(txt_path.as_posix(), good_metadata),
@@ -115,6 +125,8 @@ def test_files(get_data):
         "dirty_datetime_in_tag_tiff": File(
             tiff_dirty_datetime_path.as_posix(), tiff_dirty_datetime_metadata
         ),
+        "htan_good_h5ad": File(htan_good_h5ad_path.as_posix(), htan_good_h5ad_metadata),
+        "htan_bad_h5ad": File(htan_bad_h5ad_path.as_posix(), htan_bad_h5ad_metadata),
     }
 
     # Create an in-memory remote file based on the good file
