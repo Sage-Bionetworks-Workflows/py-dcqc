@@ -437,3 +437,60 @@ class TestTiffDateTimeTest:
             )
             test_status = test.get_status()
             assert test_status == TestStatus.FAIL
+
+
+class TestH5adHtanValidatorTest:
+    @pytest.fixture(scope="function", autouse=True)
+    def setup_method(self, test_targets):
+        self.good_h5ad_target = test_targets["htan_good_h5ad"]
+        self.good_h5ad_test = tests.H5adHtanValidatorTest(self.good_h5ad_target)
+        self.bad_h5ad_target = test_targets["htan_bad_h5ad"]
+        self.bad_h5ad_test = tests.H5adHtanValidatorTest(self.bad_h5ad_target)
+
+    def test_that_the_command_is_produced(self):
+        process = self.good_h5ad_test.generate_process()
+        assert "/usr/local/bin/h5ad.py" in process.command
+
+    @docker_enabled_test
+    def test_that_the_exit_code_is_0_when_it_should_be(self):
+        process = self.bad_h5ad_test.generate_process()
+        executor = DockerExecutor(
+            process.container, process.command, self.bad_h5ad_target.file.url
+        )
+        executor.execute()
+        assert executor.exit_code == "0"
+
+    @docker_enabled_test
+    def test_that_the_exit_code_is_1_when_it_should_be(self):
+        process = self.good_h5ad_test.generate_process()
+        executor = DockerExecutor(
+            process.container, process.command, self.good_h5ad_target.file.url
+        )
+        executor.execute()
+        assert executor.exit_code == "1"
+
+    def test_that_the_test_correctly_interprets_exit_code_0_and_1(
+        self, mocker
+    ):
+        # 1 is pass, 0 is fail
+        with TemporaryDirectory() as tmp_dir:
+            path_0 = Path(tmp_dir, "code_0.txt")
+            path_1 = Path(tmp_dir, "code_1.txt")
+            path_0.write_text("0")
+            path_1.write_text("1")
+            fail_outputs = {"std_out": path_1, "std_err": path_1, "exit_code": path_0}
+            pass_outputs = {"std_out": path_0, "std_err": path_0, "exit_code": path_1}
+
+            test = tests.TiffDateTimeTest(self.good_h5ad_target)
+            mocker.patch.object(
+                test, "_find_process_outputs", return_value=pass_outputs
+            )
+            test_status = test.get_status()
+            assert test_status == TestStatus.PASS
+
+            test = tests.TiffDateTimeTest(self.bad_h5ad_target)
+            mocker.patch.object(
+                test, "_find_process_outputs", return_value=fail_outputs
+            )
+            test_status = test.get_status()
+            assert test_status == TestStatus.FAIL
