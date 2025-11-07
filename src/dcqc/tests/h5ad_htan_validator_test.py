@@ -9,8 +9,8 @@ class H5adHtanValidatorTest(ExternalBaseTest):
     """
 
     tier = TestTier.INTERNAL_CONFORMANCE
-    pass_code = 1
-    fail_code = 0
+    pass_code = 0
+    fail_code = 1
     failure_reason_location = "std_out"
     target: SingleTarget
 
@@ -22,7 +22,7 @@ class H5adHtanValidatorTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="h5ad:latest",
+            container="ghcr.io/sage-bionetworks-workflows/htan-h5ad-validator:0.1",
             command_args=command_args,
         )
         return process
