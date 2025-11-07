@@ -464,7 +464,8 @@ class TestH5adHtanValidatorTest:
             "HTAN h5ad File Validator\n"
             "File:  htan_bad.h5ad\n"
             "Running cellxgene-schema\n"
-            "Cellxgene run has errors. Please note errors or warnings in the output file.\n"
+            "Cellxgene run has errors. "
+            "Please note errors or warnings in the output file.\n"
             "Running HTAN-specific validation\n"
             "HTAN Validation Failed.\n"
             "Please check output file for errors.\n"
@@ -483,7 +484,8 @@ class TestH5adHtanValidatorTest:
             "HTAN h5ad File Validator\n"
             "File:  htan_good.h5ad\n"
             "Running cellxgene-schema\n"
-            "Cellxgene run successful. Please check the output file to see if warnings exist.\n"
+            "Cellxgene run successful. "
+            "Please check the output file to see if warnings exist.\n"
             "Running HTAN-specific validation\n"
             "Validation Passed!\n"
             "\n"
@@ -507,9 +509,7 @@ class TestH5adHtanValidatorTest:
         )
         assert executor.exit_code == "1"
 
-    def test_that_the_test_correctly_interprets_exit_code_0_and_1(
-        self, mocker
-    ):
+    def test_that_the_test_correctly_interprets_exit_code_0_and_1(self, mocker):
         # 1 is pass, 0 is fail
         with TemporaryDirectory() as tmp_dir:
             path_0 = Path(tmp_dir, "code_0.txt")

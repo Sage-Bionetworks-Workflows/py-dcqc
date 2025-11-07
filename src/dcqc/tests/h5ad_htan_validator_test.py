@@ -5,7 +5,8 @@ from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 class H5adHtanValidatorTest(ExternalBaseTest):
     """
     Based on [HTAN H5AD Validator](https://github.com/ncihtan/h5ad)
-    This is an h5ad validator for HTAN Phase 2 single cell/single nuclei RNA-sequencing data.
+    This is an h5ad validator for HTAN Phase 2 single
+     cell/single nuclei RNA-sequencing data.
     """
 
     tier = TestTier.INTERNAL_CONFORMANCE
