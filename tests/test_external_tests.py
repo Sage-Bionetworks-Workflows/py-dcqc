@@ -462,9 +462,9 @@ class TestH5adHtanValidatorTest:
         executor.execute()
         assert "File:  htan_bad.h5ad" in executor.std_out
         assert "Cellxgene run has errors. " in executor.std_out
-        assert "HTAN Validation Failed." in  executor.std_out
-        assert "'cellxgene-schema output: Starting validation" in  executor.std_out
-        assert "HTAN-specific Validation Errors:" in  executor.std_out
+        assert "HTAN Validation Failed." in executor.std_out
+        assert "'cellxgene-schema output: Starting validation" in executor.std_out
+        assert "HTAN-specific Validation Errors:" in executor.std_out
         assert executor.exit_code == "1"
 
     @docker_enabled_test
