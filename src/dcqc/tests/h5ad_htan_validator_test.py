@@ -23,7 +23,7 @@ class H5adHtanValidatorTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="ghcr.io/sage-bionetworks-workflows/htan-h5ad-validator:0.1",
+            container="ghcr.io/sage-bionetworks-workflows/htan-h5ad-validator:0.1.1",
             command_args=command_args,
         )
         return process
