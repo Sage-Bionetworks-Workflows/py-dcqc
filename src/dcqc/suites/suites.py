@@ -86,3 +86,4 @@ class H5ADSuite(HDF5Suite):
     """
 
     file_type = FileType.get_file_type("H5AD")
+    add_tests = (tests.H5adHtanValidatorTest,)
