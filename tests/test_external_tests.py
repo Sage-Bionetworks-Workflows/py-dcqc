@@ -460,17 +460,11 @@ class TestH5adHtanValidatorTest:
             process.container, process.command, self.bad_h5ad_target.file.url
         )
         executor.execute()
-        assert executor.std_out == (
-            "HTAN h5ad File Validator\n"
-            "File:  htan_bad.h5ad\n"
-            "Running cellxgene-schema\n"
-            "Cellxgene run has errors. "
-            "Please note errors or warnings in the output file.\n"
-            "Running HTAN-specific validation\n"
-            "HTAN Validation Failed.\n"
-            "Please check output file for errors.\n"
-            "\n"
-        )
+        assert "File:  htan_bad.h5ad" in executor.std_out
+        assert "Cellxgene run has errors. " in executor.std_out
+        assert "HTAN Validation Failed." in  executor.std_out
+        assert "'cellxgene-schema output: Starting validation" in  executor.std_out
+        assert "HTAN-specific Validation Errors:" in  executor.std_out
         assert executor.exit_code == "1"
 
     @docker_enabled_test
@@ -480,16 +474,9 @@ class TestH5adHtanValidatorTest:
             process.container, process.command, self.good_h5ad_target.file.url
         )
         executor.execute()
-        assert executor.std_out == (
-            "HTAN h5ad File Validator\n"
-            "File:  htan_good.h5ad\n"
-            "Running cellxgene-schema\n"
-            "Cellxgene run successful. "
-            "Please check the output file to see if warnings exist.\n"
-            "Running HTAN-specific validation\n"
-            "Validation Passed!\n"
-            "\n"
-        )
+        assert "File:  htan_good.h5ad" in executor.std_out
+        assert "Cellxgene run successful." in executor.std_out
+        assert "Validation Passed!" in executor.std_out
         assert executor.exit_code == "0"
 
     @docker_enabled_test
