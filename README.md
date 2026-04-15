@@ -105,7 +105,7 @@ You can install py-dcqc directly from PyPI:
 ```bash
 pip install dcqc
 ```
-
+dcqc
 For development installation from source:
 
 ```bash
@@ -131,7 +131,7 @@ docker run ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc --help
 For processing local files, remember to mount your data directory:
 
 ```bash
-docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc qc_file --input-file /data/myfile.csv --file-type csv
+docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc qc_file /data/myfile.csv --file-type csv
 ```
 
 ## Command Line Interface
@@ -167,24 +167,41 @@ dcqc <command> --help
 Run QC on a single file:
 
 ```bash
-dcqc qc-file --input-file data.csv --file-type csv --metadata '{"author": "John Doe"}'
+dcqc qc-file data.csv --file-type csv --metadata '{"author": "John Doe"}' --skipped-tests ""
 ```
+
+Note you must provide `--skipped-tests ""` as a empty string if you have no tests to skip
 
 ### Creating and Running Test Suites
 
 1. Create targets from a CSV file:
+
 ```bash
 dcqc create-targets input_targets.csv output_dir/
 ```
 
 2. Create tests for a target:
+
 ```bash
-dcqc create-tests target.json tests_dir/ --required-tests "ChecksumTest" "FormatTest"
+dcqc create-tests target.json tests_dir/ --required-tests "ChecksumTest" --required-tests "FormatTest"
 ```
 
 3. Run tests and create a suite:
+
 ```bash
-dcqc create-suite --output-json results.json test1.json test2.json test3.json
+dcqc create-suite results.json tests_dir/test1.json tests_dir/test2.json tests_dir/test3.json
+```
+
+4. Combine all your test suites into a compiled suites json file:
+
+```bash
+dcqc combine-suites "suites.json" *.json
+```
+
+5. Create an output file that is your input file updated with the tests' results:
+
+```bash
+dcqc update-csv suites.json input_targets.csv results.csv
 ```
 
 ### Listing Available Tests
