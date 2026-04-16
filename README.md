@@ -108,7 +108,7 @@ You can install py-dcqc directly from PyPI:
 ```bash
 pip install dcqc
 ```
-dcqc
+
 For development installation from source:
 
 ```bash
