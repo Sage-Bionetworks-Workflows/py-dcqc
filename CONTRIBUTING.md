@@ -237,7 +237,7 @@ When contributing an internal test be sure to do the following:
 ### Testing Your Changes
 
 1. Follow the instructions in the [README.md](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/README.md)
-   file in the `nf-dcqc` respository to set up the workflow on your local machine.
+   file in the `nf-dcqc` repository to set up the workflow on your local machine.
 
    - Run `git checkout dev` to switch to the developer branch
 
@@ -257,7 +257,7 @@ When contributing an internal test be sure to do the following:
    Example command (executed from within your local `nf-dcqc` repo clone):
 
    ```
-   nextflow run main.nf -profile local,docker --input path/to/your/input.csv -- outdir output --required_tests <YOUR_TEST_NAME>
+   nextflow run main.nf -profile local,docker --input path/to/your/input.csv --outdir output --required_tests <YOUR_TEST_NAME>
    ```
 
 1. Examine the final `output.csv` and `suites.json` files exported by the Nextflow workflow, if your contributed test bahaved as
