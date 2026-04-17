@@ -134,7 +134,7 @@ docker run ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc --help
 For processing local files, remember to mount your data directory:
 
 ```bash
-docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc qc_file /data/myfile.csv --file-type csv
+docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc qc-file /data/myfile.csv --file-type csv
 ```
 
 ## Command Line Interface
@@ -168,26 +168,43 @@ dcqc <command> --help
 
 The input is a tabular file that contains a list of the file targets to run through dcqc
 
-Here is a single file target input file example
+- Here is a single file target input file example
 
-| url               | file_type | md5_checksum                     |
-|-------------------|-----------|----------------------------------|
-| syn://syn41864974 | TXT       | 38b86a456d1f441008986c6f798d5ef9 |
+  | url               | file_type | md5_checksum                     |
+  |-------------------|-----------|----------------------------------|
+  | syn://syn41864974 | TXT       | 38b86a456d1f441008986c6f798d5ef9 |
 
-You can use an [sample input targets file that is used in the nf-dcqc pipeline](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/main/testdata/input_txt.csv)
+- Here is a multi-file target input file example
+
+  | url               | file_type | md5_checksum                     |
+  |-------------------|----------|----------------------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 |
+  | syn://syn41864977 | TXT      | make-status-amber                |
+  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 |
+  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff |
 
 ## Output
 
 The output is a tabular file with your original targets files but additional columns including `dcqc_status`.
 
-Here is an example of the output of a single file target that ran through dcqc:
+- Here is an example of the output of a single file target that ran through dcqc:
 
-| url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                | dcqc_skipped_tests | dcqc_failed_tests | dcqc_errored_tests |
-|-------------------|----------|----------------------------------|-------------|------------------------------------|--------------------|-------------------|--------------------|
-| syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest |                    |                   |                    |
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                | dcqc_skipped_tests | dcqc_failed_tests | dcqc_errored_tests |
+  |-------------------|----------|----------------------------------|-------------|------------------------------------|--------------------|-------------------|--------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest |                    |                   |                    |
 
+- Here is an example of the output of multi-file targets that ran through dcqc:
+
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests | dcqc_skipped_tests | dcqc_failed_tests                         | dcqc_errored_tests        |
+  |-------------------|----------|----------------------------------|-------------|---------------------|--------------------|-------------------------------------------|---------------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       |                     |                    |                                           |                           |
+  | syn://syn41864977 | TXT      | make-status-amber                | AMBER       |                     |                    | Md5ChecksumTest                           |                           |
+  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | LibTiffInfoTest     |                    | FileExtensionTest,LibTiffInfoTest         | TiffTag306DateTimeTest    |
+  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | LibTiffInfoTest     |                    | FileExtensionTest,LibTiffInfoTest         | TiffTag306DateTimeTest    |
 
 ## Example Usage
+
+For testing purposes, there is a [sample input targets file that is used in the nf-dcqc pipeline](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/main/testdata/input_txt.csv) for testing, that you could use for testing as well or basing your input file on.
 
 ### Basic File QC
 
