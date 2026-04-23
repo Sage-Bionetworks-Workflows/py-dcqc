@@ -198,6 +198,7 @@ def qc_file(
     # Prepare suite (skip all external tests)
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests)
     external_tests = [test.type for test in suite.tests if test.is_external_test]
+    skipped_tests = skipped_tests or []
     skipped_tests += external_tests
     suite = SuiteABC.from_target(target, required_tests_maybe, skipped_tests)
 
