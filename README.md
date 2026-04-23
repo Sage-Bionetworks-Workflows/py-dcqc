@@ -211,10 +211,8 @@ For testing purposes, there is a [sample input targets file that is used in the 
 Run QC on a single file:
 
 ```bash
-dcqc qc-file data.csv --file-type csv --metadata '{"author": "John Doe"}' --skipped-tests ""
+dcqc qc-file data.csv --file-type csv --metadata '{"author": "John Doe"}'
 ```
-
-Note you must provide `--skipped-tests ""` as a empty string if you have no tests to skip
 
 ### Creating and Running Test Suites
 
