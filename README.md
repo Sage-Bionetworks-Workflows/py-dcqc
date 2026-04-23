@@ -14,6 +14,7 @@
 This Python package provides a framework for performing quality control (QC) on data files. Quality control can range from low-level integrity checks (_e.g._ MD5 checksum, file extension) to high-level checks such as conformance to a format specification and consistency with associated metadata.
 
 The tool is designed to be flexible and extensible, allowing for:
+
 - File integrity validation
 - Format specification conformance
 - Metadata consistency checks
@@ -27,6 +28,7 @@ The tool is designed to be flexible and extensible, allowing for:
 ### Files and FileTypes
 
 A `File` represents a local or remote file along with its metadata. Each file has an associated `FileType` that bundles information about:
+
 - Valid file extensions
 - EDAM format ontology identifiers
 - File type-specific validation rules
@@ -36,6 +38,7 @@ Built-in file types include TXT, JSON, JSON-LD, TIFF, OME-TIFF, TSV, CSV, BAM, F
 ### Targets
 
 A `Target` represents one or more files that should be validated together. There are two types of targets:
+
 - `SingleTarget`: For validating individual files
 - `PairedTarget`: For validating exactly two related files together (e.g., paired-end sequencing data)
 
@@ -131,7 +134,7 @@ docker run ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc --help
 For processing local files, remember to mount your data directory:
 
 ```bash
-docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc qc_file --input-file /data/myfile.csv --file-type csv
+docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:latest dcqc qc-file /data/myfile.csv --file-type csv
 ```
 
 ## Command Line Interface
@@ -160,31 +163,89 @@ For detailed help on any command:
 dcqc <command> --help
 ```
 
+
+## Input
+
+The input is a tabular file that contains a list of the file targets to run through dcqc
+
+- Here is a single file target input file example
+
+  | url               | file_type | md5_checksum                     |
+  |-------------------|-----------|----------------------------------|
+  | syn://syn41864974 | TXT       | 38b86a456d1f441008986c6f798d5ef9 |
+
+- Here is a multi-file target input file example
+
+  | url               | file_type | md5_checksum                     |
+  |-------------------|----------|----------------------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 |
+  | syn://syn41864977 | TXT      | make-status-amber                |
+  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 |
+  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff |
+
+## Output
+
+The output is a tabular file with your original targets files but additional columns including `dcqc_status`.
+
+- Here is an example of the output of a single file target that ran through dcqc:
+
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                | dcqc_skipped_tests | dcqc_failed_tests | dcqc_errored_tests |
+  |-------------------|----------|----------------------------------|-------------|------------------------------------|--------------------|-------------------|--------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest |                    |                   |                    |
+
+- Here is an example of the output of multi-file targets that ran through dcqc:
+
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests | dcqc_skipped_tests | dcqc_failed_tests                         | dcqc_errored_tests        |
+  |-------------------|----------|----------------------------------|-------------|---------------------|--------------------|-------------------------------------------|---------------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       |                     |                    |                                           |                           |
+  | syn://syn41864977 | TXT      | make-status-amber                | AMBER       |                     |                    | Md5ChecksumTest                           |                           |
+  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | LibTiffInfoTest     |                    | FileExtensionTest,LibTiffInfoTest         | TiffTag306DateTimeTest    |
+  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | LibTiffInfoTest     |                    | FileExtensionTest,LibTiffInfoTest         | TiffTag306DateTimeTest    |
+
 ## Example Usage
+
+For testing purposes, there is a [sample input targets file that is used in the nf-dcqc pipeline](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/main/testdata/input_txt.csv) for testing, that you could use for testing as well or basing your input file on.
 
 ### Basic File QC
 
 Run QC on a single file:
 
 ```bash
-dcqc qc-file --input-file data.csv --file-type csv --metadata '{"author": "John Doe"}'
+dcqc qc-file data.csv --file-type csv --metadata '{"author": "John Doe"}' --skipped-tests ""
 ```
+
+Note you must provide `--skipped-tests ""` as a empty string if you have no tests to skip
 
 ### Creating and Running Test Suites
 
 1. Create targets from a CSV file:
+
 ```bash
 dcqc create-targets input_targets.csv output_dir/
 ```
 
 2. Create tests for a target:
+
 ```bash
-dcqc create-tests target.json tests_dir/ --required-tests "ChecksumTest" "FormatTest"
+dcqc create-tests target.json tests_dir/ --required-tests "ChecksumTest" --required-tests "FormatTest"
 ```
 
 3. Run tests and create a suite:
+
 ```bash
-dcqc create-suite --output-json results.json test1.json test2.json test3.json
+dcqc create-suite results.json tests_dir/test1.json tests_dir/test2.json tests_dir/test3.json
+```
+
+4. Combine all your test suites into a compiled suites json file:
+
+```bash
+dcqc combine-suites "suites.json" *.json
+```
+
+5. Create an output file that is your input file updated with the tests' results:
+
+```bash
+dcqc update-csv suites.json input_targets.csv results.csv
 ```
 
 ### Listing Available Tests
