@@ -137,6 +137,40 @@ def test_qc_file(get_data):
     check_command_result(result)
 
 
+def test_qc_file_with_skipped_tests(get_data):
+    tiff_path = get_data("circuit.tif")
+    result = run_command(
+        [
+            "qc-file",
+            "-t",
+            "TIFF",
+            "-m",
+            '{"md5_checksum": "c7b08f6decb5e7572efbe6074926a843"}',
+            "--skipped-tests",
+            "Md5ChecksumTest",
+            tiff_path,
+        ]
+    )
+    check_command_result(result)
+
+
+def test_qc_file_with_required_tests(get_data):
+    tiff_path = get_data("circuit.tif")
+    result = run_command(
+        [
+            "qc-file",
+            "-t",
+            "TIFF",
+            "-m",
+            '{"md5_checksum": "c7b08f6decb5e7572efbe6074926a843"}',
+            "--required-tests",
+            "Md5ChecksumTest",
+            tiff_path,
+        ]
+    )
+    check_command_result(result)
+
+
 def test_qc_file_h5ad(get_data):
     h5ad_path = get_data("example.h5ad")
     args = [
