@@ -81,7 +81,10 @@ def test_for_an_error_when_accessing_local_path_of_an_unstaged_remote_file(test_
         remote_file.local_path
 
 
-def test_that_local_path_is_absolute_after_chdir(tmp_path, monkeypatch):
+def test_that_local_path_is_absolute_after_chdir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Verify that local_path remains absolute even after the working directory changes."""
     (tmp_path / "test.txt").write_text("hello")
     monkeypatch.chdir(tmp_path)
     f = File("test.txt", {"file_type": "TXT", "md5_checksum": "abc"})

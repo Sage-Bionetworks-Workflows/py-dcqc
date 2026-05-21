@@ -44,8 +44,8 @@ class TestOpenParentFs:
     @pytest.mark.parametrize(
         "url, expected_fs_type, expected_path",
         [
-            ("/tmp/some/file.txt", LocalFileSystem, "/tmp/some/file.txt"),
-            ("file:///tmp/some/file.txt", LocalFileSystem, "/tmp/some/file.txt"),
+            ("/home/user/some/file.txt", LocalFileSystem, "/home/user/some/file.txt"),
+            ("file:///home/user/some/file.txt", LocalFileSystem, "/home/user/some/file.txt"),
             ("memory://some/file.txt", MemoryFileSystem, "/some/file.txt"),
         ],
     )

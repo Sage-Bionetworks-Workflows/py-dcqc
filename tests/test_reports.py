@@ -1,5 +1,6 @@
 import pytest
 
+from dcqc.file import File
 from dcqc.reports import JsonReport
 
 
@@ -18,7 +19,10 @@ def test_that_a_single_object_can_be_reported_on(test_files):
     report.save(file, report_url, overwrite=True)
 
 
-def test_that_a_report_can_be_saved_to_a_root_level_url(test_files):
+def test_that_a_report_can_be_saved_to_a_root_level_url(
+    test_files: dict[str, File],
+) -> None:
+    """Verify that a report can be saved to a URL with no subdirectory component."""
     file = test_files["remote"]
     report_url = "memory://report.json"
     report = JsonReport()

@@ -34,6 +34,7 @@ def acceptance_test_folder_url(run_id: str, request: pytest.FixtureRequest) -> s
 def test_json_report_generation(
     get_data: Callable[[str], Path], acceptance_test_folder_url: str
 ) -> None:
+    """Verify that a JSON report can be generated from a CSV of files and saved remotely."""
     # GIVEN a list of external tests to skip (to remain self-contained)
     all_tests = BaseTest.list_subclasses()
     skipped_tests = [test.__name__ for test in all_tests if test.is_external_test]

@@ -20,7 +20,7 @@ class JsonReport:
         self._fs_path: Optional[str] = None
 
     # TODO: Move towards an FS mixin for these functions
-    def _init_fs(self, url) -> tuple[AbstractFileSystem, str]:
+    def _init_fs(self, url: str) -> tuple[AbstractFileSystem, str]:
         self._url = url
         self._fs, self._fs_path = open_parent_fs(url)
         return self._fs, self._fs_path
