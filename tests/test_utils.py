@@ -1,7 +1,5 @@
 """Tests for util functions"""
 
-from typing import Any
-
 import pytest
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.implementations.memory import MemoryFileSystem
@@ -58,7 +56,7 @@ class TestOpenParentFs:
         ],
     )
     def test_returns_correct_fs_and_path(
-        self, url: str, expected_fs_type: Any, expected_path: str
+        self, url: str, expected_fs_type: type, expected_path: str
     ) -> None:
         """Verify the correct filesystem type and path are returned for each URL."""
         fs, path = open_parent_fs(url)
