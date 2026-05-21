@@ -33,7 +33,7 @@ RUN_ID = f"{USER} - {UTCTIME} - {UUID}"  # Valid characters: [A-Za-z0-9 .+'()_-]
 
 
 # Track the list of output files to avoid clashes between tests
-outputs = set()
+outputs: set[Path] = set()
 
 
 @pytest.fixture
@@ -130,8 +130,8 @@ def test_files(get_data):
     }
 
     # Create an in-memory remote file based on the good file
-    remote_file = File(f"mem://{txt_path.name}", good_metadata)
-    remote_file.fs.writetext(remote_file.fs_path, txt_path.read_text())
+    remote_file = File(f"memory://{txt_path.name}", good_metadata)
+    remote_file.fs.pipe_file(remote_file.fs_path, txt_path.read_bytes())
     test_files["remote"] = remote_file
 
     yield test_files

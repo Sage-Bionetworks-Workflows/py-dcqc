@@ -1,13 +1,13 @@
-import re
-
-from fs import open_fs
-from fs.base import FS
-
-LOCAL_URL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
+import fsspec
+from fsspec.spec import AbstractFileSystem
 
 
 def is_url_local(url: str) -> bool:
     """Check whether a URL refers to a local location.
+
+    A URL is considered local if it uses the file:// scheme or contains
+    no scheme separator (://), which covers bare absolute and relative paths.
+    Any other scheme (s3://, memory://, syn://, etc.) is treated as remote.
 
     Args:
         url: Local or remote location of a file.
@@ -15,31 +15,23 @@ def is_url_local(url: str) -> bool:
     Returns:
         Whether the URL refers to a local location.
     """
-    return LOCAL_URL_REGEX.fullmatch(url) is not None
+    return bool(url) and (url.startswith("file://") or "://" not in url)
 
 
-def open_parent_fs(url: str) -> tuple[FS, str]:
-    # Split off prefix to avoid issues with `rpartition("/")`
-    scheme, separator, resource = url.rpartition("://")
-    if separator == "":
-        prefix = "osfs://"
-    else:
-        prefix = scheme + separator
+def open_parent_fs(url: str) -> tuple[AbstractFileSystem, str]:
+    """Open an fsspec filesystem for the given URL.
 
-    # Retrieve the "top-most" parent folder for the FS root
-    # to ensure that it exists for the FS to be constructed.
-    # The remainder of the string can be used as the FS path
-    fs_root, _, path = resource.partition("/")
+    Wraps fsspec.url_to_fs to return a filesystem instance appropriate
+    for the URL scheme (local, S3, GCS, etc.) along with the path within
+    that filesystem.
 
-    # Handle the case when the path starts with "/"
-    if fs_root == "":
-        fs_root = "/"
+    Args:
+        url: Local or remote location of a file, e.g. /tmp/file.txt,
+            file:///tmp/file.txt, or s3://bucket/key.txt.
 
-    # Handle the case when there is no "/" in the path
-    if path == "":
-        path = fs_root
-        fs_root = ""
-
-    fs_url = prefix + fs_root
-    fs = open_fs(fs_url)
-    return fs, path
+    Returns:
+        A tuple of (filesystem, path) where filesystem is an
+        AbstractFileSystem instance and path is the location of the
+        file within that filesystem.
+    """
+    return fsspec.url_to_fs(url)

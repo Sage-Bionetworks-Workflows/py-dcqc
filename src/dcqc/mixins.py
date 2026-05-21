@@ -96,7 +96,8 @@ class SerializableMixin(ABC):
             A file serialized as a dictionary.
         """
         result = []
-        official_fields = [field.name for field in fields(self)]
+        dataclass_fields = fields(self)  # type: ignore[arg-type]
+        official_fields = [field.name for field in dataclass_fields]
         serialized_properties = getattr(self, "_serialized_properties", [])
         for field in chain(official_fields, serialized_properties):
             # TODO: Code smell indicating that some restructuring is in order
@@ -151,7 +152,7 @@ class SubclassRegistryMixin(ABC, Generic[U]):
         subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
         subclasses_chain = chain(subclasses, *subsubclasses_list)
         all_subclasses = tuple(dict.fromkeys(subclasses_chain))
-        return all_subclasses
+        return all_subclasses  # type: ignore[return-value]
 
     @classmethod
     def get_subclass_by_name(cls, name: str) -> Type[U]:

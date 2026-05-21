@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import glob
 import os
+import shutil
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
@@ -21,7 +22,7 @@ from tempfile import gettempdir, mkdtemp
 from typing import Any, ClassVar, Optional
 from warnings import warn
 
-from fs.base import FS
+from fsspec.spec import AbstractFileSystem
 
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.utils import is_url_local, open_parent_fs
@@ -149,14 +150,20 @@ class File(SerializableMixin):
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
 
-        self._fs: Optional[FS]
+        self._fs: Optional[AbstractFileSystem]
         self._fs = None
         self._fs_path: Optional[str]
         self._fs_path = None
         self._name: Optional[str]
         self._name = None
         self._local_path: Optional[Path]
-        self._local_path = local_path
+        if local_path is not None:
+            self._local_path = local_path
+        elif is_url_local(self.url):
+            _, fs_path = open_parent_fs(self.url)
+            self._local_path = Path(fs_path).resolve()
+        else:
+            self._local_path = None
 
     def __hash__(self):
         return hash((self.url, self.type, tuple(self.metadata.items())))
@@ -200,7 +207,7 @@ class File(SerializableMixin):
         file_type = self.metadata.pop("file_type", "*")
         return file_type
 
-    def _init_fs(self) -> tuple[FS, str]:
+    def _init_fs(self) -> tuple[AbstractFileSystem, str]:
         """Initialize file system to access URL.
 
         All queries with this file system should use
@@ -225,16 +232,13 @@ class File(SerializableMixin):
         Returns:
             The path to the local copy or `None` if unavailable.
         """
-        if self._local_path is None and self.is_url_local():
-            _local_path = self.fs.getsyspath(self.fs_path)
-            self._local_path = Path(_local_path)
         if self._local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."
             raise FileNotFoundError(message)
         return self._local_path
 
     @property
-    def fs(self) -> FS:
+    def fs(self) -> AbstractFileSystem:
         """The file system that can access the URL."""
         fs = self._fs
         if fs is None:
@@ -253,8 +257,7 @@ class File(SerializableMixin):
     def name(self) -> str:
         """The file name according to the file system."""
         if self._name is None:
-            info = self.fs.getinfo(self.fs_path)
-            self._name = info.name
+            self._name = Path(self.fs_path).name
         return self._name
 
     def get_file_type(self) -> FileType:
@@ -394,7 +397,8 @@ class File(SerializableMixin):
             destination.symlink_to(self._local_path.resolve())
         else:
             with destination.open("wb") as dest_file:
-                self.fs.download(self.fs_path, dest_file)
+                with self.fs.open(self.fs_path, "rb") as src:
+                    shutil.copyfileobj(src, dest_file)
 
         self._local_path = destination
         return destination

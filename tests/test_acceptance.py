@@ -1,7 +1,9 @@
 import json
+from collections.abc import Callable
+from pathlib import Path
 
+import fsspec
 import pytest
-from fs import open_fs
 
 from dcqc.parsers import CsvParser
 from dcqc.reports import JsonReport
@@ -12,19 +14,26 @@ PARENT_FOLDER_URL = "syn://syn50696607"
 
 
 @pytest.fixture
-def acceptance_test_folder_url(run_id):
+def acceptance_test_folder_url(run_id: str, request: pytest.FixtureRequest) -> str:
     """Create a run-specific subfolder under parent folder.
 
     This is done to avoid clashes between concurrent tests.
     """
-    fs = open_fs(PARENT_FOLDER_URL)
-    fs.makedir(run_id)
-    yield f"{PARENT_FOLDER_URL}/{run_id}"
-    fs.removetree(run_id)
+    fs_and_path: tuple[fsspec.spec.AbstractFileSystem, str] = fsspec.url_to_fs(
+        PARENT_FOLDER_URL
+    )
+    fs, parent_path = fs_and_path
+    run_path = f"{parent_path}/{run_id}"
+    run_url = f"{PARENT_FOLDER_URL}/{run_id}"
+    fs.mkdir(run_path)
+    request.addfinalizer(lambda: fs.rm(run_path, recursive=True))
+    return run_url
 
 
 @pytest.mark.slow
-def test_json_report_generation(get_data, acceptance_test_folder_url):
+def test_json_report_generation(
+    get_data: Callable[[str], Path], acceptance_test_folder_url: str
+) -> None:
     # GIVEN a list of external tests to skip (to remain self-contained)
     all_tests = BaseTest.list_subclasses()
     skipped_tests = [test.__name__ for test in all_tests if test.is_external_test]

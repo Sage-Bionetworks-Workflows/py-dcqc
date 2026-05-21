@@ -13,7 +13,14 @@ def test_for_error_when_creating_report_if_file_already_exists(get_data, test_fi
 
 def test_that_a_single_object_can_be_reported_on(test_files):
     file = test_files["remote"]
-    report_url = "mem://subdir/report.json"
+    report_url = "memory://subdir/report.json"
+    report = JsonReport()
+    report.save(file, report_url, overwrite=True)
+
+
+def test_that_a_report_can_be_saved_to_a_root_level_url(test_files):
+    file = test_files["remote"]
+    report_url = "memory://report.json"
     report = JsonReport()
     report.save(file, report_url, overwrite=True)
 

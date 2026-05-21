@@ -3,8 +3,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, Optional, overload
 
-from fs.base import FS
-from fs.errors import ResourceNotFound
+from fsspec.spec import AbstractFileSystem
 
 from dcqc.mixins import SerializableMixin, SerializedObject
 from dcqc.utils import open_parent_fs
@@ -17,11 +16,11 @@ class JsonReport:
     def __init__(self, paths_relative_to: Optional[Path] = None) -> None:
         self.paths_relative_to = paths_relative_to
         self._url: Optional[str] = None
-        self._fs: Optional[FS] = None
+        self._fs: Optional[AbstractFileSystem] = None
         self._fs_path: Optional[str] = None
 
     # TODO: Move towards an FS mixin for these functions
-    def _init_fs(self, url) -> tuple[FS, str]:
+    def _init_fs(self, url) -> tuple[AbstractFileSystem, str]:
         self._url = url
         self._fs, self._fs_path = open_parent_fs(url)
         return self._fs, self._fs_path
@@ -32,11 +31,11 @@ class JsonReport:
         parent_url = f"{scheme}{separator}{parent_resource}"
         fs, fs_path = self._init_fs(parent_url)
         try:
-            info = fs.getinfo(fs_path)
-        except ResourceNotFound:
-            fs.makedirs(fs_path, recreate=True)
-            info = fs.getinfo(fs_path)
-        if not info.is_dir:
+            info = fs.info(fs_path)
+        except FileNotFoundError:
+            fs.makedirs(fs_path, exist_ok=True)
+            info = fs.info(fs_path)
+        if info["type"] != "directory":
             message = f"Parent URL ({url}) does not refer to a directory."
             raise NotADirectoryError(message)
 
