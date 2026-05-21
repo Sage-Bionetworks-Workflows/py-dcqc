@@ -174,7 +174,8 @@ def mocked_suites_single_targets():
     }
     mocked_suites = []
     for url, status in mock_dict_single.items():
-        suite = MagicMock(cls=SuiteABC)
+        suite = MagicMock()
+        suite.cls = SuiteABC
         suite.target.files[0].url = url
         suite.get_status.return_value = status
         mocked_suites.append(suite)
@@ -191,7 +192,8 @@ def mocked_suites_single_targets():
 #     }
 #     mocked_suites = []
 #     for url, status in mock_dict_multi.items():
-#         suite = MagicMock(cls=SuiteABC)
+#         suite = MagicMock()
+#         suite.cls = SuiteABC
 #         suite.target.files[0].url = url
 #         suite.get_status.return_value = status
 #         mocked_suites.append(suite)
