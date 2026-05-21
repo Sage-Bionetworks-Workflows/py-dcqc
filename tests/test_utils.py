@@ -33,7 +33,7 @@ class TestIsUrlLocal:
             ("", False),
         ],
     )
-    def test_url(self, url, expected):
+    def test_url(self, url: str, expected: bool):
         """Verify local vs. remote classification across URL schemes and bare paths."""
         assert is_url_local(url) == expected
 
