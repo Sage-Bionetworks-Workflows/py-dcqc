@@ -1,3 +1,7 @@
+"""Tests for util functions"""
+
+from typing import Any
+
 import pytest
 from fsspec.implementations.local import LocalFileSystem
 from fsspec.implementations.memory import MemoryFileSystem
@@ -33,7 +37,7 @@ class TestIsUrlLocal:
             ("", False),
         ],
     )
-    def test_url(self, url: str, expected: bool):
+    def test_url(self, url: str, expected: bool) -> None:
         """Verify local vs. remote classification across URL schemes and bare paths."""
         assert is_url_local(url) == expected
 
@@ -53,7 +57,9 @@ class TestOpenParentFs:
             ("memory://some/file.txt", MemoryFileSystem, "/some/file.txt"),
         ],
     )
-    def test_returns_correct_fs_and_path(self, url, expected_fs_type, expected_path):
+    def test_returns_correct_fs_and_path(
+        self, url: str, expected_fs_type: Any, expected_path: str
+    ) -> None:
         """Verify the correct filesystem type and path are returned for each URL."""
         fs, path = open_parent_fs(url)
         assert isinstance(fs, expected_fs_type)
