@@ -45,7 +45,11 @@ class TestOpenParentFs:
         "url, expected_fs_type, expected_path",
         [
             ("/home/user/some/file.txt", LocalFileSystem, "/home/user/some/file.txt"),
-            ("file:///home/user/some/file.txt", LocalFileSystem, "/home/user/some/file.txt"),
+            (
+                "file:///home/user/some/file.txt",
+                LocalFileSystem,
+                "/home/user/some/file.txt",
+            ),
             ("memory://some/file.txt", MemoryFileSystem, "/some/file.txt"),
         ],
     )
