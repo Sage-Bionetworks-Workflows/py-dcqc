@@ -55,7 +55,9 @@ def test_parse_suites_well_formed_payload():
         _make_suite(
             tests=[
                 _make_test(status="passed"),
-                _make_test(test_type="FileExtensionTest", status="failed", reason="bad ext"),
+                _make_test(
+                    test_type="FileExtensionTest", status="failed", reason="bad ext"
+                ),
                 _make_test(test_type="Md5ChecksumTest", status="skipped"),
             ]
         )
@@ -109,7 +111,9 @@ def test_parse_suites_uses_sample_id_cleaner():
         calls.append((raw, ctx))
         return raw.split(".")[0]
 
-    summaries, _ = parse_suites(suites, sample_id_cleaner=cleaner, file_context={"fn": "suites.json"})
+    summaries, _ = parse_suites(
+        suites, sample_id_cleaner=cleaner, file_context={"fn": "suites.json"}
+    )
     assert set(summaries) == {"raw"}
     assert calls == [("raw.name.h5ad", {"fn": "suites.json"})]
 
@@ -129,7 +133,12 @@ def test_parse_suites_falls_back_to_filename_when_no_id():
 def test_group_by_suite_type_separates_suites():
     suites = [
         _make_suite(suite_type="H5ADSuite", sample_id="a", tests=[_make_test()]),
-        _make_suite(suite_type="TiffSuite", sample_id="b", file_name="b.tif", tests=[_make_test()]),
+        _make_suite(
+            suite_type="TiffSuite",
+            sample_id="b",
+            file_name="b.tif",
+            tests=[_make_test()],
+        ),
     ]
     summaries, details = parse_suites(suites)
     grouped = group_by_suite_type(summaries, details)
@@ -169,16 +178,18 @@ def test_general_stats_payload_shapes():
 
 
 def test_suite_summary_table_config_ids():
-    samples = {"sample_1": {
-        "file_name": "f.h5ad",
-        "suite_type": "H5ADSuite",
-        "overall_status": "GREEN",
-        "total_tests": 1,
-        "passed": 1,
-        "failed": 0,
-        "skipped": 0,
-        "required_tests_count": 1,
-    }}
+    samples = {
+        "sample_1": {
+            "file_name": "f.h5ad",
+            "suite_type": "H5ADSuite",
+            "overall_status": "GREEN",
+            "total_tests": 1,
+            "passed": 1,
+            "failed": 0,
+            "skipped": 0,
+            "required_tests_count": 1,
+        }
+    }
     data, headers, config = suite_summary_table("H5ADSuite", samples)
     assert "sample_1" in data
     assert data["sample_1"]["status"] == "GREEN"
@@ -241,7 +252,9 @@ def test_failed_tests_html_renders_failure_block():
 
 
 def test_failed_tests_html_truncates_long_reasons():
-    long_reason = "\\n".join(f"line {i}" for i in range(FAILED_TESTS_MAX_REASON_LINES + 5))
+    long_reason = "\\n".join(
+        f"line {i}" for i in range(FAILED_TESTS_MAX_REASON_LINES + 5)
+    )
     tests = [
         {
             "sample": "s",

@@ -138,7 +138,7 @@ def general_stats_payload(
         }
         for sample_id, summary in suite_summaries.items()
     }
-    headers = {
+    headers: dict[str, dict[str, Any]] = {
         "suite_type": {
             "title": "Suite Type",
             "description": "Type of validation suite",
@@ -187,7 +187,7 @@ def suite_summary_table(
         }
         for sample_id, summary in samples.items()
     }
-    headers = {
+    headers: dict[str, dict[str, Any]] = {
         "file_name": {
             "title": "File Name",
             "description": "Data file name",
@@ -242,7 +242,7 @@ def details_table_payload(
             "status": test["status"],
             "external": "Yes" if test["external"] else "No",
         }
-    headers = {
+    headers: dict[str, dict[str, Any]] = {
         "sample": {
             "title": "Sample ID",
             "description": "Sample identifier",
@@ -297,9 +297,7 @@ def failed_tests_html(suite_type: str, tests: list[TestDetail]) -> str | None:
             '<div style="margin-bottom: 20px; padding: 10px; '
             'border-left: 3px solid #d9534f;">'
         )
-        parts.append(
-            f"<h5><strong>{test['file']}</strong> - {test['test_type']}</h5>"
-        )
+        parts.append(f"<h5><strong>{test['file']}</strong> - {test['test_type']}</h5>")
         parts.append(
             f"<p><strong>Sample:</strong> {test['sample']} | "
             f"<strong>Tier:</strong> {test['tier']}</p>"
@@ -424,9 +422,7 @@ class MultiqcModule(BaseMultiqcModule):
         self.add_section(
             name=f"{suite_type} Test Details",
             anchor=f"dcqc-{suite_type.lower()}-details",
-            description=(
-                f"Detailed results for each {suite_type} validation test"
-            ),
+            description=(f"Detailed results for each {suite_type} validation test"),
             plot=table.plot(data, headers, config),
         )
 
@@ -436,9 +432,7 @@ class MultiqcModule(BaseMultiqcModule):
         html = failed_tests_html(suite_type, tests)
         if html is None:
             return
-        failed_count = sum(
-            1 for t in tests if t["status"] == "failed" and t["reason"]
-        )
+        failed_count = sum(1 for t in tests if t["status"] == "failed" and t["reason"])
         self.add_section(
             name=f"{suite_type} Failed Tests",
             anchor=f"dcqc-{suite_type.lower()}-failed",
