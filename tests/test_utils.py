@@ -50,7 +50,7 @@ class TestOpenParentFs:
         ],
     )
     def test_returns_correct_fs_and_path(self, url, expected_fs_type, expected_path):
-        """Verify the correct filesystem type and path are returned for each URL scheme."""
+        """Verify the correct filesystem type and path are returned for each URL."""
         fs, path = open_parent_fs(url)
         assert isinstance(fs, expected_fs_type)
         assert path == expected_path
