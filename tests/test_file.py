@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
 from typing import List
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -166,6 +167,22 @@ def test_that_file_name_is_cached(test_files):
     assert file._name is not None
     attempt_2 = file.name
     assert attempt_1 is attempt_2
+
+
+def test_that_a_remote_file_name_comes_from_filesystem_metadata():
+    """The name of a remote file should be its real filename from the
+    filesystem metadata, not the last component of the path.
+
+    For a Synapse URL such as syn://syn50555279 the path component is the
+    entity ID, while the human-readable filename only lives in the
+    filesystem metadata.
+    """
+    file = File("syn://syn50555279", {"file_type": "TXT"})
+    fake_fs = MagicMock()
+    fake_fs.info.return_value = {"name": "test.txt", "type": "file"}
+    file._fs = fake_fs
+    file._fs_path = "syn50555279"
+    assert file.name == "test.txt"
 
 
 def test_for_an_error_when_staging_a_file_where_one_already_exists(test_files):

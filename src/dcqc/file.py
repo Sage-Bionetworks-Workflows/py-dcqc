@@ -254,7 +254,8 @@ class File(SerializableMixin):
     def name(self) -> str:
         """The file name according to the file system."""
         if self._name is None:
-            self._name = Path(self.fs_path).name
+            info = self.fs.info(self.fs_path)
+            self._name = Path(info.get("name") or self.fs_path).name
         return self._name
 
     def get_file_type(self) -> FileType:
