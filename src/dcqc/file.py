@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import glob
 import os
-import shutil
 from collections.abc import Collection, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
@@ -394,9 +393,7 @@ class File(SerializableMixin):
         if self._local_path and self.is_url_local():
             destination.symlink_to(self._local_path.resolve())
         else:
-            with destination.open("wb") as dest_file:
-                with self.fs.open(self.fs_path, "rb") as src:
-                    shutil.copyfileobj(src, dest_file)
+            self.fs.get(self.fs_path, str(destination))
 
         self._local_path = destination
         return destination
