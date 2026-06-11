@@ -157,13 +157,7 @@ class File(SerializableMixin):
         self._name: Optional[str]
         self._name = None
         self._local_path: Optional[Path]
-        if local_path is not None:
-            self._local_path = local_path
-        elif is_url_local(self.url):
-            _, fs_path = open_parent_fs(self.url)
-            self._local_path = Path(fs_path).resolve()
-        else:
-            self._local_path = None
+        self._local_path = local_path
 
     def __hash__(self):
         return hash((self.url, self.type, tuple(self.metadata.items())))
@@ -232,6 +226,9 @@ class File(SerializableMixin):
         Returns:
             The path to the local copy or `None` if unavailable.
         """
+        if self._local_path is None and is_url_local(self.url):
+            _, fs_path = open_parent_fs(self.url)
+            self._local_path = Path(fs_path).resolve()
         if self._local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."
             raise FileNotFoundError(message)
