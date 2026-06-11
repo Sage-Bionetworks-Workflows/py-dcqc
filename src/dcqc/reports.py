@@ -3,10 +3,10 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, Optional, overload
 
+import fsspec
 from fsspec.spec import AbstractFileSystem
 
 from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.utils import open_parent_fs
 
 
 # TODO: Refactor instance methods to class methods
@@ -22,7 +22,7 @@ class JsonReport:
     # TODO: Move towards an FS mixin for these functions
     def _init_fs(self, url: str) -> tuple[AbstractFileSystem, str]:
         self._url = url
-        self._fs, self._fs_path = open_parent_fs(url)
+        self._fs, self._fs_path = fsspec.url_to_fs(url)
         return self._fs, self._fs_path
 
     def _create_parent_directories(self, url: str):

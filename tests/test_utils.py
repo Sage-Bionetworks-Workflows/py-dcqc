@@ -1,10 +1,8 @@
 """Tests for util functions"""
 
 import pytest
-from fsspec.implementations.local import LocalFileSystem
-from fsspec.implementations.memory import MemoryFileSystem
 
-from dcqc.utils import is_url_local, open_parent_fs
+from dcqc.utils import is_url_local
 
 
 class TestIsUrlLocal:
@@ -38,27 +36,3 @@ class TestIsUrlLocal:
     def test_url(self, url: str, expected: bool) -> None:
         """Verify local vs. remote classification across URL schemes and bare paths."""
         assert is_url_local(url) == expected
-
-
-class TestOpenParentFs:
-    """Tests for open_parent_fs."""
-
-    @pytest.mark.parametrize(
-        "url, expected_fs_type, expected_path",
-        [
-            ("/home/user/some/file.txt", LocalFileSystem, "/home/user/some/file.txt"),
-            (
-                "file:///home/user/some/file.txt",
-                LocalFileSystem,
-                "/home/user/some/file.txt",
-            ),
-            ("memory://some/file.txt", MemoryFileSystem, "/some/file.txt"),
-        ],
-    )
-    def test_returns_correct_fs_and_path(
-        self, url: str, expected_fs_type: type, expected_path: str
-    ) -> None:
-        """Verify the correct filesystem type and path are returned for each URL."""
-        fs, path = open_parent_fs(url)
-        assert isinstance(fs, expected_fs_type)
-        assert path == expected_path

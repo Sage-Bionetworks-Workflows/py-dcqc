@@ -22,10 +22,11 @@ from tempfile import gettempdir, mkdtemp
 from typing import Any, ClassVar, Optional
 from warnings import warn
 
+import fsspec
 from fsspec.spec import AbstractFileSystem
 
 from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.utils import is_url_local, open_parent_fs
+from dcqc.utils import is_url_local
 
 
 @dataclass
@@ -210,7 +211,7 @@ class File(SerializableMixin):
         Returns:
             A file system + basename pair.
         """
-        fs, fs_path = open_parent_fs(self.url)
+        fs, fs_path = fsspec.url_to_fs(self.url)
         self._fs_path = fs_path
         self._fs = fs
         return fs, fs_path
@@ -227,7 +228,7 @@ class File(SerializableMixin):
             The path to the local copy or `None` if unavailable.
         """
         if self._local_path is None and is_url_local(self.url):
-            _, fs_path = open_parent_fs(self.url)
+            _, fs_path = fsspec.url_to_fs(self.url)
             self._local_path = Path(fs_path).resolve()
         if self._local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."

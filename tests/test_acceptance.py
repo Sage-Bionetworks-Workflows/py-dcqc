@@ -8,7 +8,6 @@ import pytest
 from dcqc.parsers import CsvParser
 from dcqc.reports import JsonReport
 from dcqc.tests.base_test import BaseTest
-from dcqc.utils import open_parent_fs
 
 PARENT_FOLDER_URL = "syn://syn50696607"
 
@@ -59,7 +58,7 @@ def test_json_report_generation(
     report.save(suites, report_url, overwrite=True)
 
     # THEN the file exists
-    fs, basename = open_parent_fs(report_url)
+    fs, basename = fsspec.url_to_fs(report_url)
     assert fs.exists(basename)
 
     # AND the file can be loaded by the `json` module
