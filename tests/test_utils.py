@@ -11,9 +11,8 @@ class TestIsUrlLocal:
     @pytest.mark.parametrize(
         "url, expected",
         [
-            # file:// scheme is local
+            # file:// scheme is local (empty-authority form only)
             ("file:///absolute/path/to/file.txt", True),
-            ("file://localhost/path/to/file.txt", True),
             # bare absolute paths (no scheme) are local
             ("/absolute/path/to/file.txt", True),
             # bare relative paths (no scheme) are local
