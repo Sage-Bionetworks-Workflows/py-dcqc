@@ -227,7 +227,7 @@ class File(SerializableMixin):
         Returns:
             The path to the local copy or `None` if unavailable.
         """
-        if self._local_path is None and is_url_local(self.url):
+        if self._local_path is None and self.is_url_local():
             _, fs_path = fsspec.url_to_fs(self.url)
             self._local_path = Path(fs_path).resolve()
         if self._local_path is None:
