@@ -179,9 +179,35 @@ def test_that_a_remote_file_name_comes_from_filesystem_metadata():
     """
     file = File("syn://syn50555279", {"file_type": "TXT"})
     fake_fs = MagicMock()
-    fake_fs.info.return_value = {"name": "test.txt", "type": "file"}
+    # The synapse filesystem addresses files by entity ID, so info["name"] is
+    # the entity ID; the human-readable filename is in "synapse_entity_name".
+    fake_fs.info.return_value = {
+        "name": "syn50555279",
+        "type": "file",
+        "synapse_entity_name": "test.txt",
+    }
     file._fs = fake_fs
     file._fs_path = "syn50555279"
+    assert file.name == "test.txt"
+
+
+@pytest.mark.slow
+@pytest.mark.xfail(
+    reason="Requires the fs-synapse release that adds the "
+    "'synapse_entity_name' field to info(); remove xfail once that is pinned.",
+    strict=False,
+)
+def test_that_a_synapse_file_name_resolves_against_the_live_filesystem() -> None:
+    """Pin the synapse filesystem contract that the mocked unit test assumes.
+
+    The mocked test only verifies the field-extraction logic; it cannot catch
+    a regression in which the synapse filesystem stops returning the
+    human-readable filename in info["synapse_entity_name"]. This test resolves
+    the name of a real syn:// file against the live filesystem so such a
+    regression fails loudly rather than silently reverting name to the entity
+    ID.
+    """
+    file = File("syn://syn50555279", {"file_type": "TXT"})
     assert file.name == "test.txt"
 
 
