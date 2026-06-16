@@ -224,12 +224,12 @@ class File(SerializableMixin):
                 staged yet and thus has no local copy.
 
         Returns:
-            The path to the local copy or `None` if unavailable.
+            The path to the local copy.
         """
         if self._local_path is None and self.is_url_local():
-            # Reuse the cached filesystem path; do not resolve() so that a
-            # symlinked local file keeps the path the caller supplied rather
-            # than its dereferenced target.
+            # Reuse the cached (absolutized) filesystem path; do not resolve()
+            # so that a symlinked local file keeps its symlink path rather than
+            # its dereferenced target.
             self._local_path = Path(self.fs_path)
         if self._local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."
