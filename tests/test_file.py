@@ -169,7 +169,7 @@ def test_that_file_name_is_cached(test_files):
     assert attempt_1 is attempt_2
 
 
-def test_that_a_remote_file_name_comes_from_filesystem_metadata():
+def test_that_a_remote_file_name_comes_from_filesystem_metadata() -> None:
     """The name of a remote file should be its real filename from the
     filesystem metadata, not the last component of the path.
 
