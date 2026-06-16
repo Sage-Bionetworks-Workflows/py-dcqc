@@ -227,8 +227,10 @@ class File(SerializableMixin):
             The path to the local copy or `None` if unavailable.
         """
         if self._local_path is None and self.is_url_local():
-            _, fs_path = fsspec.url_to_fs(self.url)
-            self._local_path = Path(fs_path).resolve()
+            # Reuse the cached filesystem path; do not resolve() so that a
+            # symlinked local file keeps the path the caller supplied rather
+            # than its dereferenced target.
+            self._local_path = Path(self.fs_path)
         if self._local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."
             raise FileNotFoundError(message)
