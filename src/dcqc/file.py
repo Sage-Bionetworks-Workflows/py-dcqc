@@ -254,10 +254,6 @@ class File(SerializableMixin):
         """The file name according to the file system."""
         if self._name is None:
             info = self.fs.info(self.fs_path)
-            # Synapse paths are addressed by entity ID, so info["name"] is the
-            # entity ID rather than the human-readable filename. fsspec synapse
-            # filesystems expose the real filename as "synapse_entity_name";
-            # prefer it and fall back to the basename of the path otherwise.
             self._name = (
                 info.get("synapse_entity_name")
                 or Path(info.get("name") or self.fs_path).name
