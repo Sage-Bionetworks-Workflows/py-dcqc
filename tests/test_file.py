@@ -192,11 +192,6 @@ def test_that_a_remote_file_name_comes_from_filesystem_metadata():
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(
-    reason="Requires the fs-synapse release that adds the "
-    "'synapse_entity_name' field to info(); remove xfail once that is pinned.",
-    strict=False,
-)
 def test_that_a_synapse_file_name_resolves_against_the_live_filesystem() -> None:
     """Pin the synapse filesystem contract that the mocked unit test assumes.
 
