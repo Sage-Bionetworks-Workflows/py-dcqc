@@ -143,6 +143,56 @@ def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
     assert file_1_dict == file_2_dict
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file://host/path/to/file.txt",
+        "file://localhost/path/to/file.txt",
+        "file://",
+    ],
+)
+def test_for_an_error_when_a_file_url_has_a_host_authority(url):
+    """Reject file:// URLs whose authority is non-empty.
+
+    Only the empty-authority form file:///path resolves to a correct on-disk
+    path, so host-bearing forms must raise instead of silently resolving to a
+    wrong location.
+    """
+    with pytest.raises(ValueError):
+        File(url, {"file_type": "TXT"})
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///absolute/path/to/file.txt",
+        "/absolute/path/to/file.txt",
+        "relative/path/to/file.txt",
+        "s3://bucket/key.txt",
+    ],
+)
+def test_that_a_supported_url_is_accepted(url):
+    """Accept the supported URL forms without raising.
+
+    The empty-authority file:/// form, bare absolute and relative paths, and
+    remote schemes are all valid and should construct successfully.
+    """
+    file = File(url, {"file_type": "TXT"})
+    assert file.url
+
+
+def test_for_an_error_when_deserializing_a_file_url_with_a_host_authority(test_files):
+    """Reject host-bearing file:// URLs on the deserialization path too.
+
+    from_dict reconstructs a file through the constructor, so the same URL
+    validation applies and an unsupported host authority must raise.
+    """
+    dictionary = test_files["good_txt"].to_dict()
+    dictionary["url"] = "file://host/path/to/file.txt"
+    with pytest.raises(ValueError):
+        File.from_dict(dictionary)
+
+
 def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(get_data):
     test_path = get_data("test.txt")
     test_url = test_path.resolve().as_posix()

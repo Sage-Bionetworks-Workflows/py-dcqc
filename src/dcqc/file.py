@@ -145,6 +145,7 @@ class File(SerializableMixin):
         relative_to: Optional[Path] = None,
         local_path: Optional[Path] = None,
     ):
+        self._validate_url(url)
         self.url = self._relativize_url(url, relative_to)
         metadata = metadata or dict()
         self.metadata = dict(metadata)
@@ -164,6 +165,29 @@ class File(SerializableMixin):
 
     def __eq__(self, other):
         return hash(self) == hash(other)
+
+    @staticmethod
+    def _validate_url(url: str) -> None:
+        """Reject file:// URLs that cannot be resolved to a local path.
+
+        Only the empty-authority form file:///path is supported. A file://
+        URL with a non-empty authority (e.g. file://host/path) cannot be
+        resolved to a correct on-disk path by fsspec, so it is rejected here
+        rather than silently resolving to a wrong location.
+
+        Args:
+            url: Local or remote location of a file.
+
+        Raises:
+            ValueError: If the URL uses the file:// scheme with a non-empty
+                authority.
+        """
+        if url.startswith("file://") and not url.startswith("file:///"):
+            message = (
+                f"Unsupported file:// URL with a host authority: {url!r}. "
+                "Use the empty-authority form file:///path instead."
+            )
+            raise ValueError(message)
 
     def _relativize_url(self, url: str, relative_to: Optional[Path]) -> str:
         """Update local URLs if relative to a directory other than CWD.
