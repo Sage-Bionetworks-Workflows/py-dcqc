@@ -5,10 +5,12 @@ def is_url_local(url: str) -> bool:
     no scheme separator (://), which covers bare absolute and relative paths.
     Any other scheme (s3://, memory://, syn://, etc.) is treated as remote.
 
-    Only the empty-authority form file:///path is supported. A file:// URL
-    with a non-empty authority (e.g. file://host/path) is still reported as
-    local here, but fsspec cannot resolve it to a correct on-disk path, so
-    such URLs are unsupported.
+    Note: this classifier does not distinguish between file:// authority
+    forms. A file:// URL with a non-empty authority (e.g. file://host/path)
+    is reported as local here, but only the empty-authority form file:///path
+    can be resolved to a correct on-disk path. Host-bearing forms are rejected
+    at File construction (see File._validate_url), so they should not reach
+    this function in practice.
 
     Args:
         url: Local or remote location of a file.
