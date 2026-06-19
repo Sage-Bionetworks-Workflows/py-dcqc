@@ -267,6 +267,38 @@ def test_that_a_remote_file_name_comes_from_filesystem_metadata() -> None:
     assert file.name == "test.txt"
 
 
+def test_that_a_file_name_falls_back_to_the_info_name_field() -> None:
+    """When the filesystem info has no synapse_entity_name, the name should
+    come from info["name"], reduced to its final path component.
+    """
+    file = File("memory://some/dir/test.txt", {"file_type": "TXT"})
+    fake_fs = MagicMock()
+    # No synapse_entity_name, and info["name"] carries a directory prefix that
+    # Path(...).name must strip.
+    fake_fs.info.return_value = {
+        "name": "some/dir/test.txt",
+        "type": "file",
+    }
+    file._fs = fake_fs
+    file._fs_path = "some/dir/test.txt"
+    assert file.name == "test.txt"
+
+
+def test_that_a_file_name_falls_back_to_the_fs_path() -> None:
+    """When the filesystem info has neither synapse_entity_name nor name, the
+    name should be derived from fs_path, reduced to its final path component.
+    """
+    file = File("memory://some/dir/test.txt", {"file_type": "TXT"})
+    fake_fs = MagicMock()
+    # Neither synapse_entity_name nor name is present.
+    fake_fs.info.return_value = {
+        "type": "file",
+    }
+    file._fs = fake_fs
+    file._fs_path = "some/dir/test.txt"
+    assert file.name == "test.txt"
+
+
 @pytest.mark.slow
 def test_that_a_synapse_file_name_resolves_against_the_live_filesystem() -> None:
     """Pin the synapse filesystem contract that the mocked unit test assumes.
