@@ -20,6 +20,7 @@ Add a short description here!
 :maxdepth: 2
 
 Overview <readme>
+MultiQC plugin <multiqc>
 Contributions & Help <contributing>
 License <license>
 Authors <authors>
