@@ -30,7 +30,7 @@ jobs:
       wheel-path: ${{ steps.distribution-paths.outputs.wheel }}
       tarball-path: ${{ steps.distribution-paths.outputs.tarball }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with: { fetch-depth: 0 } # deep clone for setuptools-scm
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
@@ -49,7 +49,7 @@ jobs:
         # `tests`, `pypi-publish`, and `docker-publish` will use the same
         # pre-built distributions, so we make sure to release the exact
         # same package that was tested
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-distribution-files
           path: dist/
@@ -66,13 +66,10 @@ jobs:
     strategy:
       matrix:
         python:
-        # TODO: Sunset 3.10: https://sagebionetworks.jira.com/browse/ORCA-352
-        # TODO: Allow more recent Python versions: https://sagebionetworks.jira.com/browse/ORCA-346
-          - "3.10"
           - "3.11"
-          #- "3.12"
-          #- "3.13"
-          #- "3.14"
+          - "3.12"
+          - "3.13"
+          - "3.14"
         platform:
           - ubuntu-latest
           - macos-latest
@@ -83,11 +80,11 @@ jobs:
       PYTHON: ${{ matrix.python }}
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: python-distribution-files, path: dist/ }
       - name: Install tox-gh plugin
         run: python -m pip install tox-gh>=1.2
@@ -100,7 +97,7 @@ jobs:
           tox --installpkg '${{ needs.prepare.outputs.wheel-path }}'
           -- -rFEx --durations 10 --color yes
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
         with:
           # CodeCov can be flaky, so this step is not required for success
           fail_ci_if_error: false
@@ -115,10 +112,10 @@ jobs:
     if: ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: python-distribution-files, path: dist/ }
       - name: Publish Python Package to PyPI
         env:
@@ -133,18 +130,18 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
         with: { name: python-distribution-files, path: dist/ }
-      - uses: docker/setup-qemu-action@v2
-      - uses: docker/setup-buildx-action@v2
-      - uses: docker/login-action@v2
+      - uses: docker/setup-qemu-action@2b82ce82d56a2a04d2637cd93a637ae1b359c0a7 # v2
+      - uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # v2
+      - uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 # v4
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -154,7 +151,7 @@ jobs:
             type=ref,event=branch
             type=sha
       - name: Publish Python Package to GHCR
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6 # v3
         with:
           platforms: linux/amd64,linux/arm64
           context: .

@@ -303,7 +303,7 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
     "setuptools": ("https://setuptools.pypa.io/en/stable/", None),
     "pyscaffold": ("https://pyscaffold.org/en/stable", None),
-    "pyfilesystem": ("https://docs.pyfilesystem.org/en/stable/", None),
+    "fsspec": ("https://filesystem-spec.readthedocs.io/en/stable/", None),
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)

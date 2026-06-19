@@ -1,13 +1,16 @@
-import re
-
-from fs import open_fs
-from fs.base import FS
-
-LOCAL_URL_REGEX = re.compile(r"((file|osfs)://)?/?[^:]+")
-
-
 def is_url_local(url: str) -> bool:
     """Check whether a URL refers to a local location.
+
+    A URL is considered local if it uses the file:// scheme or contains
+    no scheme separator (://), which covers bare absolute and relative paths.
+    Any other scheme (s3://, memory://, syn://, etc.) is treated as remote.
+
+    Note: this classifier does not distinguish between file:// authority
+    forms. A file:// URL with a non-empty authority (e.g. file://host/path)
+    is reported as local here, but only the empty-authority form file:///path
+    can be resolved to a correct on-disk path. Host-bearing forms are rejected
+    at File construction (see File._validate_url), so they should not reach
+    this function in practice.
 
     Args:
         url: Local or remote location of a file.
@@ -15,31 +18,4 @@ def is_url_local(url: str) -> bool:
     Returns:
         Whether the URL refers to a local location.
     """
-    return LOCAL_URL_REGEX.fullmatch(url) is not None
-
-
-def open_parent_fs(url: str) -> tuple[FS, str]:
-    # Split off prefix to avoid issues with `rpartition("/")`
-    scheme, separator, resource = url.rpartition("://")
-    if separator == "":
-        prefix = "osfs://"
-    else:
-        prefix = scheme + separator
-
-    # Retrieve the "top-most" parent folder for the FS root
-    # to ensure that it exists for the FS to be constructed.
-    # The remainder of the string can be used as the FS path
-    fs_root, _, path = resource.partition("/")
-
-    # Handle the case when the path starts with "/"
-    if fs_root == "":
-        fs_root = "/"
-
-    # Handle the case when there is no "/" in the path
-    if path == "":
-        path = fs_root
-        fs_root = ""
-
-    fs_url = prefix + fs_root
-    fs = open_fs(fs_url)
-    return fs, path
+    return bool(url) and (url.startswith("file://") or "://" not in url)

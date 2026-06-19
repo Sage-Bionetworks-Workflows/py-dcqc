@@ -23,7 +23,7 @@ repos:
   - id: autoflake
 
 - repo: https://github.com/pycqa/isort
-  rev: 6.0.1
+  rev: 8.0.1
   hooks:
   - id: isort
 
@@ -46,8 +46,7 @@ repos:
     additional_dependencies: [flake8-bugbear, flake8-pyproject]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  # TODO: update mypy: https://sagebionetworks.jira.com/browse/ORCA-350
-  rev: 'v0.991'
+  rev: 'v2.1.0'
   hooks:
   - id: mypy
 

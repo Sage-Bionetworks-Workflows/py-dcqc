@@ -1,23 +1,24 @@
 import glob
 import os
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
-from typing import List
+from unittest.mock import MagicMock
 
 import pytest
 
 from dcqc.file import File, FileType
 
 
-def create_duplicate_files(file_num) -> List[str]:
+def create_duplicate_files(file_num: int) -> list[str]:
     """Create duplicate files (empty txt) for testing.
 
     Args:
-        file_num (int): number of files to create
+        file_num: number of files to create
 
     Returns:
-       file_path_list (List[str]): list of file paths
+       file_path_list: list of file paths
     """
     file_path_list = [
         os.path.join(gettempdir(), f"dcqc-staged-test{i}/test.txt")
@@ -35,7 +36,7 @@ def create_duplicate_files(file_num) -> List[str]:
     return file_path_list
 
 
-def remove_staged_files():
+def remove_staged_files() -> None:
     """Removes all staged files and their parent directories
     which follow the 'dcqc-staged-*' pattern.
 
@@ -50,23 +51,31 @@ def remove_staged_files():
             shutil.rmtree(directory_path)
 
 
-def test_for_an_error_if_registering_a_duplicate_file_type():
+def test_for_an_error_if_registering_a_duplicate_file_type() -> None:
+    """Registering a file type whose name is already taken should raise."""
     with pytest.raises(ValueError):
         FileType("txt", (".foo",))
 
 
-def test_for_an_error_when_requesting_for_an_unregistered_file_type():
+def test_for_an_error_when_requesting_for_an_unregistered_file_type() -> None:
+    """Requesting a file type that was never registered should raise."""
     with pytest.raises(ValueError):
         FileType.get_file_type("foo")
 
 
-def test_for_an_error_when_retrieving_missing_metadata_on_a_file(test_files):
+def test_for_an_error_when_retrieving_missing_metadata_on_a_file(
+    test_files: dict[str, File],
+) -> None:
+    """Requesting a metadata key that the file does not have should raise."""
     test_file = test_files["good_txt"]
     with pytest.raises(KeyError):
         test_file.get_metadata("foo")
 
 
-def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files):
+def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(
+    test_files: dict[str, File],
+) -> None:
+    """Reading the local path of a local file should leave its URL unchanged."""
     test_file = test_files["good_txt"]
     url_before = test_file.url
     local_path = test_file.local_path
@@ -75,20 +84,29 @@ def test_that_a_local_file_is_not_moved_when_requesting_a_local_path(test_files)
     assert local_path.exists()
 
 
-def test_for_an_error_when_accessing_local_path_of_an_unstaged_remote_file(test_files):
+def test_for_an_error_when_accessing_local_path_of_an_unstaged_remote_file(
+    test_files: dict[str, File],
+) -> None:
+    """Accessing the local path of a remote file before staging should raise."""
     remote_file = test_files["remote"]
     with pytest.raises(FileNotFoundError):
         remote_file.local_path
 
 
-def test_that_a_local_file_is_not_moved_when_staged_without_a_destination(test_files):
+def test_that_a_local_file_is_not_moved_when_staged_without_a_destination(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a local file without a destination should not move it."""
     test_file = test_files["good_txt"]
     path_before = test_file.local_path
     path_after = test_file.stage()
     assert path_before == path_after
 
 
-def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(test_files):
+def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a local file with a destination should create a symlink to it."""
     test_file = test_files["good_txt"]
     with TemporaryDirectory() as tmp_dir:
         original_path = Path(test_file.local_path)
@@ -99,7 +117,10 @@ def test_that_a_local_file_is_symlinked_when_staged_with_a_destination(test_file
         assert staged_path.resolve() == original_path.resolve()
 
 
-def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_files):
+def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a remote file without a destination should create a local temp copy."""
     remote_file = test_files["remote"]
     staged_path = remote_file.stage()
     assert staged_path.exists()
@@ -107,7 +128,10 @@ def test_that_a_local_temporary_path_is_created_when_staging_a_remote_file(test_
     remove_staged_files()
 
 
-def test_that_error_is_raised_when_a_file_has_been_staged_multiple_times(test_files):
+def test_that_error_is_raised_when_a_file_has_been_staged_multiple_times(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a file when a staged copy already exists should raise."""
     create_duplicate_files(2)
     remote_file = test_files["remote"]
     with pytest.raises(FileExistsError):
@@ -115,7 +139,10 @@ def test_that_error_is_raised_when_a_file_has_been_staged_multiple_times(test_fi
     remove_staged_files()
 
 
-def test_that_file_is_not_staged_when_it_already_has_been_staged(test_files):
+def test_that_file_is_not_staged_when_it_already_has_been_staged(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a file that is already staged should reuse the existing copy."""
     duplicate_file = create_duplicate_files(1)[0]
     remote_file = test_files["remote"]
     destination = remote_file.stage()
@@ -123,7 +150,10 @@ def test_that_file_is_not_staged_when_it_already_has_been_staged(test_files):
     remove_staged_files()
 
 
-def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files):
+def test_that_a_remote_file_is_created_when_staged_with_a_destination(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a remote file with a destination should create it at that path."""
     remote_file = test_files["remote"]
     with TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir) / "test.txt"
@@ -133,7 +163,10 @@ def test_that_a_remote_file_is_created_when_staged_with_a_destination(test_files
         assert remote_file.local_path == staged_path
 
 
-def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
+def test_that_a_file_can_be_saved_and_restored_without_changing(
+    test_files: dict[str, File],
+) -> None:
+    """Serializing a file and restoring it should round-trip without changes."""
     file_1 = test_files["good_txt"]
     file_1_dict = file_1.to_dict()
     file_2 = File.from_dict(file_1_dict)
@@ -142,7 +175,62 @@ def test_that_a_file_can_be_saved_and_restored_without_changing(test_files):
     assert file_1_dict == file_2_dict
 
 
-def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(get_data):
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file://host/path/to/file.txt",
+        "file://localhost/path/to/file.txt",
+        "file://",
+    ],
+)
+def test_for_an_error_when_a_file_url_has_a_host_authority(url: str) -> None:
+    """Reject file:// URLs whose authority is non-empty.
+
+    Only the empty-authority form file:///path resolves to a correct on-disk
+    path, so host-bearing forms must raise instead of silently resolving to a
+    wrong location.
+    """
+    with pytest.raises(ValueError):
+        File(url, {"file_type": "TXT"})
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///absolute/path/to/file.txt",
+        "/absolute/path/to/file.txt",
+        "relative/path/to/file.txt",
+        "s3://bucket/key.txt",
+    ],
+)
+def test_that_a_supported_url_is_accepted(url: str) -> None:
+    """Accept the supported URL forms without raising.
+
+    The empty-authority file:/// form, bare absolute and relative paths, and
+    remote schemes are all valid and should construct successfully.
+    """
+    file = File(url, {"file_type": "TXT"})
+    assert file.url
+
+
+def test_for_an_error_when_deserializing_a_file_url_with_a_host_authority(
+    test_files: dict[str, File],
+) -> None:
+    """Reject host-bearing file:// URLs on the deserialization path too.
+
+    from_dict reconstructs a file through the constructor, so the same URL
+    validation applies and an unsupported host authority must raise.
+    """
+    dictionary = test_files["good_txt"].to_dict()
+    dictionary["url"] = "file://host/path/to/file.txt"
+    with pytest.raises(ValueError):
+        File.from_dict(dictionary)
+
+
+def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(
+    get_data: Callable[[str], Path],
+) -> None:
+    """An absolute local URL should be unchanged when relative_to is given."""
     test_path = get_data("test.txt")
     test_url = test_path.resolve().as_posix()
     metadata = {"file_type": "TXT"}
@@ -150,7 +238,10 @@ def test_that_an_absolute_local_url_is_unchanged_when_using_relative_to(get_data
     assert file.url == test_url
 
 
-def test_that_an_fs_is_created_when_an_fs_path_is_requested(test_files):
+def test_that_an_fs_is_created_when_an_fs_path_is_requested(
+    test_files: dict[str, File],
+) -> None:
+    """Requesting the fs path should lazily create the filesystem and path."""
     file = test_files["good_txt"]
     assert file._fs_path is None
     file.fs_path
@@ -158,30 +249,110 @@ def test_that_an_fs_is_created_when_an_fs_path_is_requested(test_files):
     assert file._fs is not None
 
 
-def test_that_file_name_is_cached(test_files):
+def test_that_file_name_is_cached(test_files: dict[str, File]) -> None:
+    """The resolved file name should be computed once and cached thereafter."""
     file = test_files["remote"]
     assert file._name is None
     attempt_1 = file.name
+    assert attempt_1 == "test.txt"
     assert file._name is not None
     attempt_2 = file.name
     assert attempt_1 is attempt_2
 
 
-def test_for_an_error_when_staging_a_file_where_one_already_exists(test_files):
+def test_that_a_remote_file_name_comes_from_filesystem_metadata() -> None:
+    """The name of a remote file should be its real filename from the
+    filesystem metadata, not the last component of the path.
+
+    For a Synapse URL such as syn://syn50555279 the path component is the
+    entity ID, while the human-readable filename only lives in the
+    filesystem metadata.
+    """
+    file = File("syn://syn50555279", {"file_type": "TXT"})
+    fake_fs = MagicMock()
+    # The synapse filesystem addresses files by entity ID, so info["name"] is
+    # the entity ID; the human-readable filename is in "synapse_entity_name".
+    fake_fs.info.return_value = {
+        "name": "syn50555279",
+        "type": "file",
+        "synapse_entity_name": "test.txt",
+    }
+    file._fs = fake_fs
+    file._fs_path = "syn50555279"
+    assert file.name == "test.txt"
+
+
+def test_that_a_file_name_falls_back_to_the_info_name_field() -> None:
+    """When the filesystem info has no synapse_entity_name, the name should
+    come from info["name"], reduced to its final path component.
+    """
+    file = File("memory://some/dir/test.txt", {"file_type": "TXT"})
+    fake_fs = MagicMock()
+    # No synapse_entity_name, and info["name"] carries a directory prefix that
+    # Path(...).name must strip.
+    fake_fs.info.return_value = {
+        "name": "some/dir/test.txt",
+        "type": "file",
+    }
+    file._fs = fake_fs
+    file._fs_path = "some/dir/test.txt"
+    assert file.name == "test.txt"
+
+
+def test_that_a_file_name_falls_back_to_the_fs_path() -> None:
+    """When the filesystem info has neither synapse_entity_name nor name, the
+    name should be derived from fs_path, reduced to its final path component.
+    """
+    file = File("memory://some/dir/test.txt", {"file_type": "TXT"})
+    fake_fs = MagicMock()
+    # Neither synapse_entity_name nor name is present.
+    fake_fs.info.return_value = {
+        "type": "file",
+    }
+    file._fs = fake_fs
+    file._fs_path = "some/dir/test.txt"
+    assert file.name == "test.txt"
+
+
+@pytest.mark.slow
+def test_that_a_synapse_file_name_resolves_against_the_live_filesystem() -> None:
+    """Pin the synapse filesystem contract that the mocked unit test assumes.
+
+    The mocked test only verifies the field-extraction logic; it cannot catch
+    a regression in which the synapse filesystem stops returning the
+    human-readable filename in info["synapse_entity_name"]. This test resolves
+    the name of a real syn:// file against the live filesystem so such a
+    regression fails loudly rather than silently reverting name to the entity
+    ID.
+    """
+    file = File("syn://syn50555279", {"file_type": "TXT"})
+    assert file.name == "test.txt"
+
+
+def test_for_an_error_when_staging_a_file_where_one_already_exists(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a file to a destination that already exists should raise."""
     remote_file = test_files["remote"]
     existing_file = test_files["good_txt"]
     with pytest.raises(FileExistsError):
         remote_file.stage(existing_file.local_path)
 
 
-def test_for_an_error_when_staging_a_file_under_a_nonexistent_directory(test_files):
+def test_for_an_error_when_staging_a_file_under_a_nonexistent_directory(
+    test_files: dict[str, File],
+) -> None:
+    """Staging a file under a directory that does not exist should raise."""
     remote_file = test_files["remote"]
     invalid_destination = Path("./nonexistent_dir/test.txt")
     with pytest.raises(ValueError):
         remote_file.stage(invalid_destination)
 
 
-def test_that_an_unset_local_path_is_ignored_during_deserialization(test_files):
+def test_that_an_unset_local_path_is_ignored_during_deserialization(
+    test_files: dict[str, File],
+) -> None:
+    """An unset local path should not be restored during deserialization."""
     file = test_files["remote"]
     dictionary = file.to_dict()
     file_from_dict = File.from_dict(dictionary)
@@ -189,14 +360,20 @@ def test_that_an_unset_local_path_is_ignored_during_deserialization(test_files):
         file_from_dict.local_path
 
 
-def test_that_a_file_cannot_be_made_relative_to_a_nonexistent_directory(test_files):
+def test_that_a_file_cannot_be_made_relative_to_a_nonexistent_directory(
+    test_files: dict[str, File],
+) -> None:
+    """Making a file relative to a nonexistent directory should raise."""
     file = test_files["good_txt"]
     nonexistent_dir = Path("foobar")
     with pytest.raises(ValueError):
         file.serialize_paths_relative_to(nonexistent_dir)
 
 
-def test_that_a_file_cannot_be_made_relative_to_a_another_file(test_files):
+def test_that_a_file_cannot_be_made_relative_to_a_another_file(
+    test_files: dict[str, File],
+) -> None:
+    """Making a file relative to another file rather than a directory should raise."""
     file = test_files["good_txt"]
     another_file = test_files["wrong_file_type_and_md5_txt"]
     another_file_path = another_file.local_path
@@ -204,14 +381,18 @@ def test_that_a_file_cannot_be_made_relative_to_a_another_file(test_files):
         file.serialize_paths_relative_to(another_file_path)
 
 
-def test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to():
+def test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to() -> None:
+    """Serialized paths should stay absolute when relative serialization is unused."""
     path = Path("foobar")
     file = File("test.txt", local_path=path)
     file_dict = file.to_dict()
     assert file_dict["local_path"] == str(path)
 
 
-def test_that_paths_change_when_using_serialize_paths_relative_to(get_output):
+def test_that_paths_change_when_using_serialize_paths_relative_to(
+    get_output: Callable[[str], Path],
+) -> None:
+    """Serialized paths should be rewritten when relative serialization is set."""
     path = Path("foo")
     relative_to = get_output("relative-to")
     relative_to.mkdir(parents=True, exist_ok=True)

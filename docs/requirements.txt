@@ -1,9 +1,12 @@
+click>=8.0
 # Requirements file for ReadTheDocs, check .readthedocs.yml.
 # To build the module reference correctly, make sure every external package
 # under `install_requires` in `setup.cfg` is also listed here!
-fs~=2.4
-fs-synapse~=1.0
+fs-synapse>=3.0.2,<4.0.0
+fsspec>=2026.0.0,<2027.0.0
 myst-parser[linkify]
+requests>=2.24.0,<3.0.0
 sphinx>=3.2.1
 sphinx-autodoc-typehints
 sphinx-rtd-theme
+typer>=0.25.1

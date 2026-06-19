@@ -21,10 +21,11 @@ from tempfile import gettempdir, mkdtemp
 from typing import Any, ClassVar, Optional
 from warnings import warn
 
-from fs.base import FS
+import fsspec
+from fsspec.spec import AbstractFileSystem
 
 from dcqc.mixins import SerializableMixin, SerializedObject
-from dcqc.utils import is_url_local, open_parent_fs
+from dcqc.utils import is_url_local
 
 
 @dataclass
@@ -144,12 +145,13 @@ class File(SerializableMixin):
         relative_to: Optional[Path] = None,
         local_path: Optional[Path] = None,
     ):
+        self._validate_url(url)
         self.url = self._relativize_url(url, relative_to)
         metadata = metadata or dict()
         self.metadata = dict(metadata)
         self.type = self._pop_file_type()
 
-        self._fs: Optional[FS]
+        self._fs: Optional[AbstractFileSystem]
         self._fs = None
         self._fs_path: Optional[str]
         self._fs_path = None
@@ -163,6 +165,29 @@ class File(SerializableMixin):
 
     def __eq__(self, other):
         return hash(self) == hash(other)
+
+    @staticmethod
+    def _validate_url(url: str) -> None:
+        """Reject file:// URLs that cannot be resolved to a local path.
+
+        Only the empty-authority form file:///path is supported. A file://
+        URL with a non-empty authority (e.g. file://host/path) cannot be
+        resolved to a correct on-disk path by fsspec, so it is rejected here
+        rather than silently resolving to a wrong location.
+
+        Args:
+            url: Local or remote location of a file.
+
+        Raises:
+            ValueError: If the URL uses the file:// scheme with a non-empty
+                authority.
+        """
+        if url.startswith("file://") and not url.startswith("file:///"):
+            message = (
+                f"Unsupported file:// URL with a host authority: {url!r}. "
+                "Use the empty-authority form file:///path instead."
+            )
+            raise ValueError(message)
 
     def _relativize_url(self, url: str, relative_to: Optional[Path]) -> str:
         """Update local URLs if relative to a directory other than CWD.
@@ -200,7 +225,7 @@ class File(SerializableMixin):
         file_type = self.metadata.pop("file_type", "*")
         return file_type
 
-    def _init_fs(self) -> tuple[FS, str]:
+    def _init_fs(self) -> tuple[AbstractFileSystem, str]:
         """Initialize file system to access URL.
 
         All queries with this file system should use
@@ -209,7 +234,7 @@ class File(SerializableMixin):
         Returns:
             A file system + basename pair.
         """
-        fs, fs_path = open_parent_fs(self.url)
+        fs, fs_path = fsspec.url_to_fs(self.url)
         self._fs_path = fs_path
         self._fs = fs
         return fs, fs_path
@@ -223,18 +248,17 @@ class File(SerializableMixin):
                 staged yet and thus has no local copy.
 
         Returns:
-            The path to the local copy or `None` if unavailable.
+            The path to the local copy.
         """
         if self._local_path is None and self.is_url_local():
-            _local_path = self.fs.getsyspath(self.fs_path)
-            self._local_path = Path(_local_path)
+            self._local_path = Path(self.fs_path)
         if self._local_path is None:
             message = "Local path is unavailable. Use stage() to create a local copy."
             raise FileNotFoundError(message)
         return self._local_path
 
     @property
-    def fs(self) -> FS:
+    def fs(self) -> AbstractFileSystem:
         """The file system that can access the URL."""
         fs = self._fs
         if fs is None:
@@ -253,8 +277,11 @@ class File(SerializableMixin):
     def name(self) -> str:
         """The file name according to the file system."""
         if self._name is None:
-            info = self.fs.getinfo(self.fs_path)
-            self._name = info.name
+            info = self.fs.info(self.fs_path)
+            self._name = (
+                info.get("synapse_entity_name")
+                or Path(info.get("name") or self.fs_path).name
+            )
         return self._name
 
     def get_file_type(self) -> FileType:
@@ -393,8 +420,7 @@ class File(SerializableMixin):
         if self._local_path and self.is_url_local():
             destination.symlink_to(self._local_path.resolve())
         else:
-            with destination.open("wb") as dest_file:
-                self.fs.download(self.fs_path, dest_file)
+            self.fs.get(self.fs_path, str(destination))
 
         self._local_path = destination
         return destination
