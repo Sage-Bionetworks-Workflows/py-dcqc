@@ -1,7 +1,8 @@
 import pytest
 
 from dcqc import tests
-from dcqc.target import PairedTarget
+from dcqc.file import File, FileType
+from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -49,6 +50,24 @@ class TestFileExtensionTest:
 
     def test_that_a_tiff_file_with_good_extensions_is_passed(self):
         assert self.good_tiff_test.get_status() == TestStatus.PASS
+
+    def test_that_the_file_extension_test_handles_a_list_of_extensions(self, tmp_path):
+        """compute_status must not crash when file_extensions holds a list.
+
+        str.endswith accepts only a string or a tuple of strings, and
+        compute_status passes the attribute straight through with no
+        conversion. FileType.__init__ coerces its argument to a tuple, but
+        file_extensions is a plain mutable attribute annotated tuple[str, ...],
+        so any later assignment reintroduces a list and crashes the check
+        instead of classifying the file.
+        """
+        file_type = FileType("FooListMutated", (".foo",))
+        file_type.file_extensions = [".foo"]  # type: ignore[assignment]
+        path = tmp_path / "sample.foo"
+        path.touch()
+        file = File(str(path), {"file_type": file_type.name})
+        target = SingleTarget(file)
+        assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
