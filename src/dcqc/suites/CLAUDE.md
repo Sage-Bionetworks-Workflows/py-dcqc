@@ -23,7 +23,7 @@ Class naming is genuinely inconsistent — ALL-CAPS acronyms (`TSVSuite`, `BAMSu
 
 ## Silent failure modes
 
-- **An unrecognized file type silently falls back to the `"*"` suite.** `get_subclass_by_file_type` catches the `ValueError` from `FileType.get_file_type` and substitutes `"*"` (`suite_abc.py:198-208`), so a typo'd `--file-type` yields a generic `FileSuite` instead of an error.
+- **An unrecognized file type silently falls back to the `"*"` suite.** `get_subclass_by_file_type` catches the `ValueError` from `FileType.get_file_type` and substitutes `"*"` (`suite_abc.py:198-208`), so a typo'd `--file-type` yields a generic `FileSuite` instead of an error. The generic suite still runs `FileExtensionTest`, which passes over the extensionless `"*"` type rather than failing it, so a typo now produces a silent pass on that check.
 - **Two suites claiming the same `file_type` collide silently.** The registry is a dict keyed by `file_type.name` (`suite_abc.py:204`); the last one wins, with no warning.
 - **Test ordering is non-deterministic.** `list_test_classes` builds from a `set`, so order varies with `PYTHONHASHSEED` across runs. It propagates into `init_test_classes`, the `"tests"` array of serialized suites, and `dcqc list-tests`. Never assert on it.
 - **Unknown names in `required_tests` / `skipped_tests` are silently dropped,** because the sets are computed with `.intersection(test_names)`. A typo'd `--required-tests` is not rejected.

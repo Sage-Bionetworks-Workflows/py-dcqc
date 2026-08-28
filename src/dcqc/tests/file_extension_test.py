@@ -16,6 +16,10 @@ class FileExtensionTest(InternalBaseTest):
         as a group, so that any collection of strings works and not only a
         tuple. The first file that matches none of them fails the whole test.
 
+        A file type that declares no extensions has no contract to check, so
+        such a file is passed over. This is the generic file type ("*"), which
+        every file with no file_type metadata falls back to.
+
         Returns:
             TestStatus.PASS if all file names have a valid extension,
             otherwise TestStatus.FAIL.
@@ -24,6 +28,8 @@ class FileExtensionTest(InternalBaseTest):
         for file in self.target.files:
             file_type = file.get_file_type()
             file_extensions = file_type.file_extensions
+            if not file_extensions:
+                continue
             if not any(file.name.endswith(ext) for ext in file_extensions):
                 status = TestStatus.FAIL
                 self.status_reason = (

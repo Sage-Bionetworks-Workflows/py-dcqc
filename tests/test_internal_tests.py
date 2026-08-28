@@ -51,6 +51,22 @@ class TestFileExtensionTest:
     def test_that_a_tiff_file_with_good_extensions_is_passed(self):
         assert self.good_tiff_test.get_status() == TestStatus.PASS
 
+    def test_that_a_file_with_no_declared_file_type_is_passed(self, tmp_path):
+        """A file with no file_type metadata must not fail on its extension.
+
+        File._pop_file_type defaults to the generic file type ("*"), whose
+        file_extensions is an empty tuple. No file name can match one of them,
+        so compute_status always returns FAIL. Every file in a manifest with
+        no file_type column therefore fails a tier 1 check for a reason the
+        user cannot act on.
+        """
+        path = tmp_path / "sample.txt"
+        path.touch()
+        file = File(str(path), {})
+        assert file.get_file_type().name == "*"
+        target = SingleTarget(file)
+        assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
+
     def test_that_the_file_extension_test_handles_a_list_of_extensions(self, tmp_path):
         """compute_status must not crash when file_extensions holds a list.
 
