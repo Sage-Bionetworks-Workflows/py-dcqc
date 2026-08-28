@@ -54,6 +54,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 - `JsonParser.from_dict(dictionary)` — the polymorphic factory. Use it when the concrete class is not known.
 - `JsonReport(paths_relative_to=None)` with `.generate()`, `.save()`, `.save_many()`. All accept fsspec URLs. `save` refuses to overwrite unless told.
 - `CsvParser(path, stage_files=False)` — `create_files`, `create_targets` and `create_suites` return **generators**, not lists. `list_rows()` indexes from 1.
+- **`CsvParser.list_rows_and_files()` (`parsers.py:85`) is the single source of the URL of a manifest row.** It yields `(index, row, file)`, where `row` still has its `url` column and `file.url` is relative to the manifest directory. Both `create_files` and `CsvUpdater.update` go through it. Do not pair `list_rows()` with your own `File`: that duplicate was the `update-csv` `KeyError: 'test.txt'` bug, where a manifest of relative local paths in another directory could not be joined to its suites. Every `syn://` fixture hid it, so the guard is `tests/test_updaters.py::test_that_csv_updater_joins_a_manifest_of_relative_local_paths`.
 - MD5 chunking (`md5_checksum_test.py:25-31`) and compression-agnostic FASTQ opening (`paired_fastq_parity_test.py:49-63`) already exist.
 
 ## Naming traps
@@ -69,9 +70,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 Documented so you do not trust the behaviour or "fix" the symptom. None of these are yours to fix as a drive-by.
 
 - **`PairedTarget` cannot be deserialized.** `BaseTarget.from_dict` calls `target_cls(*files, id=id)` (`target.py:85`) against an `__init__` of `(file_or_files, id=None)`, so two files raise `TypeError`. No test covers it.
-- **`CsvUpdater.parser` is declared but never assigned** (`updaters.py:17` vs the `__init__` at 19-21). Touching `self.parser` raises `AttributeError`; `update()` builds a local one instead.
-- **`update-csv` joins suites to CSV rows by raw URL string.** `CsvParser` rewrites relative local URLs via `relative_to=self.path.parent` (`parsers.py:36`), but `CsvUpdater` looks up the unrewritten column value (`updaters.py:45`), so the two keys diverge and the lookup raises `KeyError`. Confirmed by running it, not just by reading: a manifest at `manifests/input.csv` holding `url=test.txt` fails with `KeyError: 'test.txt'` while every earlier pipeline step succeeds. The precise trigger is the manifest living in a **different directory from the URL base** — it works with remote URLs, with absolute paths, and also with relative paths when the CSV is in the current working directory, because `path.parent` is then `.` and the rewrite is a no-op. The README pipeline examples pass despite reading `../examples/*.csv` from a working directory of their own, because those manifests hold `syn://` URLs; every fixture using `syn://` hides the bug the same way. The README documents the limitation without naming the cause ("A manifest of relative local paths does not survive this join from another directory").
-- **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:25-27`).
+- **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:63`).
 - `BaseTest.import_module`'s error message is accidentally a tuple (a stray trailing comma at `base_test.py:121-125`).
 - `dcqc list-tests` indexes `rows[0]` unguarded (`main.py:174`) and crashes if nothing is registered.
 
