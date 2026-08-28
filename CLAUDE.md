@@ -59,7 +59,7 @@ Suite  ── target ──> Target ── files ──> [File]
   └──── tests ────> [Test]   (each Test's own `target` key is stripped when nested in a Suite)
 ```
 
-**Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:225`) and `md5_checksum` (read by `Md5ChecksumTest`).
+**Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:263`) and `md5_checksum` (read by `Md5ChecksumTest`).
 
 **Output** is the input CSV plus five appended columns, written by `src/dcqc/updaters.py:45-57`: `dcqc_status`, `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, `dcqc_errored_tests`. The four list columns are comma-joined inside a single cell.
 
@@ -125,7 +125,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 
 Do not treat these as things you introduced, and do not "fix" them as drive-by changes.
 
-- **TSV, CSV, BAM and H5AD extension validation is effectively disabled** by missing trailing commas at `src/dcqc/file.py:112,113,114,117`. Fixing it changes QC outcomes and deserves its own PR. Details, and the other confirmed bugs in the object model, are in `src/dcqc/CLAUDE.md`.
+- The confirmed bugs in the object model are listed in `src/dcqc/CLAUDE.md`.
 - **Issue #71** — `tests/test_acceptance.py::test_json_report_generation` fails on every CI run with `UnsupportedProtocol: protocol 'syn' is not supported`, because tox installs from the built wheel.
 - `.readthedocs.yml` still declares Python 3.9 under the deprecated `python.version` key.
 - setup.cfg `[tool:pytest] testpaths` is `tests demos`, but there is no `demos/` directory.
