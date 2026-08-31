@@ -29,31 +29,36 @@
             "type": "FileExtensionTest",
             "tier": 1,
             "is_external_test": false,
-            "status": "passed"
+            "status": "passed",
+            "status_reason": ""
         },
         {
             "type": "GrepDateTest",
             "tier": 4,
             "is_external_test": true,
-            "status": "failed"
+            "status": "failed",
+            "status_reason": "test failed"
         },
         {
             "type": "LibTiffInfoTest",
             "tier": 2,
             "is_external_test": true,
-            "status": "failed"
+            "status": "failed",
+            "status_reason": "test failed"
         },
         {
             "type": "Md5ChecksumTest",
             "tier": 1,
             "is_external_test": false,
-            "status": "passed"
+            "status": "passed",
+            "status_reason": ""
         },
         {
             "type": "TiffTag306DateTimeTest",
             "tier": 4,
             "is_external_test": true,
-            "status": "passed"
+            "status": "passed",
+            "status_reason": ""
         }
     ]
 }
