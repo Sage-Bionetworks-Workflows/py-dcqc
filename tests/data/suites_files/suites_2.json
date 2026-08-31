@@ -10,7 +10,7 @@
                 },
                 "type": "TIFF",
                 "name": "test_contains_word_date.tif",
-                "local_path": "/tmp/dcqc-staged-ddxo9fx2/test_contains_word_date.tif"
+                "local_path": null
             }
         ],
         "type": "SingleTarget"
