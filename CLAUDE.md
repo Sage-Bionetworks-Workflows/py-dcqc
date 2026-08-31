@@ -127,7 +127,6 @@ Do not treat these as things you introduced, and do not "fix" them as drive-by c
 
 - The confirmed bugs in the object model are listed in `src/dcqc/CLAUDE.md`.
 - **Issue #71** — `tests/test_acceptance.py::test_json_report_generation` fails on every CI run with `UnsupportedProtocol: protocol 'syn' is not supported`, because tox installs from the built wheel.
-- `.readthedocs.yml` still declares Python 3.9 under the deprecated `python.version` key.
 - setup.cfg `[tool:pytest] testpaths` is `tests demos`, but there is no `demos/` directory.
 - `src/docker/build.sh` pins `tox~=3.0` while CI uses `tox!=3.0`.
 
