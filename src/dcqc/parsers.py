@@ -173,13 +173,13 @@ class JsonParser:
 
     @classmethod
     def get_class(cls, cls_name: str) -> Type[SerializableMixin]:
-        test_classes = BaseTest.list_subclasses()
+        test_classes = BaseTest.list_concrete_subclasses()
         test_cls_map = {cls.__name__: cls for cls in test_classes}
 
-        suite_classes = SuiteABC.list_subclasses()
+        suite_classes = SuiteABC.list_concrete_subclasses()
         suite_cls_map = {cls.__name__: cls for cls in suite_classes}
 
-        target_classes = BaseTarget.list_subclasses()
+        target_classes = BaseTarget.list_concrete_subclasses()
         target_cls_map = {cls.__name__: cls for cls in target_classes}
 
         file_types = FileType.list_file_types()

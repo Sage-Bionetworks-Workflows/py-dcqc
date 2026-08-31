@@ -118,7 +118,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do NOT change the test name in `test_that_skipped_tests_are_skipped_when_building_suite_from_tests`** — it must stay `LibTiffInfoTest`; swapping it was reverted in `9971463`.
 - **Do NOT add auth-token presence checks to CI** — added in `39e4795`, removed in `eb67219`.
 - **Do NOT re-enable Windows in the CI matrix casually** — it has been toggled on and off repeatedly and is currently parked behind ORCA-348.
-- **Do NOT reword a `status_reason` string without grepping the tests** — several are asserted verbatim, for example `tests/test_internal_tests.py:153` pins "FASTQ files do not have the same number of lines".
+- **Do NOT reword a `status_reason` string without grepping the tests** — several are asserted verbatim, for example `tests/test_internal_tests.py:204` pins "FASTQ files do not have the same number of lines".
 - **Do NOT rename a `BaseTest`, `SuiteABC`, or `BaseTarget` subclass casually** — the serialized `"type"` field is the bare class name with no aliasing or migration table, so every previously written JSON and every `nf-dcqc` run that references it breaks.
 
 ## Known Broken / Stale

@@ -27,7 +27,7 @@ Also note: the `BaseTest` docstring claims a `ValueError` when a single-file tes
 
 Implement `compute_status()` returning `TestStatus.PASS` or `TestStatus.FAIL`. On the failure path, set `self.status_reason` to a user-facing explanation before returning — that string reaches the `suites.json` report and the output CSV.
 
-Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:153`). Grep before rewording one.
+Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:204`). Grep before rewording one.
 
 ## External tests
 

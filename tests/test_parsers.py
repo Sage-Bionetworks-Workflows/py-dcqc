@@ -41,6 +41,13 @@ def test_for_an_error_when_parsing_an_unrecognized_type():
         JsonParser.get_class("foobar")
 
 
+def test_for_an_error_when_parsing_an_abstract_type():
+    # An abstract class must be rejected like an unknown name, and not
+    # accepted here only to raise a TypeError when it is instantiated.
+    with pytest.raises(ValueError):
+        JsonParser.get_class("ExternalTestMixin")
+
+
 def test_for_an_error_when_parsing_a_dictionary_without_a_type():
     dictionary = {"foo": "bar"}
     with pytest.raises(ValueError):

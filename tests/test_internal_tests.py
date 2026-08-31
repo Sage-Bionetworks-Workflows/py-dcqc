@@ -16,6 +16,19 @@ def test_for_an_error_when_retrieving_a_test_that_does_not_exist_by_name():
         BaseTest.get_subclass_by_name("FooBar")
 
 
+def test_for_an_error_when_retrieving_an_abstract_test_by_name():
+    with pytest.raises(ValueError):
+        BaseTest.get_subclass_by_name("ExternalTestMixin")
+
+
+def test_that_an_abstract_test_is_not_a_concrete_subclass():
+    subclasses = BaseTest.list_subclasses()
+    concrete_subclasses = BaseTest.list_concrete_subclasses()
+    assert tests.ExternalTestMixin in subclasses
+    assert tests.ExternalTestMixin not in concrete_subclasses
+    assert tests.Md5ChecksumTest in concrete_subclasses
+
+
 def test_for_error_when_importing_unavailable_module(test_targets):
     target = test_targets["good_txt"]
     test = tests.FileExtensionTest(target)

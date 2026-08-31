@@ -46,7 +46,7 @@ Fixture keys follow `good_<type>` for valid files and `<reason_it_is_bad>_<type>
 - `parametrize` is reserved for pure input-to-expected-classification tables; everything else uses class grouping.
 - The external-test exit-code pattern (write `"0"`/`"1"` to temp files, then `mocker.patch.object(test, "_find_process_outputs", ...)`) is repeated for each test. Copy the nearest neighbour, and check whether that test's codes are inverted — see `src/dcqc/tests/CLAUDE.md`.
 
-**A class must start with `Test` to be collected.** `test_internal_tests.py:61` defines `class Md5ChecksumTest:` and pytest therefore never runs its two tests — a real, currently-unfixed gap, not a pattern to copy.
+**A class must start with `Test` to be collected.** `test_internal_tests.py:112` defines `class Md5ChecksumTest:` and pytest therefore never runs its two tests — a real, currently-unfixed gap, not a pattern to copy.
 
 ## `tests/data`
 
