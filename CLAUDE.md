@@ -114,7 +114,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 ## Anti-Patterns — Do NOT
 
 - **Do NOT commit an intentionally broken path or command to force a test failure** — because `fd09758` had to revert exactly that in `tiff_tag_306_date_time_test.py`, where the real argument `f"'{path.name}'"` had been swapped for a literal `"bad_file.file"`.
-- **Do NOT migrate the dataclasses to pydantic** — because it was tried and abandoned; it breaks `test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to`. The reason is recorded at `src/dcqc/target.py:103-106`.
+- **Do NOT migrate the dataclasses to pydantic** — because it was tried and abandoned; it breaks `test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to`. The reason is recorded at `src/dcqc/target.py:138-141`.
 - **Do NOT change the test name in `test_that_skipped_tests_are_skipped_when_building_suite_from_tests`** — it must stay `LibTiffInfoTest`; swapping it was reverted in `9971463`.
 - **Do NOT add auth-token presence checks to CI** — added in `39e4795`, removed in `eb67219`.
 - **Do NOT re-enable Windows in the CI matrix casually** — it has been toggled on and off repeatedly and is currently parked behind ORCA-348.

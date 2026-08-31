@@ -38,6 +38,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 - **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:61-62`), so only top-level paths get relativized. `tests/data/suites.json` still contains an absolute `/tmp/dcqc-staged-.../circuit.tif` because of this.
 - **A property that raises serializes as `null`,** not as an error — `mixins.py:104-107` swallows every exception. This is how an unstaged `File` gets `"local_path": null`.
 - **`Process` round-trips lossily.** `command` is emitted space-joined and re-split with `shlex.split`, which strips the hand-written quotes around filenames.
+- **`BaseTarget.from_dict` passes the file list as one argument** — `target_cls(files, id=id)` (`target.py:114`). Do not "tidy" it into `target_cls(*files, id=id)`. The constructor is `(file_or_files, id=None)`, so unpacking put the second file in the `id` position and every `PairedTarget` failed to load with `TypeError: got multiple values for argument 'id'`. That was the bug fixed in `caacef7`; the guard is `tests/test_target.py::test_that_a_paired_target_can_be_saved_and_restored_without_changing`. `__post_init__` accepts a list or a lone `File` (`target.py:43-54`), so the list form is correct for both subclasses.
 - **`from_dict_prepare`** (which validates `"type"` against the class name) is called only by `BaseTarget.from_dict`. The other three `from_dict` implementations do no type checking.
 - `File.from_dict` requires a `local_path` key and discards the serialized `name`, because `name` is a computed property.
 - Use the `SerializedObject` alias (`mixins.py:11`) in signatures rather than a raw dict type.
@@ -69,7 +70,6 @@ To include a `@property` in the output, list its name in `_serialized_properties
 
 Documented so you do not trust the behaviour or "fix" the symptom. None of these are yours to fix as a drive-by.
 
-- **`PairedTarget` cannot be deserialized.** `BaseTarget.from_dict` calls `target_cls(*files, id=id)` (`target.py:85`) against an `__init__` of `(file_or_files, id=None)`, so two files raise `TypeError`. No test covers it.
 - **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:63`).
 - `BaseTest.import_module`'s error message is accidentally a tuple (a stray trailing comma at `base_test.py:121-125`).
 - `dcqc list-tests` indexes `rows[0]` unguarded (`main.py:174`) and crashes if nothing is registered.

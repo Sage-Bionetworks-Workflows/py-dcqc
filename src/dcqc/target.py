@@ -101,10 +101,6 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
         Raises:
             ValueError: If the "type" value does not name a registered
                 subclass, or does not match the subclass it selects.
-            TypeError: If the target holds more than one file. The
-                files are unpacked into separate positional arguments,
-                but the constructor takes one file_or_files argument,
-                so a PairedTarget cannot currently be deserialized.
 
         Returns:
             The reconstructed target object.
