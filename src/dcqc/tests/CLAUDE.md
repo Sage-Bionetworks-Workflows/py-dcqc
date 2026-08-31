@@ -62,11 +62,11 @@ Prefer contributing a tool whose failure and error exit codes differ. Many curre
 
 ### Status computation reads the current working directory
 
-`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:190-216`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
+`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:208-234`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
 
 If the files are absent, `FileNotFoundError` propagates and crashes `dcqc compute-test`; it does not degrade to `TestStatus.ERROR`.
 
-Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:232-237`, and `dcqc create-process` regenerates it on demand.
+Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:250-255`, and `dcqc create-process` regenerates it on demand.
 
 ## Naming
 

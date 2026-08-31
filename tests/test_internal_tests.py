@@ -19,8 +19,11 @@ def test_for_an_error_when_retrieving_a_test_that_does_not_exist_by_name():
 def test_for_error_when_importing_unavailable_module(test_targets):
     target = test_targets["good_txt"]
     test = tests.FileExtensionTest(target)
-    with pytest.raises(ModuleNotFoundError):
+    with pytest.raises(ModuleNotFoundError) as excinfo:
         test.import_module("foobar")
+    # The message must be a single string, not a tuple of string fragments.
+    assert isinstance(excinfo.value.args[0], str)
+    assert "pip install dcqc[all]" in excinfo.value.args[0]
 
 
 def test_that_an_existing_module_can_be_imported(test_targets):

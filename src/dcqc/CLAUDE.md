@@ -71,8 +71,6 @@ To include a `@property` in the output, list its name in `_serialized_properties
 Documented so you do not trust the behaviour or "fix" the symptom. None of these are yours to fix as a drive-by.
 
 - **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:63`).
-- `BaseTest.import_module`'s error message is accidentally a tuple (a stray trailing comma at `base_test.py:121-125`).
-- `dcqc list-tests` indexes `rows[0]` unguarded (`main.py:174`) and crashes if nothing is registered.
 
 ## CLI notes (`main.py`)
 
