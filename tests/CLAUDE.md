@@ -6,7 +6,7 @@ The pytest suite. Not to be confused with `src/dcqc/tests/`, which is production
 
 setup.cfg `[tool:pytest] addopts` puts `-m "not slow"` there, so a bare `pytest` **skips every slow test**. tox.ini `[testenv] commands` overrides it with `-m ""` and runs them. Slow tests hit live Synapse.
 
-`slow` is the only registered marker. `acceptance` is commented out in setup.cfg — do not use it.
+`slow` is the only registered marker (setup.cfg `[tool:pytest] markers`). A commented-out `acceptance` marker was removed from that list; do not reintroduce it — the end-to-end test `test_acceptance.py::test_json_report_generation` is marked `slow`.
 
 **The suite runs in one process.** The `testing` extra in setup.cfg is deliberately small — pytest, pytest-cov, pytest-mock and docker. pytest-xdist, hypothesis and nbmake were removed: xdist was installed but never used, because its `--numprocesses` flag sat commented out in `[tool:pytest] addopts`, and hypothesis and nbmake had no callers at all. Do not add xdist back without first isolating the shared state under **Side effects to be aware of** — `tests/outputs/`, `tests/data/staged_files/` and the module-level `outputs` set that `get_output` guards (`conftest.py:36,155-162`) all assume a single process, so workers would race on the same paths.
 
