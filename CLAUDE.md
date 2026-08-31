@@ -109,7 +109,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do not touch the `[pyscaffold]` block** in setup.cfg — it is consumed by PyScaffold's updater, and the block itself says "This will be used when updating. Do not change!".
 - **Do not remove the `sphinx-apidoc` call from `docs/conf.py`.** Read the Docs does not run apidoc itself, so the module reference disappears without it (conf.py:23-29).
 - **Do not rename the `SYNAPSE_AUTH_TOKEN` CI secret.** That rename was made and reverted in `1cd983a`.
-- **Version lives in two places.** setup.cfg `[metadata] version` carries the static value, while setup.py and `[tool.setuptools_scm]` also derive one from git. CI needs `fetch-depth: 0` for that. Bump setup.cfg when releasing; the tag alone is not enough.
+- **Version lives in two places, but only one of them wins.** setup.cfg `[metadata] version` (line 7) is the effective source. setup.py `use_scm_version` and `[tool.setuptools_scm]` also derive one from git, but setuptools_scm finds the version already set and leaves it alone, so a build 25 commits past `v1.8.0` still reports `1.8.0`. What setuptools_scm does still do is supply the sdist file list — there is no `MANIFEST.in` — and the `prepare` job deep-clones for it (`.github/workflows/CI.yml:34`). Bump setup.cfg when releasing; the tag alone is not enough. Do not remove the static value to make the tag the one source: it is a deliberate Won't fix, because every non-tag build then gets a `1.8.0.post1.dev25+g...` version that `docker-publish` ships on every push to main, and a tree with no `.git` fails to build at all.
 
 ## Anti-Patterns — Do NOT
 
