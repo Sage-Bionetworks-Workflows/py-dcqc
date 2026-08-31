@@ -4,7 +4,9 @@ One suite class per file type. `suite_abc.py` holds the base class and the regis
 
 ## `add_tests` is additive across the MRO, not an override
 
-`list_test_classes` (`suite_abc.py:147-161`) walks `reversed(cls.__mro__)` and unions each class's `add_tests`. So `JsonLdSuite` yields `FileExtensionTest`, `Md5ChecksumTest`, `JsonLoadTest` **and** `JsonLdLoadTest`.
+`list_test_classes` (`suite_abc.py:145-163`) walks `reversed(cls.__mro__)` and unions each class's `add_tests`. So `JsonLdSuite` yields `FileExtensionTest`, `Md5ChecksumTest`, `JsonLoadTest` **and** `JsonLdLoadTest`.
+
+The union is a `set`, so the result is sorted by class name before it is returned (`suite_abc.py:163`). That order is the one that reaches `init_test_classes`, the `"tests"` array of a serialized suite, and `dcqc list-tests`. Do not drop the sort — without it the order varies with `PYTHONHASHSEED`.
 
 Suites compose by inheritance. To make a subtype inherit a parent's checks, subclass it — `H5ADSuite(HDF5Suite)`, `OmeTiffSuite(TiffSuite)`, `JsonLdSuite(JsonSuite)`. Writing `add_tests = (...)` expecting to replace the parent's list is wrong.
 
@@ -25,7 +27,6 @@ Class naming is genuinely inconsistent — ALL-CAPS acronyms (`TSVSuite`, `BAMSu
 
 - **An unrecognized file type *name* silently falls back to the `"*"` suite.** `get_subclass_by_file_type` takes a `FileType` or a name; given a name it catches the `ValueError` from `FileType.get_file_type` and substitutes `"*"` (`suite_abc.py:198-201`), so the caller asked for one suite and gets a generic `FileSuite`. **This is not reachable from the CLI** — `SuiteABC.from_target` goes through `target.get_file_type()` (`suite_abc.py:97`), which returns a `FileType` object via `File.get_file_type` (`file.py:331`), and that raises first, so a typo'd `--file-type` already exits with `ValueError: File type (...) not among available options` from `file.py:138`. Only a library caller that passes a name reaches the fallback. Do not confuse it with the second fallback in the same method (`suite_abc.py:205-208`), which returns `registry["*"]` for a file type that *is* registered but that no suite claims; that one is correct and is covered by `test_that_the_generic_file_suite_is_retrieved_for_an_unpaired_file_type`. The current behaviour is pinned by `test_that_the_generic_file_suite_is_retrieved_for_a_random_file_type` (`tests/test_suites.py:70-72`), so removing the `except` means deleting that test. Whether to remove it is an open decision, not a settled fix — see item **[5]** of `current.md`.
 - **Two suites claiming the same `file_type` collide silently.** The registry is a dict keyed by `file_type.name` (`suite_abc.py:204`); the last one wins, with no warning.
-- **Test ordering is non-deterministic.** `list_test_classes` builds from a `set`, so order varies with `PYTHONHASHSEED` across runs. It propagates into `init_test_classes`, the `"tests"` array of serialized suites, and `dcqc list-tests`. Never assert on it.
 - **Unknown names in `required_tests` / `skipped_tests` are silently dropped,** because the sets are computed with `.intersection(test_names)`. A typo'd `--required-tests` is not rejected.
 
 ## Serializing a suite runs QC
