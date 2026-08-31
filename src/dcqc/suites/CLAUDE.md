@@ -4,9 +4,9 @@ One suite class per file type. `suite_abc.py` holds the base class and the regis
 
 ## `add_tests` is additive across the MRO, not an override
 
-`list_test_classes` (`suite_abc.py:145-163`) walks `reversed(cls.__mro__)` and unions each class's `add_tests`. So `JsonLdSuite` yields `FileExtensionTest`, `Md5ChecksumTest`, `JsonLoadTest` **and** `JsonLdLoadTest`.
+`list_test_classes` (`suite_abc.py:147-161`) walks `reversed(cls.__mro__)` and unions each class's `add_tests`. So `JsonLdSuite` yields `FileExtensionTest`, `Md5ChecksumTest`, `JsonLoadTest` **and** `JsonLdLoadTest`.
 
-The union is a `set`, so the result is sorted by class name before it is returned (`suite_abc.py:163`). That order is the one that reaches `init_test_classes`, the `"tests"` array of a serialized suite, and `dcqc list-tests`. Do not drop the sort — without it the order varies with `PYTHONHASHSEED`.
+The union is a `set`, so the result is sorted by class name before it is returned (`suite_abc.py:161`). That order is the one that reaches `init_test_classes`, the `"tests"` array of a serialized suite, and `dcqc list-tests`. Do not drop the sort — without it the order varies with `PYTHONHASHSEED`.
 
 Suites compose by inheritance. To make a subtype inherit a parent's checks, subclass it — `H5ADSuite(HDF5Suite)`, `OmeTiffSuite(TiffSuite)`, `JsonLdSuite(JsonSuite)`. Writing `add_tests = (...)` expecting to replace the parent's list is wrong.
 
