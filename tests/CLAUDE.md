@@ -8,6 +8,8 @@ setup.cfg `[tool:pytest] addopts` puts `-m "not slow"` there, so a bare `pytest`
 
 `slow` is the only registered marker. `acceptance` is commented out in setup.cfg — do not use it.
 
+**The suite runs in one process.** The `testing` extra in setup.cfg is deliberately small — pytest, pytest-cov, pytest-mock and docker. pytest-xdist, hypothesis and nbmake were removed: xdist was installed but never used, because its `--numprocesses` flag sat commented out in `[tool:pytest] addopts`, and hypothesis and nbmake had no callers at all. Do not add xdist back without first isolating the shared state under **Side effects to be aware of** — `tests/outputs/`, `tests/data/staged_files/` and the module-level `outputs` set that `get_output` guards (`conftest.py:36,155-162`) all assume a single process, so workers would race on the same paths.
+
 There is **no fixture that skips when `SYNAPSE_AUTH_TOKEN` is missing**; token presence checks were added in `39e4795` and deliberately removed in `eb67219`. A slow test without credentials errors rather than skipping.
 
 ## Fixtures (`conftest.py`)
@@ -73,4 +75,3 @@ Note that `files.csv` contains a `syn://` row, so parsing it can touch the netwo
 - `TestH5adHtanValidatorTest`'s exit-code test instantiates `TiffDateTimeTest` (`test_external_tests.py:509,516`), so h5ad status interpretation is untested.
 - The `python -m dcqc` versus `dcqc` equivalence test is commented out inside a string literal at `test_main.py:31-37`, parked behind ORCA-349.
 - Multi-target fixtures and their tests are commented out in `conftest.py:185-200` and `test_updaters.py`, pending multi-file target support.
-- pytest-xdist is installed but parallelism is off on purpose: at the current test count the overhead makes the suite slower (the commented-out `--numprocesses` line in setup.cfg `[tool:pytest] addopts`). hypothesis and nbmake are declared but unused.
