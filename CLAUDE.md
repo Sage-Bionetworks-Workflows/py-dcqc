@@ -87,7 +87,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 
 `src/dcqc/` holds the object model and CLI. Two subpackages have their own CLAUDE.md because their registration rules are easy to get wrong:
 
-- `src/dcqc/tests/` — one module per QC check. **This is production code, not the pytest suite.**
+- `src/dcqc/tests/` — one module per QC check, plus `constants.py` for the container images. **This is production code, not the pytest suite.**
 - `src/dcqc/suites/` — one suite class per file type, composed by inheritance.
 
 `tests/` is the pytest suite. See `tests/CLAUDE.md`.
@@ -132,5 +132,5 @@ Do not treat these as things you introduced, and do not "fix" them as drive-by c
 
 - **[nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc)** — the Nextflow workflow that consumes this package's JSON and actually executes external tests. Its default branch is `dev`, not `main`. External-test changes can only be validated end to end by building the image with `src/docker/build.sh` and running nf-dcqc with the `local` profile (CONTRIBUTING.md "Testing Your Changes").
 - **fs-synapse** — supplies the `syn://` fsspec protocol. Synapse access goes through it; this repo no longer has its own filesystem layer.
-- **Tool containers** referenced by external tests: `quay.io/sagebionetworks/{libtiff,bftools}`, `quay.io/biocontainers/coreutils`, `ghcr.io/sage-bionetworks-workflows/{tifftools,htan-h5ad-validator}`.
+- **Tool containers** referenced by external tests: `quay.io/sagebionetworks/{libtiff,bftools}`, `quay.io/biocontainers/coreutils`, `ghcr.io/sage-bionetworks-workflows/{tifftools,htan-h5ad-validator}`. All five image names live in `src/dcqc/tests/constants.py`, one constant per image; no test module holds a literal.
 - Jira is the tracker of record (`DPE-` current, `ORCA-` historical) at `https://sagebionetworks.jira.com`.

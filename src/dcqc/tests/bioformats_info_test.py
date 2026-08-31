@@ -1,5 +1,6 @@
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
+from dcqc.tests.constants import BFTOOLS_CONTAINER
 
 
 class BioFormatsInfoTest(ExternalBaseTest):
@@ -24,7 +25,7 @@ class BioFormatsInfoTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="quay.io/sagebionetworks/bftools:latest",
+            container=BFTOOLS_CONTAINER,
             command_args=command_args,
         )
         return process
