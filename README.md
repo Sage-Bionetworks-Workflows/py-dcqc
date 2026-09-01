@@ -72,22 +72,15 @@ There are two types of targets:
 
 Tests are individual validation checks that can be run on targets. There are two types of tests:
 
-1. **Internal Tests**: The check is Python code in this package, so `dcqc` runs it and returns a status immediately.
-   - MD5 checksum verification (`Md5ChecksumTest`)
-   - File extension validation (`FileExtensionTest`)
-   - JSON and JSON-LD load checks (`JsonLoadTest`, `JsonLdLoadTest`)
-   - Consistency between paired FASTQ files (`PairedFastqParityTest`)
+1. **Internal Tests**: The check is Python code in this package, so `dcqc` runs it and returns a status immediately. Today these cover tiers 1 and 2.
 
-2. **External Tests**: The check is a command-line tool in a Docker container. `dcqc` cannot run it. The test only describes the container image and the command to run, and the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow runs that container. The result comes back through `compute-test`.
-   - TIFF and OME-TIFF format validation (`LibTiffInfoTest`, `BioFormatsInfoTest`, `OmeXmlSchemaTest`)
-   - Date and time metadata checks (`GrepDateTest`, `TiffDateTimeTest`, `TiffTag306DateTimeTest`)
-   - HTAN H5AD conformance (`H5adHtanValidatorTest`)
+2. **External Tests**: The check is a command-line tool in a Docker container. `dcqc` cannot run it. The test only describes the container image and the command to run, and the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow runs that container. The result comes back through `compute-test`. Today these cover tiers 2 and 4.
 
-The last column of `dcqc list-tests` shows whether each test is internal or external. Because `dcqc` cannot run external tests on its own, `dcqc qc-file` skips all of them.
+The tiers are described below. For the tests themselves, run `dcqc list-tests`: the last column shows whether each test is internal or external. Because `dcqc` cannot run external tests on its own, `dcqc qc-file` skips all of them.
 
 Tests are further organized into four tiers. The tier decides whether a test is required: by default, tier-1 and tier-2 tests must pass for a suite to be GREEN, while tier-3 and tier-4 tests are optional.
 
-The list below gives the intended scope of each tier, then the tests that exist today. Tiers 1 and 2 are well covered. Tier 3 has no tests yet, and tier 4 has only date and time checks, so the remaining items describe the intended design rather than current behavior.
+The list below gives the intended scope of each tier, then the tests that exist today. 
 
 - Tier 1 - File Integrity: Checking that the file is whole and "available". These tests verify basic file integrity and usually require additional information, including:
   - MD5 checksum verification
@@ -95,14 +88,10 @@ The list below gives the intended scope of each tier, then the tests that exist 
   - Format-specific checks (e.g., first/last bytes)
   - Decompression checks if applicable
 
-  Implemented: `Md5ChecksumTest`, `FileExtensionTest`
-
 - Tier 2 - Internal Conformance: Checking that the file is internally consistent and compliant with its stated format. These tests only need the files themselves and their format specification:
   - File format validation using available tools
   - Internal metadata validation against schema (e.g., OME XML)
   - Additional checks on internal metadata
-
-  Implemented: `JsonLoadTest`, `JsonLdLoadTest`, `PairedFastqParityTest`, `LibTiffInfoTest`, `BioFormatsInfoTest`, `OmeXmlSchemaTest`, `H5adHtanValidatorTest`
 
 - Tier 3 - External Conformance: Checking that file features are consistent with separately submitted metadata. These tests use additional information but remain objective/quantitative:
   - Channel count consistency
@@ -110,14 +99,11 @@ The list below gives the intended scope of each tier, then the tests that exist 
   - Antibody nomenclature conformance
   - Secondary file presence (e.g., CRAI file for CRAM)
 
-  Implemented: none yet. All four items above are planned.
-
 - Tier 4 - Subjective Conformance: Checking files against qualitative criteria that may need expert review. These tests often involve metrics, heuristics, or sophisticated models:
   - Sample swap detection
   - PHI detection in images and metadata
   - Outlier detection using metrics (e.g., file size)
 
-  Implemented: `TiffDateTimeTest`, `TiffTag306DateTimeTest`. Both look for date and time metadata, which is one narrow form of the PHI detection listed above. `GrepDateTest` does the same for text files, but no suite includes it, so only the library can run it. Sample swap detection and outlier detection do not exist.
 
 To see the tier of every test per file type, run `dcqc list-tests` and read the `test_tier` column.
 
