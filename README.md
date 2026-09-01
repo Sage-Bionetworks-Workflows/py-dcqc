@@ -62,7 +62,7 @@ There are two types of targets:
 - `SingleTarget`: exactly one file.
 - `PairedTarget`: exactly two related files, such as paired-end sequencing data.
 
-#### Why the extra layer exists
+#### Why targets exist
 
 **Some checks need more than one file at a time.** A test has exactly one target, not a list of files. When a `PairedTarget` counts the lines of read 1 and read 2 and compares the two counts, it can see both files only because both are in one target. Without targets, each test would have to invent its own way to group files.
 
