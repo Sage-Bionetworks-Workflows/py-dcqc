@@ -155,11 +155,9 @@ You can also use the official Docker container:
 docker pull ghcr.io/sage-bionetworks-workflows/py-dcqc:main
 ```
 
-Use the `main` tag. It is built from the default branch on every push, so it matches the code in this repository. The `latest` tag only moves when a `vX.Y.Z` release tag is pushed, so it can be many months behind and can hold older dependencies that behave differently. Both tags report the same `dcqc --version`, so the version string does not tell you which one you have. To pin a known build instead, use a version tag such as `:1.8.0`. If you want to use the latest tag:
+**Use the `main` tag.** It is built from the default branch on every push, so it
+matches the code in this repository.
 
-```bash
-docker pull ghcr.io/sage-bionetworks-workflows/py-dcqc:latest
-```
 
 To run commands using the Docker container:
 
