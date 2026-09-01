@@ -66,7 +66,7 @@ There are two types of targets:
 
 **Some checks need more than one file at a time.** A test has exactly one target, not a list of files. When a `PairedTarget` counts the lines of read 1 and read 2 and compares the two counts, it can see both files only because both are in one target. Without targets, each test would have to invent its own way to group files.
 
-**A target is also the identity that survives the fan-out.** This is the reason that matters even for single-file QC. The CLI divides QC into small steps so that _nf-dcqc_ can run them at the same time on different machines. The tests of one target are therefore scattered across separate JSON files. The target is what puts them back together: `create-tests` names every file it writes after the target, and `create-suite` refuses a set of tests that do not all share one target. Without that identity, nothing would say which results belong to the same file.
+**A target is also what keeps split-up results together.** This is the reason that matters even for single-file QC. The CLI divides QC into small steps so that _nf-dcqc_ can run them at the same time on different machines, which scatters one target's tests across separate JSON files. The target `id` is what matches them back up: `create-tests` names every file it writes after the target, and `create-suite` rejects a set of tests that do not all share one target.
 
 ### Tests
 
