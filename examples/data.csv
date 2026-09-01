@@ -1,0 +1,5 @@
+sample_id,tissue,age,sequencing_platform
+S001,cortex,58,illumina_novaseq
+S002,cortex,63,illumina_novaseq
+S003,cerebellum,71,illumina_novaseq
+S004,cerebellum,49,illumina_novaseq
