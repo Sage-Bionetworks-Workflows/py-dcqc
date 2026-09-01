@@ -76,7 +76,7 @@ Tests are individual validation checks that can be run on targets. There are two
 
 2. **External Tests**: The check is a command-line tool in a Docker container. `dcqc` cannot run it. The test only describes the container image and the command to run, and the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow runs that container. The result comes back through `compute-test`. Today these cover tiers 2 and 4.
 
-The tiers are described below. For the tests themselves, run `dcqc list-tests`: the last column shows whether each test is internal or external. Because `dcqc` cannot run external tests on its own, `dcqc qc-file` skips all of them.
+The tiers are described below. For the tests themselves, run `dcqc list-tests`: the `test_tier` column gives the tier of each test, and the last column shows whether it is internal or external. Because `dcqc` cannot run external tests on its own, `dcqc qc-file` skips all of them.
 
 Tests are further organized into four tiers. The tier decides whether a test is required: by default, tier-1 and tier-2 tests must pass for a suite to be GREEN, while tier-3 and tier-4 tests are optional.
 
@@ -103,9 +103,6 @@ The list below gives the intended scope of each tier, then the tests that exist 
   - Sample swap detection
   - PHI detection in images and metadata
   - Outlier detection using metrics (e.g., file size)
-
-
-To see the tier of every test per file type, run `dcqc list-tests` and read the `test_tier` column.
 
 ### Suites
 
