@@ -169,6 +169,18 @@ For processing local files, remember to mount your data directory:
 
 ```bash
 docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:main \
+  dcqc qc-file /data/myfile.csv --file-type csv \
+  --metadata '{"md5_checksum": "my_files_checksum"}'
+```
+
+`Md5ChecksumTest` compares the file against an expected checksum, which it reads
+from the `md5_checksum` key in the file metadata. `qc-file` reads no manifest, so
+that value can only come from `--metadata`. If the key is missing, the command
+stops with a `KeyError` instead of reporting a test result. When you do not have a
+checksum for the file, skip that one test:
+
+```bash
+docker run -v /path/to/your/data:/data ghcr.io/sage-bionetworks-workflows/py-dcqc:main \
   dcqc qc-file /data/myfile.csv --file-type csv --skipped-tests Md5ChecksumTest
 ```
 
