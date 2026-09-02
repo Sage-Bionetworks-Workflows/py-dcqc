@@ -51,11 +51,49 @@ class FileType:
             name: File type name.
             file_extensions: Valid file extensions.
             edam_iri: EDAM format ontology identifier.
+
+        Raises:
+            TypeError: If file_extensions is a string, or is not a
+                collection of strings.
         """
+        self._validate_file_extensions(name, file_extensions)
         self.name = name
         self.file_extensions = tuple(file_extensions)
         self.edam_iri = edam_iri
         self.register_file_type()
+
+    @staticmethod
+    def _validate_file_extensions(name: str, file_extensions: Collection[str]) -> None:
+        """Reject file extensions that are not a collection of strings.
+
+        A string is itself a collection of characters, so tuple(".txt") gives
+        ('.', 't', 'x', 't') and str.endswith() against it matches almost any
+        file name. A single extension therefore needs a trailing comma.
+
+        Args:
+            name: File type name, used in the error message.
+            file_extensions: Valid file extensions.
+
+        Raises:
+            TypeError: If file_extensions is a string, or is not a
+                collection of strings.
+        """
+        if isinstance(file_extensions, str) or not isinstance(
+            file_extensions, Collection
+        ):
+            message = (
+                f"File extensions for file type ({name}) must be a collection "
+                f"of strings, not {type(file_extensions).__name__}. A single "
+                'extension needs a trailing comma, as in (".txt",).'
+            )
+            raise TypeError(message)
+        non_strings = [ext for ext in file_extensions if not isinstance(ext, str)]
+        if non_strings:
+            message = (
+                f"File extensions for file type ({name}) must all be strings. "
+                f"These are not: {non_strings}."
+            )
+            raise TypeError(message)
 
     def register_file_type(self) -> None:
         """Register instantiated file type for later retrieval.
@@ -109,12 +147,12 @@ FileType("JSON", (".json",), "format_3464")
 FileType("JSON-LD", (".jsonld",), "format_3749")
 FileType("TIFF", (".tif", ".tiff", ".svs", ".scn", ".qptiff"), "format_3591")
 FileType("OME-TIFF", (".ome.tif", ".ome.tiff"), "format_3727")
-FileType("TSV", (".tsv"), "format_3475")
-FileType("CSV", (".csv"), "format_3752")
-FileType("BAM", (".bam"), "format_2572")
+FileType("TSV", (".tsv",), "format_3475")
+FileType("CSV", (".csv",), "format_3752")
+FileType("BAM", (".bam",), "format_2572")
 FileType("FASTQ", (".fastq", ".fastq.gz", ".fq", ".fq.gz"), "format_1930")
 FileType("HDF5", (".hdf", ".hdf5", ".h5", ".he5"), "format_3590")
-FileType("H5AD", (".h5ad"), "format_3590")
+FileType("H5AD", (".h5ad",), "format_3590")
 
 
 # TODO: Leverage post-init function in dataclasses

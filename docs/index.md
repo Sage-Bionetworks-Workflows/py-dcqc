@@ -1,18 +1,13 @@
 # dcqc
 
-Add a short description here!
+Python package for performing quality control (QC) for data coordination (DC).
 
-
-## Note
-
-> This is the main page of your project's [Sphinx] documentation. It is
-> formatted in [Markdown]. Add additional pages by creating md-files in
-> `docs` or rst-files (formatted in [reStructuredText]) and adding links to
-> them in the `Contents` section below.
->
-> Please check [Sphinx] and [MyST] for more information
-> about how to document your project and how to configure your preferences.
-
+It runs tiered QC checks on data files, from low-level integrity checks such as
+MD5 checksums and file extensions to high-level checks such as conformance to a
+format specification. It is both a library and a command-line tool, and it is
+designed to be driven by
+[nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc), the Nextflow
+workflow that runs the QC steps in parallel.
 
 ## Contents
 
@@ -32,8 +27,3 @@ Module Reference <api/modules>
 * {ref}`genindex`
 * {ref}`modindex`
 * {ref}`search`
-
-[Sphinx]: http://www.sphinx-doc.org/
-[Markdown]: https://daringfireball.net/projects/markdown/
-[reStructuredText]: http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
-[MyST]: https://myst-parser.readthedocs.io/en/latest/

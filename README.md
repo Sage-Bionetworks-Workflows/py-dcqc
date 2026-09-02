@@ -392,9 +392,9 @@ Read the steps below to understand what it does, and to run them one at a time. 
 
    The final result is `internal_example/results.csv`: the input manifest with the five `dcqc_` columns appended, in the form shown in [Output](#output). The section below describes it.
 
-   Every row of the input CSV must have a suite in `all_suites.json`, because the command looks each row up by its `url`. If you processed only some of the targets, it stops with a bare `KeyError` naming the first missing URL, for example `KeyError: 'a.txt'`.
+   Every row of the input CSV must have a suite in `all_suites.json`, because the command looks each row up by its `url`. If you processed only some of the targets, it stops with a `KeyError` naming the row number and the missing URL.
 
-   Each row is joined to its suite by the raw `url` value, which is a synapse URL here and therefore passes through unchanged. A manifest of relative local paths does not survive this join from another directory.
+   Each row is joined to its suite by the `url` value, which both sides read through `CsvParser`. A relative local path is resolved against the directory of the manifest, so the join holds whatever your working directory is.
 
 
 `internal_example/results.csv` is the end of the pipeline, and it is the only file you must read. It holds every column of `examples/internal_target.csv`, unchanged, plus the five columns that `update-csv` appends:
@@ -544,7 +544,7 @@ It needs `docker` and `jq` on your PATH as well as `dcqc` and `synapse`. Read th
 
     The final result is `external_example/results.csv`: the input manifest with the five `dcqc_` columns appended, in the form shown in [Output](#output). The section below describes it.
 
-    Each row is joined to its suite by the raw `url` value, which is a synapse URL here and therefore passes through unchanged. A manifest of relative local paths does not survive this join from another directory.
+    Each row is joined to its suite by the `url` value, which both sides read through `CsvParser`. A relative local path is resolved against the directory of the manifest, so the join holds whatever your working directory is.
 
 
 `external_example/results.csv` is the end of the pipeline, and it is the only file you must read. It holds every column of `examples/external_target.csv`, unchanged, plus the five columns that `update-csv` appends:

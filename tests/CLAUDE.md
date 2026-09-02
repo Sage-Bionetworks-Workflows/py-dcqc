@@ -6,7 +6,9 @@ The pytest suite. Not to be confused with `src/dcqc/tests/`, which is production
 
 setup.cfg `[tool:pytest] addopts` puts `-m "not slow"` there, so a bare `pytest` **skips every slow test**. tox.ini `[testenv] commands` overrides it with `-m ""` and runs them. Slow tests hit live Synapse.
 
-`slow` is the only registered marker. `acceptance` is commented out in setup.cfg — do not use it.
+`slow` is the only registered marker (setup.cfg `[tool:pytest] markers`). A commented-out `acceptance` marker was removed from that list; do not reintroduce it — the end-to-end test `test_acceptance.py::test_json_report_generation` is marked `slow`.
+
+**The suite runs in one process.** The `testing` extra in setup.cfg is deliberately small — pytest, pytest-cov, pytest-mock and docker. pytest-xdist, hypothesis and nbmake were removed: xdist was installed but never used, because its `--numprocesses` flag sat commented out in `[tool:pytest] addopts`, and hypothesis and nbmake had no callers at all. Do not add xdist back without first isolating the shared state under **Side effects to be aware of** — `tests/outputs/`, `tests/data/staged_files/` and the module-level `outputs` set that `get_output` guards (`conftest.py:36,155-162`) all assume a single process, so workers would race on the same paths.
 
 There is **no fixture that skips when `SYNAPSE_AUTH_TOKEN` is missing**; token presence checks were added in `39e4795` and deliberately removed in `eb67219`. A slow test without credentials errors rather than skipping.
 
@@ -46,14 +48,14 @@ Fixture keys follow `good_<type>` for valid files and `<reason_it_is_bad>_<type>
 - `parametrize` is reserved for pure input-to-expected-classification tables; everything else uses class grouping.
 - The external-test exit-code pattern (write `"0"`/`"1"` to temp files, then `mocker.patch.object(test, "_find_process_outputs", ...)`) is repeated for each test. Copy the nearest neighbour, and check whether that test's codes are inverted — see `src/dcqc/tests/CLAUDE.md`.
 
-**A class must start with `Test` to be collected.** `test_internal_tests.py:61` defines `class Md5ChecksumTest:` and pytest therefore never runs its two tests — a real, currently-unfixed gap, not a pattern to copy.
+**A class must start with `Test` to be collected.** `test_internal_tests.py:112` defines `class Md5ChecksumTest:` and pytest therefore never runs its two tests — a real, currently-unfixed gap, not a pattern to copy.
 
 ## `tests/data`
 
 Four distinct categories. Treat them differently.
 
-1. **Generated JSON — regenerate, do not hand-edit.** `file.json`, `target.json`, `test.internal.json`, `test.external.json`, `test.computed.json`, `tests.json`, `suite.json`, `suites.json` all come from `tests/data/generate.py`. **Run it from the repo root** — it emits repo-relative paths via `paths_relative_to=Path.cwd()`, and running it elsewhere changes the fixture shape (that relativity was a deliberate fix in `9c2935d`).
-2. **`suites_files/` are hand-maintained *inputs* to `generate.py`, not outputs.** Editing them changes the generated `suites.json`, which `test_main.py`'s `update-csv` test depends on. They contain stale machine-specific absolute paths such as `/tmp/dcqc-staged-.../circuit.tif` — harmless today because nothing dereferences them, but a trap if you start resolving those paths.
+1. **Generated JSON — regenerate, do not hand-edit.** `file.json`, `target.json`, `test.internal.json`, `test.external.json`, `test.computed.json`, `tests.json`, `suite.json`, `suites.json` all come from `tests/data/generate.py`. **Run it from the repo root** — it emits repo-relative paths via `paths_relative_to=Path.cwd()`, and running it elsewhere changes the fixture shape (that relativity was a deliberate fix in `9c2935d`). The last step, `suites.json`, needs `SYNAPSE_AUTH_TOKEN`, because serializing a suite calls `compute_status` -> `compute_tests` -> `target.stage()` (`suite_abc.py:223`) and the inputs name `syn://` files. The seven earlier exports need no credentials. Note also that `required_tests` is a `set` serialized with `list()` (`suite_abc.py:253`), so its order in a regenerated `suites.json` moves between runs; no test reads that order.
+2. **`suites_files/` are hand-maintained *inputs* to `generate.py`, not outputs.** Editing them changes the generated `suites.json`, which `test_main.py`'s `update-csv` test depends on. Their `local_path` values are `null`, which is correct for an unstaged remote file — they used to hold stale machine-specific absolute paths such as `/tmp/dcqc-staged-.../circuit.tif`. Keep the key present and set it to `null`; do not delete it, because `File.from_dict` indexes it directly (`file.py:481`). Every test entry needs a `status_reason` for the same reason — `BaseTest.from_dict` indexes `dictionary["status_reason"]` (`base_test.py:113`), so omitting it raises `KeyError` and the `suites.json` step of the generator dies. Use `"test failed"` where `status` is `failed` and `""` otherwise, which is what the generated `suites.json` holds.
 3. **`tiffinfo/` is a hand-captured real process output triple** — `std_out.txt`, `std_err.txt` (intentionally empty), `exit_code.txt`. Those three filenames are the contract with `ExternalTestMixin._find_process_outputs`; renaming them breaks discovery.
 4. **Binary samples are committed as-is** with no generator and no LFS, including three ~11 MB h5ad files. `example.bam`, `example.fastq` and `example.fastq.gz` are 7-byte **placeholders**, not real format files. Fixture md5 checksums are duplicated across up to three places: the placeholders share `14758f1a...`, recorded in `conftest.py:76` and `files.csv:9-11`, while `circuit.tif`'s `c7b08f6d...` additionally appears in `test_main.py:133,148,165`. **Grep the hex string before changing any fixture byte.**
 
@@ -73,4 +75,3 @@ Note that `files.csv` contains a `syn://` row, so parsing it can touch the netwo
 - `TestH5adHtanValidatorTest`'s exit-code test instantiates `TiffDateTimeTest` (`test_external_tests.py:509,516`), so h5ad status interpretation is untested.
 - The `python -m dcqc` versus `dcqc` equivalence test is commented out inside a string literal at `test_main.py:31-37`, parked behind ORCA-349.
 - Multi-target fixtures and their tests are commented out in `conftest.py:185-200` and `test_updaters.py`, pending multi-file target support.
-- pytest-xdist is installed but parallelism is off on purpose: at the current test count the overhead makes the suite slower (the commented-out `--numprocesses` line in setup.cfg `[tool:pytest] addopts`). hypothesis and nbmake are declared but unused.
