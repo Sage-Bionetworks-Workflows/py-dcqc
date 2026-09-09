@@ -73,4 +73,4 @@ Note that `files.csv` contains a `syn://` row, so parsing it can touch the netwo
 - `TestH5adHtanValidatorTest`'s exit-code test instantiates `TiffDateTimeTest` (`test_external_tests.py:509,516`), so h5ad status interpretation is untested.
 - The `python -m dcqc` versus `dcqc` equivalence test is commented out inside a string literal at `test_main.py:31-37`, parked behind ORCA-349.
 - Multi-target fixtures and their tests are commented out in `conftest.py:185-200` and `test_updaters.py`, pending multi-file target support.
-- pytest-xdist is installed but parallelism is off on purpose: at the current test count the overhead makes the suite slower (the commented-out `--numprocesses` line in setup.cfg `[tool:pytest] addopts`). hypothesis and nbmake are declared but unused.
+- pytest-xdist, hypothesis and nbmake were dropped from the `testing` extra in #76 (dependabot alert); none were in use. Parallelism stays off — at the current test count the xdist overhead made the suite slower.
