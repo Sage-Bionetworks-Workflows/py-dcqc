@@ -14,6 +14,24 @@ considerate, reasonable, and respectful**. When in doubt,
 [Python Software Foundation's Code of Conduct] is a good reference in terms of
 behavior guidelines.
 
+## Table of Contents
+
+- [Issue Reports](#issue-reports)
+- [Documentation Improvements](#documentation-improvements)
+- [Code Contributions](#code-contributions)
+  - [Submit an issue](#submit-an-issue)
+  - [Clone the repository](#clone-the-repository)
+  - [Implement your changes](#implement-your-changes)
+  - [Submit your contribution](#submit-your-contribution)
+  - [Adding a Dependency](#adding-a-dependency)
+  - [Contributing New File Types](#contributing-new-file-types)
+  - [Contributing New Suites](#contributing-new-suites)
+  - [Contributing New Tests](#contributing-new-tests)
+  - [Testing Your Changes](#testing-your-changes)
+  - [Troubleshooting](#troubleshooting)
+- [Maintainer tasks](#maintainer-tasks)
+  - [Releases](#releases)
+
 ## Issue Reports
 
 If you experience bugs or general issues with `dcqc`, please have a look

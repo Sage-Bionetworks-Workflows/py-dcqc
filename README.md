@@ -9,6 +9,31 @@
 
 > Python package for performing quality control (QC) for data coordination (DC)
 
+## Table of Contents
+
+- [Intended Audience](#intended-audience)
+- [Purpose](#purpose)
+- [Core Concepts](#core-concepts)
+  - [Files and FileTypes](#files-and-filetypes)
+  - [Targets](#targets)
+  - [Tests](#tests)
+  - [Suites](#suites)
+  - [Reports](#reports)
+- [Installation](#installation)
+  - [Docker](#docker)
+- [Command Line Interface](#command-line-interface)
+  - [Common options](#common-options)
+- [Input](#input)
+- [Output](#output)
+- [Example Usage](#example-usage)
+  - [Basic File QC](#basic-file-qc)
+  - [Internal Test by Hand](#internal-test-by-hand)
+  - [External Test by Hand](#external-test-by-hand)
+  - [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image)
+  - [Listing Available Tests](#listing-available-tests)
+- [Integration with nf-dcqc](#integration-with-nf-dcqc)
+- [PyScaffold](#pyscaffold)
+
 ## Intended Audience
 
 This package is designed to be used by [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc), the Nextflow workflow that runs the QC steps in parallel. It is not intended for direct use by end users. The CLI is deliberately split into many small commands that read and write JSON so that _nf-dcqc_ can distribute the steps.
