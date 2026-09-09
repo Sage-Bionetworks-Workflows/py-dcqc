@@ -547,7 +547,7 @@ package:
    ```
 
 3. Make sure to have a reliable [tox] installation that uses a supported
-   Python version (3.11 or later, but earlier than 3.15). When in doubt you can
+   Python version (see [Prerequisites](#prerequisites)). When in doubt you can
    run:
 
    ```console
