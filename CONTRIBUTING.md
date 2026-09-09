@@ -336,10 +336,6 @@ Do these two steps.
 
    Note these points:
 
-   - `FileType.get_file_type` runs when Python defines the class, so register
-     the file type first. See
-     [Contributing New File Types](#contributing-new-file-types). An unregistered
-     name raises a `ValueError` at import time.
    - Subclass `FileSuite` for a new format. Subclass a more specific suite if
      your type is a subtype of an existing format, as `H5ADSuite(HDF5Suite)`,
      `OmeTiffSuite(TiffSuite)` and `JsonLdSuite(JsonSuite)` do.
@@ -348,50 +344,14 @@ Do these two steps.
      every class in the method resolution order, so a subclass also runs the
      tests of its parents. Inheritance is the only way to share tests between
      suites.
-   - `add_tests` is optional. `TXTSuite`, `TSVSuite`, `CSVSuite`, `BAMSuite` and
-     `HDF5Suite` declare no tests of their own and run only the tests of
-     `FileSuite`.
-   - Write the test names as `tests.MyNewTest`, because `suites.py` imports the
-     package with `from dcqc import tests`. Every test in `add_tests` must also
-     have an import line in `src/dcqc/tests/__init__.py`. See
-     [Registering a New Test](#registering-a-new-test).
    - Two suites must not claim the same file type. The registry is a dictionary
      keyed on the file type name, so the second class replaces the first one with
      no warning.
-   - Do not use `del_tests` to remove an inherited test. Nothing in `src/` uses
-     it. The loop that reads it uses `hasattr`, so a subclass that does not
-     declare its own `del_tests` applies the `del_tests` of an ancestor again at
-     its own position in the method resolution order, and this can remove its own
-     `add_tests`. Change the shape of the hierarchy instead.
-   - Class names in `suites.py` are not consistent. ALL-CAPS acronyms
-     (`TSVSuite`, `HDF5Suite`) sit beside PascalCase names (`TiffSuite`,
-     `FastqSuite`). Match the classes near yours.
-   - `SuiteABC` has no abstract methods, so Python does not tell you that a class
-     attribute is absent. If you forget `file_type`, the class still imports, and
-     the `AttributeError` comes later from `get_subclass_by_file_type` and
-     `list_test_classes_by_file_type`. Both walk all of the suites, so one
-     incomplete suite breaks the selection of every other suite and breaks
-     `dcqc list-tests`.
-
-2. Register the suite by import. `src/dcqc/suites/__init__.py` is empty, and the
-   suites are registered only because `src/dcqc/__init__.py` imports
-   `dcqc.suites.suites`. A class you add to `suites.py` needs no further step. A
-   new suites *module* needs two:
-
-   - Add an import for it to `src/dcqc/__init__.py`. That file carries an
-     `# isort: skip_file` comment, because its import order prevents a circular
-     import. Do not reorder the lines.
-   - Add a `[[tool.mypy.overrides]]` block for the module in `pyproject.toml`
-     with `disable_error_code = "assignment"`, as `dcqc.suites.suites` has.
-     Suites reassign inherited `ClassVar` attributes, and mypy reports that as an
-     assignment error.
 
 
 ### Contributing New Tests
 
-A new test needs two things: a test class, and registration. If you write the class but do not register it, nothing tells you. The class does not fail to import, and `pre-commit` and `tox` stay green. The problem shows later, when `dcqc compute-test` stops with `Subclass (MyNewTest) not available`.
-
-DCQC finds tests by a walk of the subclasses of `BaseTest`. There is no plugin scan, no entry point and no decorator. A test class is visible only if `src/dcqc/tests/__init__.py` imports its module, and DCQC runs it only if a suite lists it.
+A new test needs two things: a test class, and registration. If you write the class but do not register it, nothing tells you.
 
 #### Registering a New Test
 
@@ -403,7 +363,7 @@ Do these two steps for every new test, internal or external.
    from dcqc.tests.my_new_test import MyNewTest
    ```
 
-   These imports look unused, but they are the registration. Do not remove them. Two settings in `setup.cfg` keep the linters from removing them for you: `per-file-ignores = */__init__.py:F401` in the `[flake8]` section, and `ignore-init-module-imports=true` in the `[autoflake]` section. Do not change either one.
+   These imports look unused, but they are the registration. Do not remove them.
 
 2. Add your class to the `add_tests` tuple of one or more suites in `src/dcqc/suites/suites.py`:
 
@@ -419,8 +379,6 @@ Do these two steps for every new test, internal or external.
            tests.MyNewTest,
        )
    ```
-
-   The first step makes the class known to DCQC. This step makes DCQC run it. A test that is in no suite never runs against a CSV manifest and never shows in `dcqc list-tests`. Pick the suite for the file type that your test applies to, or `FileSuite` if it applies to all file types. `add_tests` is additive along the class hierarchy, so a suite also runs the tests of the suites it inherits from.
 
 #### Contributing Internal Tests
 
