@@ -39,11 +39,10 @@ If you experience bugs or general issues with `dcqc`, please have a look
 on the [issue tracker].
 If you don't see anything useful there, please feel free to fire an issue report.
 
-:::{tip}
-Please don't forget to include the closed issues in your search.
-Sometimes a solution was already reported, and the problem is considered
-**solved**.
-:::
+> [!TIP]
+> Please don't forget to include the closed issues in your search.
+> Sometimes a solution was already reported, and the problem is considered
+> **solved**.
 
 New issue reports should include information about your programming environment
 (e.g., operating system, Python version) and steps to reproduce the problem.
@@ -61,20 +60,19 @@ This means that the docs are kept in the same repository as the project code, an
 that any documentation update is done in the same way was a code contribution.
 The documentation is written using [CommonMark] with [MyST] extensions.
 
-:::{tip}
-Please notice that the [GitHub web interface] provides a quick way of
-propose changes in `dcqc`'s files. While this mechanism can
-be tricky for normal code contributions, it works perfectly fine for
-contributing to the docs, and can be quite handy.
-
-If you are interested in trying this method out, please navigate to
-the `docs` folder in the source [repository], find which file you
-would like to propose changes and click in the little pencil icon at the
-top, to open [GitHub's code editor]. Once you finish editing the file,
-please write a message in the form at the bottom of the page describing
-which changes have you made and what are the motivations behind them and
-submit your proposal.
-:::
+> [!TIP]
+> Please notice that the [GitHub web interface] provides a quick way of
+> propose changes in `dcqc`'s files. While this mechanism can
+> be tricky for normal code contributions, it works perfectly fine for
+> contributing to the docs, and can be quite handy.
+>
+> If you are interested in trying this method out, please navigate to
+> the `docs` folder in the source [repository], find which file you
+> would like to propose changes and click in the little pencil icon at the
+> top, to open [GitHub's code editor]. Once you finish editing the file,
+> please write a message in the form at the bottom of the page describing
+> which changes have you made and what are the motivations behind them and
+> submit your proposal.
 
 When working on documentation changes in your local machine, you can
 compile them using [tox] :
@@ -177,19 +175,18 @@ This often provides additional considerations and avoids unnecessary work.
    This should automatically use [flake8]/[black] to check/fix the code style
    in a way that is compatible with the project.
 
-   :::{important}
-   Don't forget to add unit tests and documentation in case your
-   contribution adds an additional feature and is not just a bugfix.
-
-   Moreover, writing a [descriptive commit message] is highly recommended.
-   In case of doubt, you can check the commit history with:
-
-   ```console
-   git log --graph --decorate --pretty=oneline --abbrev-commit --all
-   ```
-
-   to look for recurring communication patterns.
-   :::
+   > **Important:**
+   > Don't forget to add unit tests and documentation in case your
+   > contribution adds an additional feature and is not just a bugfix.
+   >
+   > Moreover, writing a [descriptive commit message] is highly recommended.
+   > In case of doubt, you can check the commit history with:
+   >
+   > ```console
+   > git log --graph --decorate --pretty=oneline --abbrev-commit --all
+   > ```
+   >
+   > to look for recurring communication patterns.
 
 5. Please check that your changes don't break any unit tests:
 
@@ -197,33 +194,31 @@ This often provides additional considerations and avoids unnecessary work.
    - Full matrix on every supported Python: `tox`
    - List the other pre-configured tasks: `tox -av`
 
-   :::{important}
-   Notes on the test suite:
-
-   - **`tox` runs more tests than `pytest`.** `setup.cfg` excludes the slow
-     tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`. So
-     `tox` also runs the slow tests.
-   - **The slow tests need Synapse.** They use live Synapse and need a valid
-     `SYNAPSE_AUTH_TOKEN` in your environment. No fixture skips them when the
-     token is absent: without it they **fail or error**, and that is not a
-     defect in your change.
-   - **`tox` always runs the slow tests; you cannot switch them off from the
-     command line.** `tox.ini` runs `pytest {posargs} -m ""`, and the `-m ""`
-     clears the marker filter. Whatever you type after `tox --` lands in
-     `{posargs}`, which comes **before** that `-m ""`, so `tox -- -m "not slow"`
-     runs as `pytest -m "not slow" -m ""`. `pytest` obeys only the last `-m`.
-     To run the fast tests only, call `pytest` directly with
-     `pipenv run pytest`; it reads `-m "not slow"` from `setup.cfg`.
-   - **`tests/test_acceptance.py::test_json_report_generation` is already broken
-     in CI, and not by your change.** It errors with
-     `UnsupportedProtocol: protocol 'syn' is not supported`. CI installs `dcqc`
-     from the built wheel, and under that layout the `fs-synapse` entry point
-     that registers the `syn://` protocol is not loaded. The editable dev
-     install (`pipenv install --dev`) does load it, so the test passes locally
-     with a valid token. See
-     [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71)
-     and [DPE-1795](https://sagebionetworks.jira.com/browse/DPE-1795).
-   :::
+   > **Important — notes on the test suite:**
+   >
+   > - **`tox` runs more tests than `pytest`.** `setup.cfg` excludes the slow
+   >   tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`. So
+   >   `tox` also runs the slow tests.
+   > - **The slow tests need Synapse.** They use live Synapse and need a valid
+   >   `SYNAPSE_AUTH_TOKEN` in your environment. No fixture skips them when the
+   >   token is absent: without it they **fail or error**, and that is not a
+   >   defect in your change.
+   > - **`tox` always runs the slow tests; you cannot switch them off from the
+   >   command line.** `tox.ini` runs `pytest {posargs} -m ""`, and the `-m ""`
+   >   clears the marker filter. Whatever you type after `tox --` lands in
+   >   `{posargs}`, which comes **before** that `-m ""`, so `tox -- -m "not slow"`
+   >   runs as `pytest -m "not slow" -m ""`. `pytest` obeys only the last `-m`.
+   >   To run the fast tests only, call `pytest` directly with
+   >   `pipenv run pytest`; it reads `-m "not slow"` from `setup.cfg`.
+   > - **`tests/test_acceptance.py::test_json_report_generation` is already broken
+   >   in CI, and not by your change.** It errors with
+   >   `UnsupportedProtocol: protocol 'syn' is not supported`. CI installs `dcqc`
+   >   from the built wheel, and under that layout the `fs-synapse` entry point
+   >   that registers the `syn://` protocol is not loaded. The editable dev
+   >   install (`pipenv install --dev`) does load it, so the test passes locally
+   >   with a valid token. See
+   >   [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71)
+   >   and [DPE-1795](https://sagebionetworks.jira.com/browse/DPE-1795).
 
 ### Submit your contribution
 
@@ -275,10 +270,9 @@ dependency, then follow its steps in order.
 The `all`, `testing` and `dev` extras are exempt from step 2, because the API
 documentation does not import them.
 
-:::{important}
-`tox -e pipenv` runs `pipenv lock --dev` and then `pipenv install --dev`.
-`Pipfile.lock` is committed. Never edit `Pipfile.lock` by hand.
-:::
+> [!IMPORTANT]
+> `tox -e pipenv` runs `pipenv lock --dev` and then `pipenv install --dev`.
+> `Pipfile.lock` is committed. Never edit `Pipfile.lock` by hand.
 
 ### Contributing New File Types
 
