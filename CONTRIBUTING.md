@@ -314,24 +314,6 @@ Do these two steps.
 2. Add a suite class that claims the type in `src/dcqc/suites/suites.py`. See
    [Contributing New Suites](#contributing-new-suites) for the details:
 
-   ```python
-   class MyTypeSuite(FileSuite):
-       """Suite class for MY-TYPE files."""
-
-       file_type = FileType.get_file_type("MY-TYPE")
-       add_tests = (tests.MyNewTest,)
-   ```
-
-   For a working pair to copy, see the `FASTQ` entry in `src/dcqc/file.py` and
-   `FastqSuite` in `src/dcqc/suites/suites.py`. If your type is a subtype of an
-   existing format, subclass that format's suite instead of `FileSuite`, as
-   `H5ADSuite(HDF5Suite)` and `OmeTiffSuite(TiffSuite)` do.
-
-   A file type without a suite is legal, but it does almost nothing. DCQC gives
-   files of an unclaimed type the generic `FileSuite`, and the type does not show
-   in `dcqc list-tests`. Nothing warns you, because `dcqc list-tests` and
-   `SuiteABC.get_subclass_by_file_type` work from the suites, not from the file
-   type registry.
 
 ### Contributing New Suites
 
