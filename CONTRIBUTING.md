@@ -242,26 +242,43 @@ This often provides additional considerations and avoids unnecessary work.
 
 ### Adding a Dependency
 
-Dependencies live in `setup.cfg`. A runtime dependency goes in `install_requires`
-under `[options]`. A dependency that only the tests or the development tools need
-goes in the `testing` or the `dev` extra under `[options.extras_require]`.
+All dependencies are declared in `setup.cfg`. Pick the case that matches your
+dependency, then follow its steps in order.
 
-A **runtime** dependency needs a second edit. Add the same package to
-`docs/requirements.txt` as well. Read the Docs installs that file to build the
-module reference, so the API documentation fails to build if the package is
-absent from it. Both files carry a comment that says this. The `all`, `testing`
-and `dev` extras are not part of this rule, because the API documentation does
-not import them.
+#### A non-runtime dependency (tests or dev tools only)
 
-After any change to the dependencies in `setup.cfg`, regenerate the lock file:
+1. Add the package to the `testing` or the `dev` extra under
+   `[options.extras_require]` in `setup.cfg`.
+2. Regenerate the lock file:
 
-```console
-tox -e pipenv
-```
+   ```console
+   tox -e pipenv
+   ```
 
-This runs `pipenv lock --dev` and then `pipenv install --dev`. `Pipfile.lock` is
-committed, so commit the new lock file together with your `setup.cfg` change.
-Never edit `Pipfile.lock` by hand.
+3. Commit the updated `Pipfile.lock` together with your `setup.cfg` change.
+
+#### A runtime dependency (imported by `dcqc` itself)
+
+1. Add the package to `install_requires` under `[options]` in `setup.cfg`.
+2. Add the **same** package to `docs/requirements.txt`. Read the Docs installs
+   that file to build the module reference, so the API documentation fails to
+   build if the package is missing from it. Both files carry a comment that says
+   so.
+3. Regenerate the lock file:
+
+   ```console
+   tox -e pipenv
+   ```
+
+4. Commit `setup.cfg`, `docs/requirements.txt` and `Pipfile.lock` together.
+
+The `all`, `testing` and `dev` extras are exempt from step 2, because the API
+documentation does not import them.
+
+:::{important}
+`tox -e pipenv` runs `pipenv lock --dev` and then `pipenv install --dev`.
+`Pipfile.lock` is committed. Never edit `Pipfile.lock` by hand.
+:::
 
 ### Contributing New File Types
 
