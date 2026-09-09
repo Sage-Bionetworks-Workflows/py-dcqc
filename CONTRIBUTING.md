@@ -291,6 +291,26 @@ claims it. The `FileType` object gives the type a name, its valid extensions and
 its [EDAM] identifier. The suite decides which tests DCQC runs on files of that
 type.
 
+For example:
+
+```python
+# src/dcqc/file.py, next to the other FileType(...) statements
+FileType("MY-TYPE", (".mytype", ".mytype.gz"), "format_1234")
+
+
+# src/dcqc/suites/suites.py, next to the other suite classes
+class MyTypeSuite(FileSuite):
+    """Suite class for MY-TYPE files."""
+
+    file_type = FileType.get_file_type("MY-TYPE")
+    add_tests = (tests.MyNewTest,)
+```
+
+For a working pair to copy, see the `FASTQ` entry in `src/dcqc/file.py` and
+`FastqSuite` in `src/dcqc/suites/suites.py`. If your type is a subtype of an
+existing format, subclass that format's suite instead of `FileSuite`, as
+`H5ADSuite(HDF5Suite)` and `OmeTiffSuite(TiffSuite)` do.
+
 A file type without a suite is legal, but it does almost nothing. DCQC gives
 files of an unclaimed type the generic `FileSuite`, and the type does not show in
 `dcqc list-tests`. Nothing warns you, because `dcqc list-tests` and
