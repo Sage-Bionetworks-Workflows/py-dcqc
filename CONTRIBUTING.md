@@ -276,66 +276,62 @@ documentation does not import them.
 
 ### Contributing New File Types
 
-If you want to add the ability to test a completely new file type, you must add that type first.
-The [Files and FileTypes] section of the `README.md` describes what a file type
-is and lists the types that exist today. Read it before you add one.
+If you want to test a completely new file type, you must add that type first. A
+new file type needs two things: a `FileType` object in `src/dcqc/file.py`, and a
+suite class in `src/dcqc/suites/suites.py` that claims it. Read the
+[Files and FileTypes] section of the `README.md` first. It describes what a file
+type is and lists the types that exist today.
 
-A new file type needs two things: a `FileType` object, and a suite class that
-claims it. The `FileType` object gives the type a name, its valid extensions and
-its [EDAM] identifier. The suite decides which tests DCQC runs on files of that
-type.
+Do these two steps.
 
-For example:
+1. Register the file type in `src/dcqc/file.py`. Add one line to the block of
+   `FileType(...)` statements at the end of the module. Constructing the object
+   is the registration; there is no separate registry call:
 
-```python
-# src/dcqc/file.py, next to the other FileType(...) statements
-FileType("MY-TYPE", (".mytype", ".mytype.gz"), "format_1234")
+   ```python
+   FileType("MY-TYPE", (".mytype", ".mytype.gz"), "format_1234")
+   ```
 
+   The three arguments are the name, the valid extensions and the [EDAM]
+   identifier. Note these points:
 
-# src/dcqc/suites/suites.py, next to the other suite classes
-class MyTypeSuite(FileSuite):
-    """Suite class for MY-TYPE files."""
+   - **Keep the trailing comma if the type has only one extension.**
+     `(".mytype")` is a string, not a tuple, and `FileType` calls `tuple()` on
+     it. The result is one element per character, and `FileExtensionTest` then
+     accepts any file name that ends in one of those characters. Write
+     `(".mytype",)`.
+   - `FileExtensionTest` matches with `str.endswith`, so write compound
+     extensions in full, as `OME-TIFF` and `FASTQ` do (`.ome.tif`,
+     `.fastq.gz`).
+   - The name must be unique. Names are compared in lower case, and a duplicate
+     raises a `ValueError` at import time.
+   - Do not give the file type the name of a `Test`, `Suite` or `Target` class.
+     `JsonParser.get_class` in `src/dcqc/parsers.py` looks at those classes
+     before it looks at the file type names, so the class wins and
+     deserialization returns the wrong object.
+   - The EDAM identifier is optional, but give one if the format has one.
 
-    file_type = FileType.get_file_type("MY-TYPE")
-    add_tests = (tests.MyNewTest,)
-```
+2. Add a suite class that claims the type in `src/dcqc/suites/suites.py`. See
+   [Contributing New Suites](#contributing-new-suites) for the details:
 
-For a working pair to copy, see the `FASTQ` entry in `src/dcqc/file.py` and
-`FastqSuite` in `src/dcqc/suites/suites.py`. If your type is a subtype of an
-existing format, subclass that format's suite instead of `FileSuite`, as
-`H5ADSuite(HDF5Suite)` and `OmeTiffSuite(TiffSuite)` do.
+   ```python
+   class MyTypeSuite(FileSuite):
+       """Suite class for MY-TYPE files."""
 
-A file type without a suite is legal, but it does almost nothing. DCQC gives
-files of an unclaimed type the generic `FileSuite`, and the type does not show in
-`dcqc list-tests`. Nothing warns you, because `dcqc list-tests` and
-`SuiteABC.get_subclass_by_file_type` work from the suites, not from the file type
-registry.
+       file_type = FileType.get_file_type("MY-TYPE")
+       add_tests = (tests.MyNewTest,)
+   ```
 
-Register the file type in `src/dcqc/file.py`. Add one line to the block of
-`FileType(...)` statements at the end of the module. Construction of the
-object is the registration; there is no separate registry call:
+   For a working pair to copy, see the `FASTQ` entry in `src/dcqc/file.py` and
+   `FastqSuite` in `src/dcqc/suites/suites.py`. If your type is a subtype of an
+   existing format, subclass that format's suite instead of `FileSuite`, as
+   `H5ADSuite(HDF5Suite)` and `OmeTiffSuite(TiffSuite)` do.
 
-```python
-FileType("MY-TYPE", (".mytype", ".mytype.gz"), "format_1234")
-```
-
-Note these points:
-
-- **Keep the trailing comma if the type has only one extension.**
-   `(".mytype")` is a string, not a tuple, and `FileType` calls `tuple()` on
-   it. The result is one element per character, and `FileExtensionTest` then
-   accepts any file name that ends in one of those characters. Write
-   `(".mytype",)`.
-- `FileExtensionTest` matches with `str.endswith`, so write compound
-   extensions in full, as `OME-TIFF` and `FASTQ` do (`.ome.tif`,
-   `.fastq.gz`).
-- The name must be unique. Names are compared in lower case, and a duplicate
-   raises a `ValueError` at import time.
-- Do not give the file type the name of a `Test`, `Suite` or `Target` class.
-   `JsonParser.get_class` in `src/dcqc/parsers.py` looks at those classes
-   before it looks at the file type names, so the class wins and
-   deserialization returns the wrong object.
-- The EDAM identifier is optional, but give one if the format has one.
+   A file type without a suite is legal, but it does almost nothing. DCQC gives
+   files of an unclaimed type the generic `FileSuite`, and the type does not show
+   in `dcqc list-tests`. Nothing warns you, because `dcqc list-tests` and
+   `SuiteABC.get_subclass_by_file_type` work from the suites, not from the file
+   type registry.
 
 ### Contributing New Suites
 
@@ -344,66 +340,70 @@ There is one suite class for each file type. All of them are in
 `src/dcqc/suites/suites.py`, and all of them come from `SuiteABC` in
 `src/dcqc/suites/suite_abc.py`. There is no `BaseSuite`.
 
-Add the class to `src/dcqc/suites/suites.py`. Give it a docstring, the file type
-it claims, and the tests that are new at this level:
+Do these two steps.
 
-```python
-class MyTypeSuite(FileSuite):
-    """Suite class for MY-TYPE files."""
+1. Add the class to `src/dcqc/suites/suites.py`. Give it a docstring, the file
+   type it claims, and the tests that are new at this level:
 
-    file_type = FileType.get_file_type("MY-TYPE")
-    add_tests = (tests.MyNewTest,)
-```
+   ```python
+   class MyTypeSuite(FileSuite):
+       """Suite class for MY-TYPE files."""
 
-Note these points:
+       file_type = FileType.get_file_type("MY-TYPE")
+       add_tests = (tests.MyNewTest,)
+   ```
 
-- `FileType.get_file_type` runs when Python defines the class, so register the
-   file type first. See the section above. An unregistered name raises a
-   `ValueError` at import time.
-- Subclass `FileSuite` for a new format. Subclass a more specific suite if your
-   type is a subtype of an existing format, as `H5ADSuite(HDF5Suite)`,
-   `OmeTiffSuite(TiffSuite)` and `JsonLdSuite(JsonSuite)` do.
-- `add_tests` is additive along the class hierarchy. It does not replace the
-   list of the parent class. `list_test_classes` unions the `add_tests` of every
-   class in the method resolution order, so a subclass also runs the tests of
-   its parents. Inheritance is the only way to share tests between suites.
-- `add_tests` is optional. `TXTSuite`, `TSVSuite`, `CSVSuite`, `BAMSuite` and
-   `HDF5Suite` declare no tests of their own and run only the tests of
-   `FileSuite`.
-- Write the test names as `tests.MyNewTest`, because `suites.py` imports the
-   package with `from dcqc import tests`. Every test in `add_tests` must also
-   have an import line in `src/dcqc/tests/__init__.py`. See
-   [Registering a New Test](#registering-a-new-test).
-- Two suites must not claim the same file type. The registry is a dictionary
-   keyed on the file type name, so the second class replaces the first one with
-   no warning.
-- Do not use `del_tests` to remove an inherited test. Nothing in `src/` uses it.
-   The loop that reads it uses `hasattr`, so a subclass that does not declare
-   its own `del_tests` applies the `del_tests` of an ancestor again at its own
-   position in the method resolution order, and this can remove its own
-   `add_tests`. Change the shape of the hierarchy instead.
-- Class names in `suites.py` are not consistent. ALL-CAPS acronyms (`TSVSuite`,
-   `HDF5Suite`) sit beside PascalCase names (`TiffSuite`, `FastqSuite`). Match
-   the classes near yours.
+   Note these points:
 
-`SuiteABC` has no abstract methods, so Python does not tell you that a class
-attribute is absent. If you forget `file_type`, the class still imports, and the
-`AttributeError` comes later from `get_subclass_by_file_type` and
-`list_test_classes_by_file_type`. Both walk all of the suites, so one incomplete
-suite breaks the selection of every other suite and breaks `dcqc list-tests`.
+   - `FileType.get_file_type` runs when Python defines the class, so register
+     the file type first. See
+     [Contributing New File Types](#contributing-new-file-types). An unregistered
+     name raises a `ValueError` at import time.
+   - Subclass `FileSuite` for a new format. Subclass a more specific suite if
+     your type is a subtype of an existing format, as `H5ADSuite(HDF5Suite)`,
+     `OmeTiffSuite(TiffSuite)` and `JsonLdSuite(JsonSuite)` do.
+   - `add_tests` is additive along the class hierarchy. It does not replace the
+     list of the parent class. `list_test_classes` unions the `add_tests` of
+     every class in the method resolution order, so a subclass also runs the
+     tests of its parents. Inheritance is the only way to share tests between
+     suites.
+   - `add_tests` is optional. `TXTSuite`, `TSVSuite`, `CSVSuite`, `BAMSuite` and
+     `HDF5Suite` declare no tests of their own and run only the tests of
+     `FileSuite`.
+   - Write the test names as `tests.MyNewTest`, because `suites.py` imports the
+     package with `from dcqc import tests`. Every test in `add_tests` must also
+     have an import line in `src/dcqc/tests/__init__.py`. See
+     [Registering a New Test](#registering-a-new-test).
+   - Two suites must not claim the same file type. The registry is a dictionary
+     keyed on the file type name, so the second class replaces the first one with
+     no warning.
+   - Do not use `del_tests` to remove an inherited test. Nothing in `src/` uses
+     it. The loop that reads it uses `hasattr`, so a subclass that does not
+     declare its own `del_tests` applies the `del_tests` of an ancestor again at
+     its own position in the method resolution order, and this can remove its own
+     `add_tests`. Change the shape of the hierarchy instead.
+   - Class names in `suites.py` are not consistent. ALL-CAPS acronyms
+     (`TSVSuite`, `HDF5Suite`) sit beside PascalCase names (`TiffSuite`,
+     `FastqSuite`). Match the classes near yours.
+   - `SuiteABC` has no abstract methods, so Python does not tell you that a class
+     attribute is absent. If you forget `file_type`, the class still imports, and
+     the `AttributeError` comes later from `get_subclass_by_file_type` and
+     `list_test_classes_by_file_type`. Both walk all of the suites, so one
+     incomplete suite breaks the selection of every other suite and breaks
+     `dcqc list-tests`.
 
-Registration is by import, as it is for tests. `src/dcqc/suites/__init__.py` is
-empty, and the suites are registered only because `src/dcqc/__init__.py` imports
-`dcqc.suites.suites`. A class in `suites.py` therefore needs no other step. A
-new suites *module* needs two more:
+2. Register the suite by import. `src/dcqc/suites/__init__.py` is empty, and the
+   suites are registered only because `src/dcqc/__init__.py` imports
+   `dcqc.suites.suites`. A class you add to `suites.py` needs no further step. A
+   new suites *module* needs two:
 
-- Add an import for it to `src/dcqc/__init__.py`. That file carries an
-   `# isort: skip_file` comment, because its import order prevents a circular
-   import. Do not reorder the lines.
-- Add a `[[tool.mypy.overrides]]` block for the module in `pyproject.toml` with
-   `disable_error_code = "assignment"`, as `dcqc.suites.suites` has. Suites
-   reassign inherited `ClassVar` attributes, and mypy reports that as an
-   assignment error.
+   - Add an import for it to `src/dcqc/__init__.py`. That file carries an
+     `# isort: skip_file` comment, because its import order prevents a circular
+     import. Do not reorder the lines.
+   - Add a `[[tool.mypy.overrides]]` block for the module in `pyproject.toml`
+     with `disable_error_code = "assignment"`, as `dcqc.suites.suites` has.
+     Suites reassign inherited `ClassVar` attributes, and mypy reports that as an
+     assignment error.
 
 
 ### Contributing New Tests
