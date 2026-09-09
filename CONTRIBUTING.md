@@ -319,8 +319,7 @@ Do these two steps.
 
 A suite connects one file type to the tests that DCQC runs on files of that type.
 There is one suite class for each file type. All of them are in
-`src/dcqc/suites/suites.py`, and all of them come from `SuiteABC` in
-`src/dcqc/suites/suite_abc.py`. There is no `BaseSuite`.
+`src/dcqc/suites/suites.py`.
 
 Do these two steps.
 
