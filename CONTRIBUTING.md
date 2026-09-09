@@ -191,33 +191,39 @@ This often provides additional considerations and avoids unnecessary work.
    to look for recurring communication patterns.
    :::
 
-5. Please check that your changes don't break any unit tests with:
+5. Please check that your changes don't break any unit tests:
 
-   ```console
-   tox
-   ```
+   - Fast tests only: `pipenv run pytest`
+   - Full matrix on every supported Python: `tox`
+   - List the other pre-configured tasks: `tox -av`
 
    :::{important}
-   `tox` and a bare `pytest` do not run the same tests. `setup.cfg` excludes the
-   slow tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`.
-   The slow tests use live Synapse, so `tox` needs a valid
-   `SYNAPSE_AUTH_TOKEN` in your environment. There is no fixture that skips
-   these tests when the token is absent: without the token they **fail or
-   error**, and that is not a defect in your change.
+   Notes on the test suite:
 
-   One of the two slow tests,
-   `tests/test_acceptance.py::test_json_report_generation`, also fails in CI
-   even with a valid token. See
-   [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71).
-
-   To run only the fast tests, use `pipenv run pytest`. Do not try to pass the
-   marker through `tox`: `tox.ini` puts `{posargs}` **before** its own `-m ""`,
-   so `tox -- -m "not slow"` becomes `pytest -m "not slow" -m ""`. `pytest`
-   keeps only the last `-m`, and your marker is ignored.
+   - **`tox` runs more tests than `pytest`.** `setup.cfg` excludes the slow
+     tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`. So
+     `tox` also runs the slow tests.
+   - **The slow tests need Synapse.** They use live Synapse and need a valid
+     `SYNAPSE_AUTH_TOKEN` in your environment. No fixture skips them when the
+     token is absent: without it they **fail or error**, and that is not a
+     defect in your change.
+   - **`tox` always runs the slow tests; you cannot switch them off from the
+     command line.** `tox.ini` runs `pytest {posargs} -m ""`, and the `-m ""`
+     clears the marker filter. Whatever you type after `tox --` lands in
+     `{posargs}`, which comes **before** that `-m ""`, so `tox -- -m "not slow"`
+     runs as `pytest -m "not slow" -m ""`. `pytest` obeys only the last `-m`.
+     To run the fast tests only, call `pytest` directly with
+     `pipenv run pytest`; it reads `-m "not slow"` from `setup.cfg`.
+   - **`tests/test_acceptance.py::test_json_report_generation` is already broken
+     in CI, and not by your change.** It errors with
+     `UnsupportedProtocol: protocol 'syn' is not supported`. CI installs `dcqc`
+     from the built wheel, and under that layout the `fs-synapse` entry point
+     that registers the `syn://` protocol is not loaded. The editable dev
+     install (`pipenv install --dev`) does load it, so the test passes locally
+     with a valid token. See
+     [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71)
+     and [DPE-1795](https://sagebionetworks.jira.com/browse/DPE-1795).
    :::
-
-   You can also use [tox] to run several other pre-configured tasks in the
-   repository. Try `tox -av` to see a list of the available checks.
 
 ### Submit your contribution
 
