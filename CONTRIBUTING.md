@@ -19,6 +19,7 @@ behavior guidelines.
 - [Issue Reports](#issue-reports)
 - [Documentation Improvements](#documentation-improvements)
 - [Code Contributions](#code-contributions)
+  - [Prerequisites](#prerequisites)
   - [Submit an issue](#submit-an-issue)
   - [Clone the repository](#clone-the-repository)
   - [Implement your changes](#implement-your-changes)
@@ -95,6 +96,19 @@ Before you write code, read the [Core Concepts] section of the `README.md`. It
 describes the four objects that move through the whole system (`File`, `Target`,
 `Test` and `Suite`), the difference between internal and external tests, and the
 order of the command line pipeline.
+
+### Prerequisites
+
+Before you set up the project, install these tools:
+
+- **Python `>=3.11, <3.15`.** CI tests 3.11 through 3.14.
+- **[pipenv].** It manages the development environment. `Pipfile.lock` is
+  committed, and the rest of the repo assumes that environment. The setup below
+  uses `pipenv install --dev`.
+- **[tox].** It runs the tests, the linters (`tox -e lint`) and the docs build
+  (`tox -e docs`). Run `tox -av` to list every task.
+- **[pre-commit].** Installed by the `--dev` extra; you activate it with
+  `pipenv run pre-commit install` (see below).
 
 ### Submit an issue
 
@@ -645,6 +659,7 @@ on [PyPI], the following steps can be used to release a new version for
 [miniconda]: https://docs.conda.io/en/latest/miniconda.html
 [myst]: https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html
 [other kinds of contributions]: https://opensource.guide/how-to-contribute
+[pipenv]: https://pipenv.pypa.io/
 [pre-commit]: https://pre-commit.com/
 [pypi]: https://pypi.org/
 [pyscaffold's contributor's guide]: https://pyscaffold.org/en/stable/contributing.html

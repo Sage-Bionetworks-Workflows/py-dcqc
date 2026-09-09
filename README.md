@@ -19,6 +19,7 @@
   - [Tests](#tests)
   - [Suites](#suites)
   - [Reports](#reports)
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
   - [Docker](#docker)
 - [Command Line Interface](#command-line-interface)
@@ -151,6 +152,10 @@ Reports provide structured output of test results in various formats:
 - Detailed test status and error messages
 - Aggregated results across multiple suites
 
+## Prerequisites
+
+See [Prerequisites in CONTRIBUTING.md](CONTRIBUTING.md#prerequisites) for the tools you need (pipenv, tox) and the full setup.
+
 ## Installation
 
 You can install py-dcqc directly from PyPI:
@@ -161,13 +166,15 @@ pip install 'dcqc[all]'
 
 The `all` extra adds `rdflib`, which `JsonLdLoadTest` needs to parse JSON-LD files. Without it, that one test raises `ModuleNotFoundError` when you compute its status, while every other test continues to work. The published Docker image installs this extra. If you know you will never check JSON-LD files, plain `pip install dcqc` is enough.
 
-For development installation from source:
+For development installation from source, use pipenv. `Pipfile.lock` is committed and the rest of the repo assumes that environment:
 
 ```bash
 git clone https://github.com/Sage-Bionetworks-Workflows/py-dcqc.git
 cd py-dcqc
-pip install -e '.[all]'
+pipenv install --dev
 ```
+
+Installing into a virtualenv of your own with `pip install -e '.[all,testing,dev]'` is an equivalent fallback. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full setup.
 
 ### Docker
 
