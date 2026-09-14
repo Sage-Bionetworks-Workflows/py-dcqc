@@ -350,7 +350,7 @@ dcqc qc-file examples/data.csv --file-type csv --skipped-tests Md5ChecksumTest
 
 The commands below form one continuous pipeline. Each step consumes the files the previous step wrote, so run them in order. Start from the root of a clone, which is where `examples/internal_target.csv` sits. That manifest holds the single TXT row shown in [Input](#input), so every test in it is an internal one. The steps must run in this order, because each command validates the type of the JSON it is given.
 
-This section needs `dcqc` installed in a virtual environment. The [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image) section below runs the same six commands in the published image instead, and needs no local install.
+The [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image) section below runs the same six commands in the published image instead, and needs no local install.
 
 Steps 4 to 6 apply to a single target, while steps 3, 7 and 8 apply to the whole manifest. Every intermediate file name starts with the name of its target, so name the target in each glob. A bare `computed/*.json` in step 6 matches the tests of every target you have processed so far, and the command then stops with `ValueError: Not all tests refer to the same target`.
 
