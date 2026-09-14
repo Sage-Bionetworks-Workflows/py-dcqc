@@ -277,7 +277,7 @@ The input is a tabular file that contains a list of the file targets to run thro
   |-------------------|-----------|----------------------------------|
   | syn://syn41864974 | TXT       | 38b86a456d1f441008986c6f798d5ef9 |
 
-- Here is an input file example with several targets, also at `examples/example_manifest.csv`. Every row becomes its own single-file target, so the rows are checked independently of one another.
+- Here is an input file example with several targets, also at `examples/example_manifest_multiple.csv`. Every row becomes its own single-file target, so the rows are checked independently of one another.
 
   | url               | file_type | md5_checksum                     |
   |-------------------|----------|----------------------------------|
