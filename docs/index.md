@@ -21,6 +21,7 @@ Add a short description here!
 
 Overview <readme>
 Contributions & Help <contributing>
+Architecture <architecture>
 License <license>
 Authors <authors>
 Changelog <changelog>

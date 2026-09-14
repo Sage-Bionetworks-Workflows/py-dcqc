@@ -59,3 +59,8 @@ MANIFEST
 .python-version
 
 debugging/
+
+# Output of the examples/ scripts
+internal_example/
+external_example/
+docker_example/
