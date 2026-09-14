@@ -107,7 +107,7 @@ The tiers are described below. For the tests themselves, run `dcqc list-tests`: 
 
 Tests are further organized into four tiers. The tier decides whether a test is required: by default, tier-1 and tier-2 tests must pass for a suite to be GREEN, while tier-3 and tier-4 tests are optional.
 
-The list below gives the intended scope of each tier, then the tests that exist today. 
+The list below gives the intended scope of each tier, then the tests that exist today.
 
 - Tier 1 - File Integrity: Checking that the file is whole and "available". These tests verify basic file integrity and usually require additional information, including:
   - MD5 checksum verification
