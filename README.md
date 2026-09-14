@@ -26,12 +26,13 @@
   - [Common options](#common-options)
 - [Input](#input)
 - [Output](#output)
-- [Example Usage](#example-usage)
-  - [Basic File QC](#basic-file-qc)
-  - [Internal Test by Hand](#internal-test-by-hand)
-  - [External Test by Hand](#external-test-by-hand)
-  - [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image)
-  - [Listing Available Tests](#listing-available-tests)
+- [Getting Started](#getting-started)
+  - [Tutorials](#tutorials)
+    - [Listing Available Tests](#listing-available-tests)
+    - [Basic File QC](#basic-file-qc)
+    - [Internal Test by Hand](#internal-test-by-hand)
+    - [External Test by Hand](#external-test-by-hand)
+    - [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image)
 - [Integration with nf-dcqc](#integration-with-nf-dcqc)
 - [PyScaffold](#pyscaffold)
 
@@ -308,7 +309,9 @@ The output is a tabular file with your original targets files but additional col
 
 **The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run. Compare the set of names, not the text of the cell, and do not use these cells in a byte comparison against an expected file.
 
-## Example Usage
+## Getting Started
+
+### Tutorials
 
 Three of the sections below are also runnable scripts, so that you can see a whole pipeline work before you read it step by step. All three take their input from `examples/`, write every artifact to a directory of their own, and need `SYNAPSE_AUTH_TOKEN` in your environment.
 
@@ -318,9 +321,17 @@ Three of the sections below are also runnable scripts, so that you can see a who
 | `examples/external.sh` | [External Test by Hand](#external-test-by-hand) | `external_example/results.csv` |
 | `examples/docker.sh` | [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image) | `docker_example/results.csv` |
 
-`examples/docker.sh` needs only `docker`, because it runs `dcqc` in the published image. The other two need `dcqc` itself, so activate the project environment first with `source "$(pipenv --venv)/bin/activate"`.
+`examples/docker.sh` needs only `docker`, because it runs `dcqc` in the published image. `examples/internal.sh` needs `dcqc` itself, so activate the project environment first with `source "$(pipenv --venv)/bin/activate"`. `examples/external.sh` needs that same activated environment plus `docker` and `jq` on your PATH, because it runs each external test's container by hand.
 
-### Basic File QC
+#### Listing Available Tests
+
+To see all available tests for different file types:
+
+```bash
+dcqc list-tests
+```
+
+#### Basic File QC
 
 Run QC on a single file:
 
@@ -335,7 +346,7 @@ To run without a checksum, skip that test instead:
 dcqc qc-file examples/data.csv --file-type csv --skipped-tests Md5ChecksumTest
 ```
 
-### Internal Test by Hand
+#### Internal Test by Hand
 
 The commands below form one continuous pipeline. Each step consumes the files the previous step wrote, so run them in order. Start from the root of a clone, which is where `examples/internal_target.csv` sits. That manifest holds the single TXT row shown in [Input](#input), so every test in it is an internal one. The steps must run in this order, because each command validates the type of the JSON it is given.
 
@@ -440,7 +451,7 @@ One row of the manifest gives one row here, and the columns hold the status of t
 
 Your `dcqc_required_tests` cell can read `"FileExtensionTest,Md5ChecksumTest"` instead. The order inside the four list columns is not stable between runs, as [Output](#output) explains. Only the set of names is meaningful.
 
-### External Test by Hand
+#### External Test by Hand
 
 *nf-dcqc* is the supported way to run external tests, and the only practical way to run a manifest of them. The steps here do the same work by hand with `docker run`, and end in the same `results.csv` as the internal pipeline above.
 
@@ -594,7 +605,7 @@ The three names in `dcqc_required_tests`, and the two in `dcqc_failed_tests`, ca
 
 The CSV names the tests but not the reason each one gave. Keep `all_suites.json` from step 13 for that, because it holds the `status_reason` of every test, for example `new line.txt: Not a TIFF or MDI file, bad magic number 28267` for `LibTiffInfoTest`.
 
-### Internal Test in the py-dcqc Docker Image
+#### Internal Test in the py-dcqc Docker Image
 
 This section runs the pipeline of [Internal Test by Hand](#internal-test-by-hand) in the published image, with no local Python install. It takes the same manifest, runs the same six commands and ends in the same GREEN row, so read it as a second way to invoke that pipeline rather than as a different one. Only `docker` is needed on your PATH, not `dcqc`.
 
@@ -722,14 +733,6 @@ syn://syn41864974,TXT,38b86a456d1f441008986c6f798d5ef9,GREEN,"Md5ChecksumTest,Fi
 The order inside `dcqc_required_tests` is not stable here either, as [Output](#output) explains.
 
 The files themselves are owned by you, not by `root`, because of the `--user` flag in the wrapper of step 3. Drop that flag and the image runs as `root`, which leaves `targets/`, `tests/` and `results.csv` owned by `root` on the host and makes `rm -rf docker_example` need `sudo` before a second run.
-
-### Listing Available Tests
-
-To see all available tests for different file types:
-
-```bash
-dcqc list-tests
-```
 
 ## Integration with nf-dcqc
 
