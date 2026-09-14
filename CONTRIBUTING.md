@@ -37,7 +37,11 @@ behavior guidelines.
 
 If you experience bugs or general issues with `dcqc`, please have a look
 on the [issue tracker].
-If you don't see anything useful there, please feel free to fire an issue report.
+
+- **External contributors:** if you don't see anything useful there, please
+  feel free to fire an issue report.
+- **Sage Bionetworks employees:** file a ticket in the [DPE Jira project]
+  instead of opening a GitHub issue.
 
 > [!TIP]
 > Please don't forget to include the closed issues in your search.
@@ -647,3 +651,4 @@ on [PyPI], the following steps can be used to release a new version for
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
 [repository]: https://github.com/sage-bionetworks-workflows/py-dcqc
 [issue tracker]: https://github.com/sage-bionetworks-workflows/py-dcqc/issues
+[dpe jira project]: https://sagebionetworks.jira.com/browse/DPE
