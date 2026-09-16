@@ -192,22 +192,12 @@ This often provides additional considerations and avoids unnecessary work.
    > ```console
    > git log --graph --decorate --pretty=oneline --abbrev-commit --all
    > ```
-   >
-   > to look for recurring communication patterns.
 
 5. Please check that your changes don't break any unit tests:
 
    - Fast tests only: `pipenv run pytest`
    - Full matrix on every supported Python: `tox`
    - List the other pre-configured tasks: `tox -av`
-
-   to look for recurring communication patterns.
-
-5. Please check that your changes don't break any unit tests with:
-
-   ```console
-   tox
-   ```
 
    > **Important — notes on the test suite:**
    >
