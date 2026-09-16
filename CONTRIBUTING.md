@@ -14,17 +14,39 @@ considerate, reasonable, and respectful**. When in doubt,
 [Python Software Foundation's Code of Conduct] is a good reference in terms of
 behavior guidelines.
 
+## Table of Contents
+
+- [Issue Reports](#issue-reports)
+- [Documentation Improvements](#documentation-improvements)
+- [Code Contributions](#code-contributions)
+  - [Prerequisites](#prerequisites)
+  - [Submit an issue](#submit-an-issue)
+  - [Clone the repository](#clone-the-repository)
+  - [Implement your changes](#implement-your-changes)
+  - [Submit your contribution](#submit-your-contribution)
+  - [Adding a Dependency](#adding-a-dependency)
+  - [Testing Your Changes](#testing-your-changes)
+  - [Troubleshooting](#troubleshooting)
+- [Maintainer tasks](#maintainer-tasks)
+  - [Releases](#releases)
+
+Adding a new file type, suite, or test (internal or external) is a separate,
+longer document: [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Issue Reports
 
 If you experience bugs or general issues with `dcqc`, please have a look
 on the [issue tracker].
-If you don't see anything useful there, please feel free to fire an issue report.
 
-:::{tip}
-Please don't forget to include the closed issues in your search.
-Sometimes a solution was already reported, and the problem is considered
-**solved**.
-:::
+- **External contributors:** if you don't see anything useful there, please
+  feel free to fire an issue report.
+- **Sage Bionetworks employees:** file a ticket in the [DPE Jira project]
+  instead of opening a GitHub issue.
+
+> [!TIP]
+> Please don't forget to include the closed issues in your search.
+> Sometimes a solution was already reported, and the problem is considered
+> **solved**.
 
 New issue reports should include information about your programming environment
 (e.g., operating system, Python version) and steps to reproduce the problem.
@@ -42,20 +64,19 @@ This means that the docs are kept in the same repository as the project code, an
 that any documentation update is done in the same way was a code contribution.
 The documentation is written using [CommonMark] with [MyST] extensions.
 
-:::{tip}
-Please notice that the [GitHub web interface] provides a quick way of
-propose changes in `dcqc`'s files. While this mechanism can
-be tricky for normal code contributions, it works perfectly fine for
-contributing to the docs, and can be quite handy.
-
-If you are interested in trying this method out, please navigate to
-the `docs` folder in the source [repository], find which file you
-would like to propose changes and click in the little pencil icon at the
-top, to open [GitHub's code editor]. Once you finish editing the file,
-please write a message in the form at the bottom of the page describing
-which changes have you made and what are the motivations behind them and
-submit your proposal.
-:::
+> [!TIP]
+> Please notice that the [GitHub web interface] provides a quick way of
+> propose changes in `dcqc`'s files. While this mechanism can
+> be tricky for normal code contributions, it works perfectly fine for
+> contributing to the docs, and can be quite handy.
+>
+> If you are interested in trying this method out, please navigate to
+> the `docs` folder in the source [repository], find which file you
+> would like to propose changes and click in the little pencil icon at the
+> top, to open [GitHub's code editor]. Once you finish editing the file,
+> please write a message in the form at the bottom of the page describing
+> which changes have you made and what are the motivations behind them and
+> submit your proposal.
 
 When working on documentation changes in your local machine, you can
 compile them using [tox] :
@@ -73,13 +94,26 @@ python3 -m http.server --directory 'docs/_build/html'
 
 ## Code Contributions
 
-<!---
-#TODO: Include a reference or explanation about the internals of the project.
+Before you write code, read the [Core Concepts] section of the `README.md`. It
+describes the four objects that move through the whole system (`File`, `Target`,
+`Test` and `Suite`), the difference between internal and external tests, and the
+order of the command line pipeline.
 
-An architecture description, design principles or at least a summary of the
-main concepts will make it easy for potential contributors to get started
-quickly.
---->
+Adding a new file type, a new suite, or a new test (internal or external) is
+covered in [ARCHITECTURE.md](ARCHITECTURE.md), not in this document.
+
+### Prerequisites
+
+Before you set up the project, install these tools:
+
+- **Python `>=3.11, <3.15`.** CI tests 3.11 through 3.14.
+- **[pipenv].** It manages the development environment. `Pipfile.lock` is
+  committed, and the rest of the repo assumes that environment. The setup below
+  uses `pipenv install --dev`.
+- **[tox].** It runs the tests, the linters (`tox -e lint`) and the docs build
+  (`tox -e docs`). Run `tox -av` to list every task.
+- **[pre-commit].** Installed by the `--dev` extra; you activate it with
+  `pipenv run pre-commit install` (see below).
 
 ### Submit an issue
 
@@ -98,7 +132,7 @@ This often provides additional considerations and avoids unnecessary work.
 
    ```console
    git clone git@github.com:Sage-Bionetworks-Workflows/py-dcqc.git
-   cd dcqc
+   cd py-dcqc
    ```
 
 4. You should run:
@@ -148,28 +182,50 @@ This often provides additional considerations and avoids unnecessary work.
    This should automatically use [flake8]/[black] to check/fix the code style
    in a way that is compatible with the project.
 
-   :::{important}
-   Don't forget to add unit tests and documentation in case your
-   contribution adds an additional feature and is not just a bugfix.
+   > **Important:**
+   > Don't forget to add unit tests and documentation in case your
+   > contribution adds an additional feature and is not just a bugfix.
+   >
+   > Moreover, writing a [descriptive commit message] is highly recommended.
+   > In case of doubt, you can check the commit history with:
+   >
+   > ```console
+   > git log --graph --decorate --pretty=oneline --abbrev-commit --all
+   > ```
+   >
+   > to look for recurring communication patterns.
 
-   Moreover, writing a [descriptive commit message] is highly recommended.
-   In case of doubt, you can check the commit history with:
+5. Please check that your changes don't break any unit tests:
 
-   ```console
-   git log --graph --decorate --pretty=oneline --abbrev-commit --all
-   ```
+   - Fast tests only: `pipenv run pytest`
+   - Full matrix on every supported Python: `tox`
+   - List the other pre-configured tasks: `tox -av`
 
-   to look for recurring communication patterns.
-   :::
-
-5. Please check that your changes don't break any unit tests with:
-
-   ```console
-   tox
-   ```
-
-   You can also use [tox] to run several other pre-configured tasks in the
-   repository. Try `tox -av` to see a list of the available checks.
+   > **Important — notes on the test suite:**
+   >
+   > - **`tox` runs more tests than `pytest`.** `setup.cfg` excludes the slow
+   >   tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`. So
+   >   `tox` also runs the slow tests.
+   > - **The slow tests need Synapse.** They use live Synapse and need a valid
+   >   `SYNAPSE_AUTH_TOKEN` in your environment. No fixture skips them when the
+   >   token is absent: without it they **fail or error**, and that is not a
+   >   defect in your change.
+   > - **`tox` always runs the slow tests; you cannot switch them off from the
+   >   command line.** `tox.ini` runs `pytest {posargs} -m ""`, and the `-m ""`
+   >   clears the marker filter. Whatever you type after `tox --` lands in
+   >   `{posargs}`, which comes **before** that `-m ""`, so `tox -- -m "not slow"`
+   >   runs as `pytest -m "not slow" -m ""`. `pytest` obeys only the last `-m`.
+   >   To run the fast tests only, call `pytest` directly with
+   >   `pipenv run pytest`; it reads `-m "not slow"` from `setup.cfg`.
+   > - **`tests/test_acceptance.py::test_json_report_generation` is already broken
+   >   in CI, and not by your change.** It errors with
+   >   `UnsupportedProtocol: protocol 'syn' is not supported`. CI installs `dcqc`
+   >   from the built wheel, and under that layout the `fs-synapse` entry point
+   >   that registers the `syn://` protocol is not loaded. The editable dev
+   >   install (`pipenv install --dev`) does load it, so the test passes locally
+   >   with a valid token. See
+   >   [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71)
+   >   and [DPE-1795](https://sagebionetworks.jira.com/browse/DPE-1795).
 
 ### Submit your contribution
 
@@ -186,53 +242,44 @@ This often provides additional considerations and avoids unnecessary work.
    the PR as a draft first and mark it as ready for review after the feedbacks
    from the continuous integration (CI) system or any required fixes.
 
-### Contributing New Tests
+### Adding a Dependency
 
-#### Contributing Internal Tests
+All dependencies are declared in `setup.cfg`. Pick the case that matches your
+dependency, then follow its steps in order.
 
-In `py-dcqc`, any test where the primary business logic is executed within the package itself is considered "internal". One example is the `Md5ChecksumTest`.
+#### A non-runtime dependency (tests or dev tools only)
 
-When contributing an internal test be sure to do the following:
+1. Add the package to the `testing` or the `dev` extra under
+   `[options.extras_require]` in `setup.cfg`.
+2. Regenerate the lock file:
 
-1. Follow the steps above to set up `py-dcqc` and create your contribution.
+   ```console
+   tox -e pipenv
+   ```
 
-1. Include a class docstring that describes the purpose of the test.
+3. Commit the updated `Pipfile.lock` together with your `setup.cfg` change.
 
-1. Include the following class attributes:
+#### A runtime dependency (imported by `dcqc` itself)
 
-   - `tier`: A `TestTier` enum describing the complexity of the validation. Valid `tier` values include:
-     - `FILE_INTEGRITY`: Validates basic file integrity and availability. Requires additional information for MD5 verification, file extension validation, format-specific checks, and decompression verification.
-     - `INTERNAL_CONFORMANCE`: Ensures file internal consistency and format compliance. Only needs the files themselves and their format specification for validation against schema and internal metadata checks.
-     - `EXTERNAL_CONFORMANCE`: Verifies file features against separately submitted metadata. Uses additional information while remaining objective/quantitative for validating channel counts, file sizes, nomenclature, and required companion files.
-     - `SUBJECTIVE_CONFORMANCE`: Evaluates files using qualitative criteria that may need expert review. Uses metrics, heuristics, or models for tasks like sample swap detection, PHI detection, and outlier identification.
-   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
+1. Add the package to `install_requires` under `[options]` in `setup.cfg`.
+2. Add the **same** package to `docs/requirements.txt`. Read the Docs installs
+   that file to build the module reference, so the API documentation fails to
+   build if the package is missing from it. Both files carry a comment that says
+   so.
+3. Regenerate the lock file:
 
-1. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
-   - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
+   ```console
+   tox -e pipenv
+   ```
 
-#### Contributing External Tests
+4. Commit `setup.cfg`, `docs/requirements.txt` and `Pipfile.lock` together.
 
-In `py-dcqc`, any test where the primary business logic is executed outside of this package itself is considered to be external. One example is the `LibTiffInfoTest`. For these tests, `py-dcqc` is responsible for packaging up a Nextflow process which is then executed in an [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow run. Such tests are not possible to run in `py-dcqc` alone at this time. This makes contributing, testing, debugging, and using external tests a little more complicated that internal tests such as the `Md5ChecksumTest` which has all of its logic built into this package.
+The `all`, `testing` and `dev` extras are exempt from step 2, because the API
+documentation does not import them.
 
-When contributing an internal test be sure to do the following:
-
-1. Follow the steps above to set up `py-dcqc` and create your contribution.
-
-1. Include a class docstring that describes the purpose of the test.
-
-1. Include the following class attributes:
-
-   - `tier`: A `TestTier` enum describing the complexity of the validation. Valid `tier` values include:
-     - `FILE_INTEGRITY`
-     - `INTERNAL_CONFORMANCE`
-     - `EXTERNAL_CONFORMANCE`
-     - `SUBJECTIVE_CONFORMANCE`
-   - `pass_code`: The exit code that will be returned by the command indicating a passed test.
-   - `fail_code`: The exit code that will be returned by the command indicating a failed test.
-   - `failure_reason_location`: The file (either `"std_out"` or `"std_err"`) that will contain the reason for a failed test.
-   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
-
-1. If possible, contribute an external test that returns different codes when it fails and when it errors out. Currently, a limitation of DCQC is that several external tests return the same `exit_code` when they fail and encounter an error. This will be addressed in future work that will add finer grained result interpretation.
+> [!IMPORTANT]
+> `tox -e pipenv` runs `pipenv lock --dev` and then `pipenv install --dev`.
+> `Pipfile.lock` is committed. Never edit `Pipfile.lock` by hand.
 
 ### Testing Your Changes
 
@@ -241,7 +288,7 @@ When contributing an internal test be sure to do the following:
 
    - Run `git checkout dev` to switch to the developer branch
 
-1. Build your local version of `py-dcqc` with your new changes with:
+2. Build your local version of `py-dcqc` with your new changes with:
 
    ```console
    src/docker/build.sh
@@ -249,10 +296,10 @@ When contributing an internal test be sure to do the following:
 
    NOTE: This step assumes that you have docker installed and that it is running, and that you have `pipx` installed.
 
-1. Follow `nf-dcqc` instructions to create a `nextflow run` command that tests your contribution.
+3. Follow `nf-dcqc` instructions to create a `nextflow run` command that tests your contribution.
 
    - You should include at least two files in your `nf-dcqc` input file ([example](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/dev/testdata/input_full.csv)), one that you expect to pass your contributed test, and one that you expect to fail.
-   - Include the `local` profile so that the workflow leverages your locally built `py-orca` container
+   - Include the `local` profile so that the workflow leverages your locally built `py-dcqc` container
 
    Example command (executed from within your local `nf-dcqc` repo clone):
 
@@ -260,7 +307,7 @@ When contributing an internal test be sure to do the following:
    nextflow run main.nf -profile local,docker --input path/to/your/input.csv --outdir output --required_tests <YOUR_TEST_NAME>
    ```
 
-1. Examine the final `output.csv` and `suites.json` files exported by the Nextflow workflow, if your contributed test bahaved as
+4. Examine the final `output.csv` and `suites.json` files exported by the Nextflow workflow, if your contributed test behaved as
    expected, you're done! If not, debug and make changes to your contribution and re-run the workflow.
 
 ### Troubleshooting
@@ -291,8 +338,9 @@ package:
    tox -r -e docs
    ```
 
-3. Make sure to have a reliable [tox] installation that uses the correct
-   Python version (e.g., 3.7+). When in doubt you can run:
+3. Make sure to have a reliable [tox] installation that uses a supported
+   Python version (see [Prerequisites](#prerequisites)). When in doubt you can
+   run:
 
    ```console
    tox --version
@@ -308,8 +356,11 @@ package:
    virtualenv .venv
    source .venv/bin/activate
    .venv/bin/pip install tox
-   .venv/bin/tox -e all
+   .venv/bin/tox
    ```
+
+   There is no `all` environment in `tox.ini`. Run `tox -av` for the list of
+   the environments that exist.
 
 4. [Pytest can drop you] in an interactive session in the case an error occurs.
    In order to do that you need to pass a `--pdb` option (for example by
@@ -325,18 +376,31 @@ on [PyPI], the following steps can be used to release a new version for
 `dcqc`:
 
 1. Make sure all unit tests are successful.
-2. Tag the current commit on the main branch with a release tag, e.g., `v1.2.3`.
-3. Push the new tag to the upstream [repository],
+2. Bump `version` in the `[metadata]` section of `setup.cfg` to the new
+   version, e.g., `1.2.3`, and merge that change into the main branch. The
+   [git] tag alone does not set the version of the package.
+3. Tag the current commit on the main branch with a release tag, e.g., `v1.2.3`.
+4. Push the new tag to the upstream [repository],
    e.g., `git push upstream v1.2.3`
-4. Clean up the `dist` and `build` folders with `tox -e clean`
-   (or `rm -rf dist build`)
-   to avoid confusion with old builds and Sphinx docs.
-5. Run `tox -e build` and check that the files in `dist` have
-   the correct version (no `.dirty` or [git] hash) according to the [git] tag.
-   Also check the sizes of the distributions, if they are too big (e.g., >
-   500KB), unwanted clutter may have been accidentally included.
-6. Run `tox -e publish -- --repository pypi` and check that everything was
-   uploaded to [PyPI] correctly.
+
+   A `v*` tag starts the `pypi-publish` job in `.github/workflows/CI.yml`, which
+   builds the distribution and uploads it to [PyPI]. In normal conditions the
+   release is complete at this point. Confirm that PyPI serves the new version
+   before you go on.
+
+5. If the CI job did not run or did not succeed, do the release manually with
+   the steps below.
+
+   1. Clean up the `dist` and `build` folders with `tox -e clean`
+      (or `rm -rf dist build`)
+      to avoid confusion with old builds and Sphinx docs.
+   2. Run `tox -e build` and check that the files in `dist` have
+      the correct version (no `.dirty` or [git] hash) according to the [git]
+      tag. Also check the sizes of the distributions, if they are too big
+      (e.g., > 500KB), unwanted clutter may have been accidentally included.
+   3. Run `tox -e publish -- --repository pypi` and check that everything was
+      uploaded to [PyPI] correctly. `tox -e publish` alone uploads to
+      TestPyPI, so the `--repository pypi` argument is necessary.
 
 [^contrib1]:
     Even though, these resources focus on open source projects and
@@ -347,6 +411,7 @@ on [PyPI], the following steps can be used to release a new version for
 [black]: https://pypi.org/project/black/
 [commonmark]: https://commonmark.org/
 [contribution-guide.org]: http://www.contribution-guide.org/
+[core concepts]: https://github.com/Sage-Bionetworks-Workflows/py-dcqc#core-concepts
 [creating a pr]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [descriptive commit message]: https://chris.beams.io/posts/git-commit
 [docstrings]: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
@@ -360,6 +425,7 @@ on [PyPI], the following steps can be used to release a new version for
 [miniconda]: https://docs.conda.io/en/latest/miniconda.html
 [myst]: https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html
 [other kinds of contributions]: https://opensource.guide/how-to-contribute
+[pipenv]: https://pipenv.pypa.io/
 [pre-commit]: https://pre-commit.com/
 [pypi]: https://pypi.org/
 [pyscaffold's contributor's guide]: https://pyscaffold.org/en/stable/contributing.html
@@ -371,3 +437,4 @@ on [PyPI], the following steps can be used to release a new version for
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
 [repository]: https://github.com/sage-bionetworks-workflows/py-dcqc
 [issue tracker]: https://github.com/sage-bionetworks-workflows/py-dcqc/issues
+[dpe jira project]: https://sagebionetworks.jira.com/browse/DPE
