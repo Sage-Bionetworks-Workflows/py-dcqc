@@ -303,7 +303,7 @@ dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
 
 Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
 
-IF comparing two outputs directly, do not use BYTE comparison, compare the set of names, not the text of the cell. 
+IF comparing two outputs directly, do not use BYTE comparison, compare the set of names, not the text of the cell.
 **The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run.
 
 ## Getting Started
