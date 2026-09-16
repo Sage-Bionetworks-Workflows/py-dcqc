@@ -93,21 +93,28 @@ There are two types of targets:
 
 **Some checks need more than one file at a time.** A test has exactly one target, not a list of files. When a `PairedTarget` counts the lines of read 1 and read 2 and compares the two counts, it can see both files only because both are in one target. Without targets, each test would have to invent its own way to group files.
 
-**A target is also what keeps split-up results together.** This is the reason that matters even for single-file QC. The CLI divides QC into small steps so that _nf-dcqc_ can run them at the same time on different machines, which scatters one target's tests across separate JSON files. The target `id` is what matches them back up: `create-tests` names every file it writes after the target, and `create-suite` rejects a set of tests that do not all share one target.
+**A target is also the identity that survives the fan-out.** This is the reason that matters even for single-file QC. The CLI divides QC into small steps so that _nf-dcqc_ can run them at the same time on different machines. The tests of one target are therefore scattered across separate JSON files. The target is what puts them back together: `create-tests` names every file it writes after the target, and `create-suite` refuses a set of tests that do not all share one target. Without that identity, nothing would say which results belong to the same file.
 
 ### Tests
 
 Tests are individual validation checks that can be run on targets. There are two types of tests:
 
-1. **Internal Tests**: The check is Python code in this package, so `dcqc` runs it and returns a status immediately. Today these cover tiers 1 and 2.
+1. **Internal Tests**: The check is Python code in this package, so `dcqc` runs it and returns a status immediately.
+   - MD5 checksum verification (`Md5ChecksumTest`)
+   - File extension validation (`FileExtensionTest`)
+   - JSON and JSON-LD load checks (`JsonLoadTest`, `JsonLdLoadTest`)
+   - Consistency between paired FASTQ files (`PairedFastqParityTest`)
 
-2. **External Tests**: The check is a command-line tool in a Docker container. `dcqc` cannot run it. The test only describes the container image and the command to run, and the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow runs that container. The result comes back through `compute-test`. Today these cover tiers 2 and 4.
+2. **External Tests**: The check is a command-line tool in a Docker container. `dcqc` cannot run it. The test only describes the container image and the command to run, and the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow runs that container. The result comes back through `compute-test`.
+   - TIFF and OME-TIFF format validation (`LibTiffInfoTest`, `BioFormatsInfoTest`, `OmeXmlSchemaTest`)
+   - Date and time metadata checks (`GrepDateTest`, `TiffDateTimeTest`, `TiffTag306DateTimeTest`)
+   - HTAN H5AD conformance (`H5adHtanValidatorTest`)
 
-The tiers are described below. For the tests themselves, run `dcqc list-tests`: the `test_tier` column gives the tier of each test, and the last column shows whether it is internal or external. Because `dcqc` cannot run external tests on its own, `dcqc qc-file` skips all of them.
+The last column of `dcqc list-tests` shows whether each test is internal or external. Because `dcqc` cannot run external tests on its own, `dcqc qc-file` skips all of them.
 
 Tests are further organized into four tiers. The tier decides whether a test is required: by default, tier-1 and tier-2 tests must pass for a suite to be GREEN, while tier-3 and tier-4 tests are optional.
 
-The list below gives the intended scope of each tier, then the tests that exist today.
+The list below gives the intended scope of each tier, then the tests that exist today. Tiers 1 and 2 are well covered. Tier 3 has no tests yet, and tier 4 has only date and time checks, so the remaining items describe the intended design rather than current behavior.
 
 - Tier 1 - File Integrity: Checking that the file is whole and "available". These tests verify basic file integrity and usually require additional information, including:
   - MD5 checksum verification
@@ -115,10 +122,14 @@ The list below gives the intended scope of each tier, then the tests that exist 
   - Format-specific checks (e.g., first/last bytes)
   - Decompression checks if applicable
 
+  Implemented: `Md5ChecksumTest`, `FileExtensionTest`
+
 - Tier 2 - Internal Conformance: Checking that the file is internally consistent and compliant with its stated format. These tests only need the files themselves and their format specification:
   - File format validation using available tools
   - Internal metadata validation against schema (e.g., OME XML)
   - Additional checks on internal metadata
+
+  Implemented: `JsonLoadTest`, `JsonLdLoadTest`, `PairedFastqParityTest`, `LibTiffInfoTest`, `BioFormatsInfoTest`, `OmeXmlSchemaTest`, `H5adHtanValidatorTest`
 
 - Tier 3 - External Conformance: Checking that file features are consistent with separately submitted metadata. These tests use additional information but remain objective/quantitative:
   - Channel count consistency
@@ -126,10 +137,16 @@ The list below gives the intended scope of each tier, then the tests that exist 
   - Antibody nomenclature conformance
   - Secondary file presence (e.g., CRAI file for CRAM)
 
+  Implemented: none yet. All four items above are planned.
+
 - Tier 4 - Subjective Conformance: Checking files against qualitative criteria that may need expert review. These tests often involve metrics, heuristics, or sophisticated models:
   - Sample swap detection
   - PHI detection in images and metadata
   - Outlier detection using metrics (e.g., file size)
+
+  Implemented: `TiffDateTimeTest`, `TiffTag306DateTimeTest`. Both look for date and time metadata, which is one narrow form of the PHI detection listed above. `GrepDateTest` does the same for text files, but no suite includes it, so only the library can run it. Sample swap detection and outlier detection do not exist.
+
+To see the tier of every test per file type, run `dcqc list-tests` and read the `test_tier` column.
 
 ### Suites
 
@@ -185,8 +202,7 @@ You can also use the official Docker container:
 docker pull ghcr.io/sage-bionetworks-workflows/py-dcqc:main
 ```
 
-**Use the `main` tag.** It is built from the default branch on every push, so it
-matches the code in this repository.
+**Use the `main` tag.** It is built from the default branch on every push, so it matches the code in this repository. The `latest` tag only moves when a `vX.Y.Z` release tag is pushed, so it can be many months behind and can hold older dependencies that behave differently. Both tags report the same `dcqc --version`, so the version string does not tell you which one you have. To pin a known build instead, use a version tag such as `:1.8.0`.
 
 
 To run commands using the Docker container:
@@ -233,6 +249,18 @@ If the `dcqc` console script is not on your PATH, you can call the same interfac
 ```bash
 python -m dcqc --help
 ```
+
+Main commands include:
+
+- `create-targets`: Create target JSON files from a targets CSV file
+- `create-tests`: Create test JSON files from a target JSON file
+- `create-process`: Create external process JSON file from a test JSON file
+- `compute-test`: Compute the test status from a test JSON file
+- `create-suite`: Create a suite from a set of test JSON files sharing the same target
+- `combine-suites`: Combine several suite JSON files into a single JSON report
+- `list-tests`: List the tests available for each file type
+- `qc-file`: Run QC tests on a single file (external tests are skipped)
+- `update-csv`: Update input CSV file with dcqc_status column
 
 ### Common options
 
@@ -293,7 +321,7 @@ The output is a tabular file with your original targets files but additional col
   | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest |
   | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest |
 
-`dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type.
+`dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type. Give `--required-tests` to `create-suite` or `qc-file` to use a different set.
 
 Pass `--required-tests` to `create-suite` or `qc-file` to replace that default set with your own choice of tests. For example, to require only `Md5ChecksumTest` for a TXT file (dropping the default `FileExtensionTest` requirement), so the suite status ignores a failing `FileExtensionTest`:
 
@@ -303,8 +331,7 @@ dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
 
 Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
 
-IF comparing two outputs directly, do not use BYTE comparison, compare the set of names, not the text of the cell.
-**The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run.
+**The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run. Compare the set of names, not the text of the cell, and do not use these cells in a byte comparison against an expected file.
 
 ## Getting Started
 

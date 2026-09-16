@@ -115,12 +115,30 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return test
 
     def import_module(self, name: str) -> ModuleType:
+        """Import an optional dependency at run time.
+
+        Use this instead of a top-level import for any package that is only
+        installed by an extra. A top-level import would break the whole dcqc
+        package for a user with the base install, because dcqc.tests imports
+        every test module to register it.
+
+        Args:
+            name: Name of the module to import.
+
+        Returns:
+            The imported module.
+
+        Raises:
+            ModuleNotFoundError: If the module is not installed. The message
+                names this test and tells the user to re-install dcqc with
+                the all extra.
+        """
         try:
             module = import_module(name)
         except ModuleNotFoundError:
             message = (
-                f"{self.type} cannot be computed without the '{name}' package. ",
-                "Re-install `dcqc` with the `all` extra: pip install dcqc[all].",
+                f"{self.type} cannot be computed without the '{name}' package. "
+                "Re-install `dcqc` with the `all` extra: pip install dcqc[all]."
             )
             raise ModuleNotFoundError(message)
         return module

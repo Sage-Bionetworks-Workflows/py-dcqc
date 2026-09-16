@@ -1,7 +1,8 @@
 import pytest
 
 from dcqc import tests
-from dcqc.target import PairedTarget
+from dcqc.file import File, FileType
+from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -15,11 +16,27 @@ def test_for_an_error_when_retrieving_a_test_that_does_not_exist_by_name():
         BaseTest.get_subclass_by_name("FooBar")
 
 
+def test_for_an_error_when_retrieving_an_abstract_test_by_name():
+    with pytest.raises(ValueError):
+        BaseTest.get_subclass_by_name("ExternalTestMixin")
+
+
+def test_that_an_abstract_test_is_not_a_concrete_subclass():
+    subclasses = BaseTest.list_subclasses()
+    concrete_subclasses = BaseTest.list_concrete_subclasses()
+    assert tests.ExternalTestMixin in subclasses
+    assert tests.ExternalTestMixin not in concrete_subclasses
+    assert tests.Md5ChecksumTest in concrete_subclasses
+
+
 def test_for_error_when_importing_unavailable_module(test_targets):
     target = test_targets["good_txt"]
     test = tests.FileExtensionTest(target)
-    with pytest.raises(ModuleNotFoundError):
+    with pytest.raises(ModuleNotFoundError) as excinfo:
         test.import_module("foobar")
+    # The message must be a single string, not a tuple of string fragments.
+    assert isinstance(excinfo.value.args[0], str)
+    assert "pip install dcqc[all]" in excinfo.value.args[0]
 
 
 def test_that_an_existing_module_can_be_imported(test_targets):
@@ -49,6 +66,40 @@ class TestFileExtensionTest:
 
     def test_that_a_tiff_file_with_good_extensions_is_passed(self):
         assert self.good_tiff_test.get_status() == TestStatus.PASS
+
+    def test_that_a_file_with_no_declared_file_type_is_passed(self, tmp_path):
+        """A file with no file_type metadata must not fail on its extension.
+
+        File._pop_file_type defaults to the generic file type ("*"), whose
+        file_extensions is an empty tuple. No file name can match one of them,
+        so compute_status always returns FAIL. Every file in a manifest with
+        no file_type column therefore fails a tier 1 check for a reason the
+        user cannot act on.
+        """
+        path = tmp_path / "sample.txt"
+        path.touch()
+        file = File(str(path), {})
+        assert file.get_file_type().name == "*"
+        target = SingleTarget(file)
+        assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
+
+    def test_that_the_file_extension_test_handles_a_list_of_extensions(self, tmp_path):
+        """compute_status must not crash when file_extensions holds a list.
+
+        str.endswith accepts only a string or a tuple of strings, and
+        compute_status passes the attribute straight through with no
+        conversion. FileType.__init__ coerces its argument to a tuple, but
+        file_extensions is a plain mutable attribute annotated tuple[str, ...],
+        so any later assignment reintroduces a list and crashes the check
+        instead of classifying the file.
+        """
+        file_type = FileType("FooListMutated", (".foo",))
+        file_type.file_extensions = [".foo"]  # type: ignore[assignment]
+        path = tmp_path / "sample.foo"
+        path.touch()
+        file = File(str(path), {"file_type": file_type.name})
+        target = SingleTarget(file)
+        assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL

@@ -192,8 +192,6 @@ This often provides additional considerations and avoids unnecessary work.
    > ```console
    > git log --graph --decorate --pretty=oneline --abbrev-commit --all
    > ```
-   >
-   > to look for recurring communication patterns.
 
 5. Please check that your changes don't break any unit tests:
 
@@ -227,6 +225,9 @@ This often provides additional considerations and avoids unnecessary work.
    >   [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71)
    >   and [DPE-1795](https://sagebionetworks.jira.com/browse/DPE-1795).
 
+   You can also use [tox] to run several other pre-configured tasks in the
+   repository. Try `tox -av` to see a list of the available checks.
+
 ### Submit your contribution
 
 1. If everything works fine, push your local branch to the remote server with:
@@ -243,7 +244,6 @@ This often provides additional considerations and avoids unnecessary work.
    from the continuous integration (CI) system or any required fixes.
 
 ### Adding a Dependency
-
 All dependencies are declared in `setup.cfg`. Pick the case that matches your
 dependency, then follow its steps in order.
 
@@ -415,6 +415,8 @@ on [PyPI], the following steps can be used to release a new version for
 [creating a pr]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [descriptive commit message]: https://chris.beams.io/posts/git-commit
 [docstrings]: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
+[edam]: https://edamontology.github.io/edam-browser/
+[files and filetypes]: https://github.com/Sage-Bionetworks-Workflows/py-dcqc#files-and-filetypes
 [first-contributions tutorial]: https://github.com/firstcontributions/first-contributions
 [flake8]: https://flake8.pycqa.org/en/stable/
 [git]: https://git-scm.com

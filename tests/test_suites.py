@@ -34,6 +34,12 @@ def test_that_a_file_suite_results_in_multiple_tests():
     assert all(issubclass(test, BaseTest) for test in tests)
 
 
+def test_that_the_test_classes_are_sorted_by_name():
+    tests = OmeTiffSuite.list_test_classes()
+    test_names = [test.__name__ for test in tests]
+    assert test_names == sorted(test_names)
+
+
 def test_that_deleting_a_just_added_test_results_in_the_same_test_list():
     tests_1 = FileSuite.list_test_classes()
     tests_2 = RedundantFileSuite.list_test_classes()
