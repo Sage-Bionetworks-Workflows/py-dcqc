@@ -6,7 +6,7 @@ When asked to "add a test", first decide which is meant: a QC check belongs here
 
 ## Adding a QC test — the full checklist
 
-CONTRIBUTING.md "Contributing New Tests" now covers registration too, in its "Registering a New Test" subsection.
+ARCHITECTURE.md "Contributing New Tests" now covers registration too, in its "Registering a New Test" subsection.
 
 1. Create `src/dcqc/tests/<snake_case>_test.py`.
 2. Subclass `InternalBaseTest` or `ExternalBaseTest`, imported from `dcqc.tests.base_test`. Neither is re-exported from `__init__.py`, so import them from the module directly — every existing test does.
@@ -58,15 +58,15 @@ The inversion is correct: these wrap `grep`/`jq`, where "no match" (exit 1) is t
 
 **`GrepDateTest` is orphaned — it is the live example of skipping step 7 above.** It is imported in `__init__.py:10`, so it registers and deserializes fine, but it appears in no suite's `add_tests` (`suites.py` attaches only the other two date tests to `TiffSuite`). It therefore never shows up in `dcqc list-tests`, and no CSV manifest can trigger it; only the library and `tests/test_external_tests.py:268-324` reach it. `tests/data/suites.json` still contains a `GrepDateTest` entry inside a `TiffSuite`, which is stale for the same reason. Do not treat its absence from `list-tests` as a bug in the registry.
 
-Prefer contributing a tool whose failure and error exit codes differ. Many current tests return the same code for both, so an error is reported as a failure (CONTRIBUTING.md "Contributing External Tests", item 9).
+Prefer contributing a tool whose failure and error exit codes differ. Many current tests return the same code for both, so an error is reported as a failure (ARCHITECTURE.md "Contributing External Tests", item 9).
 
 ### Status computation reads the current working directory
 
-`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:208-234`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
+`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:208-217`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
 
 If the files are absent, `FileNotFoundError` propagates and crashes `dcqc compute-test`; it does not degrade to `TestStatus.ERROR`.
 
-Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:250-255`, and `dcqc create-process` regenerates it on demand.
+Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:251`, and `dcqc create-process` regenerates it on demand.
 
 ## Naming
 

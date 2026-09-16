@@ -16,6 +16,7 @@ workflow that runs the QC steps in parallel.
 
 Overview <readme>
 Contributions & Help <contributing>
+Architecture <architecture>
 License <license>
 Authors <authors>
 Changelog <changelog>

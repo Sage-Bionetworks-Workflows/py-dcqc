@@ -76,6 +76,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 Documented so you do not trust the behaviour or "fix" the symptom. None of these are yours to fix as a drive-by.
 
 - **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:63`).
+- `dcqc list-tests` indexes `rows[0]` unguarded (`main.py:174`) and crashes if nothing is registered.
 
 ## CLI notes (`main.py`)
 

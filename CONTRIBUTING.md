@@ -14,17 +14,39 @@ considerate, reasonable, and respectful**. When in doubt,
 [Python Software Foundation's Code of Conduct] is a good reference in terms of
 behavior guidelines.
 
+## Table of Contents
+
+- [Issue Reports](#issue-reports)
+- [Documentation Improvements](#documentation-improvements)
+- [Code Contributions](#code-contributions)
+  - [Prerequisites](#prerequisites)
+  - [Submit an issue](#submit-an-issue)
+  - [Clone the repository](#clone-the-repository)
+  - [Implement your changes](#implement-your-changes)
+  - [Submit your contribution](#submit-your-contribution)
+  - [Adding a Dependency](#adding-a-dependency)
+  - [Testing Your Changes](#testing-your-changes)
+  - [Troubleshooting](#troubleshooting)
+- [Maintainer tasks](#maintainer-tasks)
+  - [Releases](#releases)
+
+Adding a new file type, suite, or test (internal or external) is a separate,
+longer document: [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Issue Reports
 
 If you experience bugs or general issues with `dcqc`, please have a look
 on the [issue tracker].
-If you don't see anything useful there, please feel free to fire an issue report.
 
-:::{tip}
-Please don't forget to include the closed issues in your search.
-Sometimes a solution was already reported, and the problem is considered
-**solved**.
-:::
+- **External contributors:** if you don't see anything useful there, please
+  feel free to fire an issue report.
+- **Sage Bionetworks employees:** file a ticket in the [DPE Jira project]
+  instead of opening a GitHub issue.
+
+> [!TIP]
+> Please don't forget to include the closed issues in your search.
+> Sometimes a solution was already reported, and the problem is considered
+> **solved**.
 
 New issue reports should include information about your programming environment
 (e.g., operating system, Python version) and steps to reproduce the problem.
@@ -42,20 +64,19 @@ This means that the docs are kept in the same repository as the project code, an
 that any documentation update is done in the same way was a code contribution.
 The documentation is written using [CommonMark] with [MyST] extensions.
 
-:::{tip}
-Please notice that the [GitHub web interface] provides a quick way of
-propose changes in `dcqc`'s files. While this mechanism can
-be tricky for normal code contributions, it works perfectly fine for
-contributing to the docs, and can be quite handy.
-
-If you are interested in trying this method out, please navigate to
-the `docs` folder in the source [repository], find which file you
-would like to propose changes and click in the little pencil icon at the
-top, to open [GitHub's code editor]. Once you finish editing the file,
-please write a message in the form at the bottom of the page describing
-which changes have you made and what are the motivations behind them and
-submit your proposal.
-:::
+> [!TIP]
+> Please notice that the [GitHub web interface] provides a quick way of
+> propose changes in `dcqc`'s files. While this mechanism can
+> be tricky for normal code contributions, it works perfectly fine for
+> contributing to the docs, and can be quite handy.
+>
+> If you are interested in trying this method out, please navigate to
+> the `docs` folder in the source [repository], find which file you
+> would like to propose changes and click in the little pencil icon at the
+> top, to open [GitHub's code editor]. Once you finish editing the file,
+> please write a message in the form at the bottom of the page describing
+> which changes have you made and what are the motivations behind them and
+> submit your proposal.
 
 When working on documentation changes in your local machine, you can
 compile them using [tox] :
@@ -77,6 +98,22 @@ Before you write code, read the [Core Concepts] section of the `README.md`. It
 describes the four objects that move through the whole system (`File`, `Target`,
 `Test` and `Suite`), the difference between internal and external tests, and the
 order of the command line pipeline.
+
+Adding a new file type, a new suite, or a new test (internal or external) is
+covered in [ARCHITECTURE.md](ARCHITECTURE.md), not in this document.
+
+### Prerequisites
+
+Before you set up the project, install these tools:
+
+- **Python `>=3.11, <3.15`.** CI tests 3.11 through 3.14.
+- **[pipenv].** It manages the development environment. `Pipfile.lock` is
+  committed, and the rest of the repo assumes that environment. The setup below
+  uses `pipenv install --dev`.
+- **[tox].** It runs the tests, the linters (`tox -e lint`) and the docs build
+  (`tox -e docs`). Run `tox -av` to list every task.
+- **[pre-commit].** Installed by the `--dev` extra; you activate it with
+  `pipenv run pre-commit install` (see below).
 
 ### Submit an issue
 
@@ -145,19 +182,26 @@ This often provides additional considerations and avoids unnecessary work.
    This should automatically use [flake8]/[black] to check/fix the code style
    in a way that is compatible with the project.
 
-   :::{important}
-   Don't forget to add unit tests and documentation in case your
-   contribution adds an additional feature and is not just a bugfix.
+   > **Important:**
+   > Don't forget to add unit tests and documentation in case your
+   > contribution adds an additional feature and is not just a bugfix.
+   >
+   > Moreover, writing a [descriptive commit message] is highly recommended.
+   > In case of doubt, you can check the commit history with:
+   >
+   > ```console
+   > git log --graph --decorate --pretty=oneline --abbrev-commit --all
+   > ```
+   >
+   > to look for recurring communication patterns.
 
-   Moreover, writing a [descriptive commit message] is highly recommended.
-   In case of doubt, you can check the commit history with:
+5. Please check that your changes don't break any unit tests:
 
-   ```console
-   git log --graph --decorate --pretty=oneline --abbrev-commit --all
-   ```
+   - Fast tests only: `pipenv run pytest`
+   - Full matrix on every supported Python: `tox`
+   - List the other pre-configured tasks: `tox -av`
 
    to look for recurring communication patterns.
-   :::
 
 5. Please check that your changes don't break any unit tests with:
 
@@ -165,24 +209,31 @@ This often provides additional considerations and avoids unnecessary work.
    tox
    ```
 
-   :::{important}
-   `tox` and a bare `pytest` do not run the same tests. `setup.cfg` excludes the
-   slow tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`.
-   The slow tests use live Synapse, so `tox` needs a valid
-   `SYNAPSE_AUTH_TOKEN` in your environment. There is no fixture that skips
-   these tests when the token is absent: without the token they **fail or
-   error**, and that is not a defect in your change.
-
-   One of the two slow tests,
-   `tests/test_acceptance.py::test_json_report_generation`, also fails in CI
-   even with a valid token. See
-   [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71).
-
-   To run only the fast tests, use `pipenv run pytest`. Do not try to pass the
-   marker through `tox`: `tox.ini` puts `{posargs}` **before** its own `-m ""`,
-   so `tox -- -m "not slow"` becomes `pytest -m "not slow" -m ""`. `pytest`
-   keeps only the last `-m`, and your marker is ignored.
-   :::
+   > **Important — notes on the test suite:**
+   >
+   > - **`tox` runs more tests than `pytest`.** `setup.cfg` excludes the slow
+   >   tests with `-m "not slow"`, but `tox.ini` overrides that with `-m ""`. So
+   >   `tox` also runs the slow tests.
+   > - **The slow tests need Synapse.** They use live Synapse and need a valid
+   >   `SYNAPSE_AUTH_TOKEN` in your environment. No fixture skips them when the
+   >   token is absent: without it they **fail or error**, and that is not a
+   >   defect in your change.
+   > - **`tox` always runs the slow tests; you cannot switch them off from the
+   >   command line.** `tox.ini` runs `pytest {posargs} -m ""`, and the `-m ""`
+   >   clears the marker filter. Whatever you type after `tox --` lands in
+   >   `{posargs}`, which comes **before** that `-m ""`, so `tox -- -m "not slow"`
+   >   runs as `pytest -m "not slow" -m ""`. `pytest` obeys only the last `-m`.
+   >   To run the fast tests only, call `pytest` directly with
+   >   `pipenv run pytest`; it reads `-m "not slow"` from `setup.cfg`.
+   > - **`tests/test_acceptance.py::test_json_report_generation` is already broken
+   >   in CI, and not by your change.** It errors with
+   >   `UnsupportedProtocol: protocol 'syn' is not supported`. CI installs `dcqc`
+   >   from the built wheel, and under that layout the `fs-synapse` entry point
+   >   that registers the `syn://` protocol is not loaded. The editable dev
+   >   install (`pipenv install --dev`) does load it, so the test passes locally
+   >   with a valid token. See
+   >   [issue #71](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/issues/71)
+   >   and [DPE-1795](https://sagebionetworks.jira.com/browse/DPE-1795).
 
    You can also use [tox] to run several other pre-configured tasks in the
    repository. Try `tox -av` to see a list of the available checks.
@@ -203,283 +254,42 @@ This often provides additional considerations and avoids unnecessary work.
    from the continuous integration (CI) system or any required fixes.
 
 ### Adding a Dependency
+All dependencies are declared in `setup.cfg`. Pick the case that matches your
+dependency, then follow its steps in order.
 
-Dependencies live in `setup.cfg`. A runtime dependency goes in `install_requires`
-under `[options]`. A dependency that only the tests or the development tools need
-goes in the `testing` or the `dev` extra under `[options.extras_require]`.
+#### A non-runtime dependency (tests or dev tools only)
 
-A **runtime** dependency needs a second edit. Add the same package to
-`docs/requirements.txt` as well. Read the Docs installs that file to build the
-module reference, so the API documentation fails to build if the package is
-absent from it. Both files carry a comment that says this. The `all`, `testing`
-and `dev` extras are not part of this rule, because the API documentation does
-not import them.
+1. Add the package to the `testing` or the `dev` extra under
+   `[options.extras_require]` in `setup.cfg`.
+2. Regenerate the lock file:
 
-After any change to the dependencies in `setup.cfg`, regenerate the lock file:
-
-```console
-tox -e pipenv
-```
-
-This runs `pipenv lock --dev` and then `pipenv install --dev`. `Pipfile.lock` is
-committed, so commit the new lock file together with your `setup.cfg` change.
-Never edit `Pipfile.lock` by hand.
-
-### Contributing New File Types
-
-If you want to add the ability to test a completely new file type, you must add that type first.
-The [Files and FileTypes] section of the `README.md` describes what a file type
-is and lists the types that exist today. Read it before you add one.
-
-A new file type needs two things: a `FileType` object, and a suite class that
-claims it. The `FileType` object gives the type a name, its valid extensions and
-its [EDAM] identifier. The suite decides which tests DCQC runs on files of that
-type.
-
-A file type without a suite is legal, but it does almost nothing. DCQC gives
-files of an unclaimed type the generic `FileSuite`, and the type does not show in
-`dcqc list-tests`. Nothing warns you, because `dcqc list-tests` and
-`SuiteABC.get_subclass_by_file_type` work from the suites, not from the file type
-registry.
-
-Register the file type in `src/dcqc/file.py`. Add one line to the block of
-`FileType(...)` statements at the end of the module. Construction of the
-object is the registration; there is no separate registry call:
-
-```python
-FileType("MY-TYPE", (".mytype", ".mytype.gz"), "format_1234")
-```
-
-Note these points:
-
-- **Keep the trailing comma if the type has only one extension.**
-   `(".mytype")` is a string, not a tuple, and `FileType` calls `tuple()` on
-   it. The result is one element per character, and `FileExtensionTest` then
-   accepts any file name that ends in one of those characters. Write
-   `(".mytype",)`.
-- `FileExtensionTest` matches with `str.endswith`, so write compound
-   extensions in full, as `OME-TIFF` and `FASTQ` do (`.ome.tif`,
-   `.fastq.gz`).
-- The name must be unique. Names are compared in lower case, and a duplicate
-   raises a `ValueError` at import time.
-- Do not give the file type the name of a `Test`, `Suite` or `Target` class.
-   `JsonParser.get_class` in `src/dcqc/parsers.py` looks at those classes
-   before it looks at the file type names, so the class wins and
-   deserialization returns the wrong object.
-- The EDAM identifier is optional, but give one if the format has one.
-
-### Contributing New Suites
-
-A suite connects one file type to the tests that DCQC runs on files of that type.
-There is one suite class for each file type. All of them are in
-`src/dcqc/suites/suites.py`, and all of them come from `SuiteABC` in
-`src/dcqc/suites/suite_abc.py`. There is no `BaseSuite`.
-
-Add the class to `src/dcqc/suites/suites.py`. Give it a docstring, the file type
-it claims, and the tests that are new at this level:
-
-```python
-class MyTypeSuite(FileSuite):
-    """Suite class for MY-TYPE files."""
-
-    file_type = FileType.get_file_type("MY-TYPE")
-    add_tests = (tests.MyNewTest,)
-```
-
-Note these points:
-
-- `FileType.get_file_type` runs when Python defines the class, so register the
-   file type first. See the section above. An unregistered name raises a
-   `ValueError` at import time.
-- Subclass `FileSuite` for a new format. Subclass a more specific suite if your
-   type is a subtype of an existing format, as `H5ADSuite(HDF5Suite)`,
-   `OmeTiffSuite(TiffSuite)` and `JsonLdSuite(JsonSuite)` do.
-- `add_tests` is additive along the class hierarchy. It does not replace the
-   list of the parent class. `list_test_classes` unions the `add_tests` of every
-   class in the method resolution order, so a subclass also runs the tests of
-   its parents. Inheritance is the only way to share tests between suites.
-- `add_tests` is optional. `TXTSuite`, `TSVSuite`, `CSVSuite`, `BAMSuite` and
-   `HDF5Suite` declare no tests of their own and run only the tests of
-   `FileSuite`.
-- Write the test names as `tests.MyNewTest`, because `suites.py` imports the
-   package with `from dcqc import tests`. Every test in `add_tests` must also
-   have an import line in `src/dcqc/tests/__init__.py`. See
-   [Registering a New Test](#registering-a-new-test).
-- Two suites must not claim the same file type. The registry is a dictionary
-   keyed on the file type name, so the second class replaces the first one with
-   no warning.
-- Do not use `del_tests` to remove an inherited test. Nothing in `src/` uses it.
-   The loop that reads it uses `hasattr`, so a subclass that does not declare
-   its own `del_tests` applies the `del_tests` of an ancestor again at its own
-   position in the method resolution order, and this can remove its own
-   `add_tests`. Change the shape of the hierarchy instead.
-- Class names in `suites.py` are not consistent. ALL-CAPS acronyms (`TSVSuite`,
-   `HDF5Suite`) sit beside PascalCase names (`TiffSuite`, `FastqSuite`). Match
-   the classes near yours.
-
-`SuiteABC` has no abstract methods, so Python does not tell you that a class
-attribute is absent. If you forget `file_type`, the class still imports, and the
-`AttributeError` comes later from `get_subclass_by_file_type` and
-`list_test_classes_by_file_type`. Both walk all of the suites, so one incomplete
-suite breaks the selection of every other suite and breaks `dcqc list-tests`.
-
-Registration is by import, as it is for tests. `src/dcqc/suites/__init__.py` is
-empty, and the suites are registered only because `src/dcqc/__init__.py` imports
-`dcqc.suites.suites`. A class in `suites.py` therefore needs no other step. A
-new suites *module* needs two more:
-
-- Add an import for it to `src/dcqc/__init__.py`. That file carries an
-   `# isort: skip_file` comment, because its import order prevents a circular
-   import. Do not reorder the lines.
-- Add a `[[tool.mypy.overrides]]` block for the module in `pyproject.toml` with
-   `disable_error_code = "assignment"`, as `dcqc.suites.suites` has. Suites
-   reassign inherited `ClassVar` attributes, and mypy reports that as an
-   assignment error.
-
-
-### Contributing New Tests
-
-A new test needs two things: a test class, and registration. If you write the class but do not register it, nothing tells you. The class does not fail to import, and `pre-commit` and `tox` stay green. The problem shows later, when `dcqc compute-test` stops with `Subclass (MyNewTest) not available`.
-
-DCQC finds tests by a walk of the subclasses of `BaseTest`. There is no plugin scan, no entry point and no decorator. A test class is visible only if `src/dcqc/tests/__init__.py` imports its module, and DCQC runs it only if a suite lists it.
-
-#### Registering a New Test
-
-Do these two steps for every new test, internal or external.
-
-1. Add an import line for your module to `src/dcqc/tests/__init__.py`, in alphabetical order with the lines that are there:
-
-   ```python
-   from dcqc.tests.my_new_test import MyNewTest
+   ```console
+   tox -e pipenv
    ```
 
-   These imports look unused, but they are the registration. Do not remove them. Two settings in `setup.cfg` keep the linters from removing them for you: `per-file-ignores = */__init__.py:F401` in the `[flake8]` section, and `ignore-init-module-imports=true` in the `[autoflake]` section. Do not change either one.
+3. Commit the updated `Pipfile.lock` together with your `setup.cfg` change.
 
-2. Add your class to the `add_tests` tuple of one or more suites in `src/dcqc/suites/suites.py`:
+#### A runtime dependency (imported by `dcqc` itself)
 
-   ```python
-   class TiffSuite(FileSuite):
-       """Suite class for TIFF files."""
+1. Add the package to `install_requires` under `[options]` in `setup.cfg`.
+2. Add the **same** package to `docs/requirements.txt`. Read the Docs installs
+   that file to build the module reference, so the API documentation fails to
+   build if the package is missing from it. Both files carry a comment that says
+   so.
+3. Regenerate the lock file:
 
-       file_type = FileType.get_file_type("TIFF")
-       add_tests = (
-           tests.LibTiffInfoTest,
-           tests.TiffDateTimeTest,
-           tests.TiffTag306DateTimeTest,
-           tests.MyNewTest,
-       )
+   ```console
+   tox -e pipenv
    ```
 
-   The first step makes the class known to DCQC. This step makes DCQC run it. A test that is in no suite never runs against a CSV manifest and never shows in `dcqc list-tests`. Pick the suite for the file type that your test applies to, or `FileSuite` if it applies to all file types. `add_tests` is additive along the class hierarchy, so a suite also runs the tests of the suites it inherits from.
+4. Commit `setup.cfg`, `docs/requirements.txt` and `Pipfile.lock` together.
 
-#### Contributing Internal Tests
+The `all`, `testing` and `dev` extras are exempt from step 2, because the API
+documentation does not import them.
 
-In `py-dcqc`, any test where the primary business logic is executed within the package itself is considered "internal". One example is the `Md5ChecksumTest`.
-
-When contributing an internal test be sure to do the following:
-
-1. Follow the steps above to set up `py-dcqc` and create your contribution.
-
-2. Add a new module at `src/dcqc/tests/<snake_case>_test.py`, with one test class in it. These modules are package code, not unit tests, although their names end in `_test.py`. The unit tests are in the `tests/` directory at the root of the repository.
-
-3. Subclass `InternalBaseTest`, and import it from `dcqc.tests.base_test`. The `dcqc.tests` package does not re-export it:
-
-   ```python
-   from dcqc.tests.base_test import InternalBaseTest
-
-
-   class MyNewTest(InternalBaseTest):
-       """Tests that ..."""
-   ```
-
-   The other names that you need, such as `TestStatus`, `TestTier` and `Process`, also come from `dcqc.tests.base_test`. `SingleTarget` and `PairedTarget` come from `dcqc.target`.
-
-4. Include a class docstring that describes the purpose of the test. The
-   docstring goes into the Sphinx API documentation. `dcqc list-tests` does not
-   show it: that command prints only the file type, the EDAM identifier, the
-   test name, the tier and the test type.
-
-5. Include the following class attributes:
-
-   - `tier`: A `TestTier` enum describing the complexity of the validation. Valid `tier` values include:
-     - `FILE_INTEGRITY`: Validates basic file integrity and availability. Requires additional information for MD5 verification, file extension validation, format-specific checks, and decompression verification.
-     - `INTERNAL_CONFORMANCE`: Ensures file internal consistency and format compliance. Only needs the files themselves and their format specification for validation against schema and internal metadata checks.
-     - `EXTERNAL_CONFORMANCE`: Verifies file features against separately submitted metadata. Uses additional information while remaining objective/quantitative for validating channel counts, file sizes, nomenclature, and required companion files.
-     - `SUBJECTIVE_CONFORMANCE`: Evaluates files using qualitative criteria that may need expert review. Uses metrics, heuristics, or models for tasks like sample swap detection, PHI detection, and outlier identification.
-   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
-
-6. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
-   - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
-   - Call `self.target.file.stage()` to get a local `Path` to the file. This works for remote URLs, such as `syn://`, as well as local files.
-
-7. Register the test with the two steps in the "Registering a New Test" section above. Without them the test never runs.
-
-8. Add a unit test for your class to `tests/test_internal_tests.py`.
-
-#### Contributing External Tests
-
-In `py-dcqc`, any test where the primary business logic is executed outside of this package itself is considered to be external. One example is the `LibTiffInfoTest`. For these tests, `py-dcqc` is responsible for packaging up a Nextflow process which is then executed in an [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) workflow run. Such tests are not possible to run in `py-dcqc` alone at this time. This makes contributing, testing, debugging, and using external tests a little more complicated than internal tests such as the `Md5ChecksumTest` which has all of its logic built into this package.
-
-When contributing an external test be sure to do the following:
-
-1. Follow the steps above to set up `py-dcqc` and create your contribution.
-
-2. Add a new module at `src/dcqc/tests/<snake_case>_test.py`, with one test class in it, as for an internal test.
-
-3. Subclass `ExternalBaseTest`, and import it from `dcqc.tests.base_test`. The `dcqc.tests` package does not re-export it:
-
-   ```python
-   from dcqc.tests.base_test import ExternalBaseTest
-
-
-   class MyNewTest(ExternalBaseTest):
-       """Tests that ..."""
-   ```
-
-4. Include a class docstring that describes the purpose of the test. The
-   docstring goes into the Sphinx API documentation. `dcqc list-tests` does not
-   show it: that command prints only the file type, the EDAM identifier, the
-   test name, the tier and the test type.
-
-5. Include the following class attributes:
-
-   - `tier`: A `TestTier` enum describing the complexity of the validation. Valid `tier` values include:
-     - `FILE_INTEGRITY`
-     - `INTERNAL_CONFORMANCE`
-     - `EXTERNAL_CONFORMANCE`
-     - `SUBJECTIVE_CONFORMANCE`
-   - `pass_code`: The exit code that will be returned by the command indicating a passed test.
-   - `fail_code`: The exit code that will be returned by the command indicating a failed test.
-   - `failure_reason_location`: The file (either `"std_out"` or `"std_err"`) that will contain the reason for a failed test.
-   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
-
-6. Implement the `generate_process` method. It does not run the command. It returns a `Process` object that describes the container and the command for `nf-dcqc` to run:
-
-   ```python
-   def generate_process(self) -> Process:
-       path = self.target.file.stage()
-
-       command_args = [
-           "my-tool",
-           f"'{path.name}'",
-       ]
-       process = Process(
-           container="quay.io/sagebionetworks/my-tool:1.0",
-           command_args=command_args,
-       )
-       return process
-   ```
-
-   Note these two points:
-
-   - Call `self.target.file.stage()` first. The workflow needs a local copy of the file.
-   - Build `command_args` from `path.name`, not from the full path. The workflow mounts the file in the working directory of the container, so a full local path is not valid there.
-
-7. Register the test with the two steps in the "Registering a New Test" section above. Without them the test never runs.
-
-8. Add a unit test for your class to `tests/test_external_tests.py`. Because the business logic is in a container, you can only test the `Process` that `generate_process` returns, and the interpretation of the exit codes. To test the container itself, see [Testing Your Changes](#testing-your-changes) below.
-
-9. If possible, contribute an external test that returns different codes when it fails and when it errors out. Currently, a limitation of DCQC is that several external tests return the same `exit_code` when they fail and encounter an error. This will be addressed in future work that will add finer grained result interpretation.
+> [!IMPORTANT]
+> `tox -e pipenv` runs `pipenv lock --dev` and then `pipenv install --dev`.
+> `Pipfile.lock` is committed. Never edit `Pipfile.lock` by hand.
 
 ### Testing Your Changes
 
@@ -539,7 +349,7 @@ package:
    ```
 
 3. Make sure to have a reliable [tox] installation that uses a supported
-   Python version (3.11 or later, but earlier than 3.15). When in doubt you can
+   Python version (see [Prerequisites](#prerequisites)). When in doubt you can
    run:
 
    ```console
@@ -627,6 +437,7 @@ on [PyPI], the following steps can be used to release a new version for
 [miniconda]: https://docs.conda.io/en/latest/miniconda.html
 [myst]: https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html
 [other kinds of contributions]: https://opensource.guide/how-to-contribute
+[pipenv]: https://pipenv.pypa.io/
 [pre-commit]: https://pre-commit.com/
 [pypi]: https://pypi.org/
 [pyscaffold's contributor's guide]: https://pyscaffold.org/en/stable/contributing.html
@@ -638,3 +449,4 @@ on [PyPI], the following steps can be used to release a new version for
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
 [repository]: https://github.com/sage-bionetworks-workflows/py-dcqc
 [issue tracker]: https://github.com/sage-bionetworks-workflows/py-dcqc/issues
+[dpe jira project]: https://sagebionetworks.jira.com/browse/DPE
