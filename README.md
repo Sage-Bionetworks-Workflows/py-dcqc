@@ -167,7 +167,7 @@ pip install 'dcqc[all]'
 
 The `all` extra adds `rdflib`, which `JsonLdLoadTest` needs to parse JSON-LD files. Without it, that one test raises `ModuleNotFoundError` when you compute its status, while every other test continues to work. The published Docker image installs this extra. If you know you will never check JSON-LD files, plain `pip install dcqc` is enough.
 
-For development installation from source, use pipenv. `Pipfile.lock` is committed and the rest of the repo assumes that environment:
+For development installation from source, use pipenv. [`Pipfile.lock`](Pipfile.lock) is committed and the rest of the repo assumes that environment:
 
 ```bash
 git clone https://github.com/Sage-Bionetworks-Workflows/py-dcqc.git
@@ -234,18 +234,6 @@ If the `dcqc` console script is not on your PATH, you can call the same interfac
 python -m dcqc --help
 ```
 
-Main commands include:
-
-- `create-targets`: Create target JSON files from a targets CSV file
-- `create-tests`: Create test JSON files from a target JSON file
-- `create-process`: Create external process JSON file from a test JSON file
-- `compute-test`: Compute the test status from a test JSON file
-- `create-suite`: Create a suite from a set of test JSON files sharing the same target
-- `combine-suites`: Combine several suite JSON files into a single JSON report
-- `list-tests`: List the tests available for each file type
-- `qc-file`: Run QC tests on a single file (external tests are skipped)
-- `update-csv`: Update input CSV file with dcqc_status column
-
 ### Common options
 
 Several commands share the same options:
@@ -271,13 +259,13 @@ dcqc <command> --help
 
 The input is a tabular file that contains a list of the file targets to run through dcqc
 
-- Here is a single file target input file example, also at `examples/example_manifest_single.csv`
+- Here is a single file target input file example, also at [`examples/example_manifest_single.csv`](examples/example_manifest_single.csv)
 
   | url               | file_type | md5_checksum                     |
   |-------------------|-----------|----------------------------------|
   | syn://syn41864974 | TXT       | 38b86a456d1f441008986c6f798d5ef9 |
 
-- Here is an input file example with several targets, also at `examples/example_manifest_multiple.csv`. Every row becomes its own single-file target, so the rows are checked independently of one another.
+- Here is an input file example with several targets, also at [`examples/example_manifest_multiple.csv`](examples/example_manifest_multiple.csv). Every row becomes its own single-file target, so the rows are checked independently of one another.
 
   | url               | file_type | md5_checksum                     |
   |-------------------|----------|----------------------------------|
@@ -305,7 +293,15 @@ The output is a tabular file with your original targets files but additional col
   | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest |
   | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest |
 
-`dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type. Give `--required-tests` to `create-suite` or `qc-file` to use a different set.
+`dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type.
+
+Pass `--required-tests` to `create-suite` or `qc-file` to replace that default set with your own choice of tests. For example, to require only `Md5ChecksumTest` for a TXT file (dropping the default `FileExtensionTest` requirement), so the suite status ignores a failing `FileExtensionTest`:
+
+```bash
+dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
+```
+
+Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
 
 **The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run. Compare the set of names, not the text of the cell, and do not use these cells in a byte comparison against an expected file.
 
@@ -317,15 +313,17 @@ Three of the sections below are also runnable scripts, so that you can see a who
 
 | Script | Section | Writes |
 |---|---|---|
-| `examples/internal.sh` | [Internal Test by Hand](#internal-test-by-hand) | `internal_example/results.csv` |
-| `examples/external.sh` | [External Test by Hand](#external-test-by-hand) | `external_example/results.csv` |
-| `examples/docker.sh` | [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image) | `docker_example/results.csv` |
+| [`examples/internal.sh`](examples/internal.sh) | [Internal Test by Hand](#internal-test-by-hand) | `internal_example/results.csv` |
+| [`examples/external.sh`](examples/external.sh) | [External Test by Hand](#external-test-by-hand) | `external_example/results.csv` |
+| [`examples/docker.sh`](examples/docker.sh) | [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-docker-image) | `docker_example/results.csv` |
 
 `examples/docker.sh` needs only `docker`, because it runs `dcqc` in the published image. `examples/internal.sh` needs `dcqc` itself, so activate the project environment first with `source "$(pipenv --venv)/bin/activate"`. `examples/external.sh` needs that same activated environment plus `docker` and `jq` on your PATH, because it runs each external test's container by hand.
 
 #### Listing Available Tests
 
 To see all available tests for different file types:
+
+Command(s) to Run:
 
 ```bash
 dcqc list-tests
@@ -335,6 +333,8 @@ dcqc list-tests
 
 Run QC on a single file:
 
+Command(s) to Run:
+
 ```bash
 dcqc qc-file examples/data.csv --file-type csv \
   --metadata '{"md5_checksum": "52f81b43ac7bde58d3c97184588fba07"}'
@@ -342,13 +342,17 @@ dcqc qc-file examples/data.csv --file-type csv \
 
 To run without a checksum, skip that test instead:
 
+Command(s) to Run:
+
 ```bash
 dcqc qc-file examples/data.csv --file-type csv --skipped-tests Md5ChecksumTest
 ```
 
 #### Internal Test by Hand
 
-Walks the full internal pipeline — `create-targets` → `create-tests` → `compute-test` → `create-suite` → `combine-suites` → `update-csv` — command by command in a local Python environment. The manifest is `examples/internal_target.csv`, the single TXT row from [Input](#input), so every test in its suite is internal and no container is needed. The commands must run in this order, because each one validates the type of the JSON it is given.
+Walks the full internal pipeline — `create-targets` → `create-tests` → `compute-test` → `create-suite` → `combine-suites` → `update-csv` — command by command in a local Python environment. The manifest is [`examples/internal_target.csv`](examples/internal_target.csv), the single TXT row from [Input](#input), so every test in its suite is internal and no container is needed. The commands must run in this order, because each one validates the type of the JSON it is given.
+
+Command(s) to Run:
 
 ```bash
 export SYNAPSE_AUTH_TOKEN=<your personal access token>
@@ -361,7 +365,9 @@ The [Internal Test in the py-dcqc Docker Image](#internal-test-in-the-py-dcqc-do
 
 #### External Test by Hand
 
-*nf-dcqc* is the supported way to run external tests, and the only practical way to run a manifest of them. `examples/external.sh` does the same work by hand with `docker run`, so you can see what *nf-dcqc* does for you. The manifest is `examples/external_target.csv`, the single TIFF row from [Input](#input); a TIFF suite has three external tests — `LibTiffInfoTest`, `TiffDateTimeTest` and `TiffTag306DateTimeTest` — each needing its own container run, plus the same two internal tests as above.
+*nf-dcqc* is the supported way to run external tests, and the only practical way to run a manifest of them. `examples/external.sh` does the same work by hand with `docker run`, so you can see what *nf-dcqc* does for you. The manifest is [`examples/external_target.csv`](examples/external_target.csv), the single TIFF row from [Input](#input); a TIFF suite has three external tests — `LibTiffInfoTest`, `TiffDateTimeTest` and `TiffTag306DateTimeTest` — each needing its own container run, plus the same two internal tests as above.
+
+Command(s) to Run:
 
 ```bash
 export SYNAPSE_AUTH_TOKEN=<your personal access token>
@@ -375,6 +381,8 @@ It refuses to run if `external_example/` already exists, and writes its result t
 #### Internal Test in the py-dcqc Docker Image
 
 Runs the same pipeline as [Internal Test by Hand](#internal-test-by-hand) inside the published image, so only `docker` is needed — no local Python install, and no environment to activate.
+
+Command(s) to Run:
 
 ```bash
 export SYNAPSE_AUTH_TOKEN=<your personal access token>
