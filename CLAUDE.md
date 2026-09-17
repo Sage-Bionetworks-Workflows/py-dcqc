@@ -127,7 +127,6 @@ Do not treat these as things you introduced, and do not "fix" them as drive-by c
 
 - **TSV, CSV, BAM and H5AD extension validation is effectively disabled** by missing trailing commas at `src/dcqc/file.py:112,113,114,117`. Fixing it changes QC outcomes and deserves its own PR. Details, and the other confirmed bugs in the object model, are in `src/dcqc/CLAUDE.md`.
 - **Issue #71** — `tests/test_acceptance.py::test_json_report_generation` fails on every CI run with `UnsupportedProtocol: protocol 'syn' is not supported`, because tox installs from the built wheel.
-- `.readthedocs.yml` still declares Python 3.9 under the deprecated `python.version` key.
 - **No docs site is live.** The repo is wired for Read the Docs (`.readthedocs.yml`, the "Requirements file for ReadTheDocs" header in `docs/requirements.txt`) and `README.md:4` carries an RTD badge, but every hosted URL 404s: `dcqc.readthedocs.io`, the RTD project `readthedocs.org/projects/dcqc`, and the badge's own link target `sage-bionetworks-workflows.github.io/dcqc/` (a GitHub Pages URL that does not match the RTD badge). No CI job builds or deploys docs — `.github/workflows/` has only `CI.yml` — and there is no `gh-pages` branch. `tox -e docs` is the only working build.
 - setup.cfg `[tool:pytest] testpaths` is `tests demos`, but there is no `demos/` directory.
 - `src/docker/build.sh` pins `tox~=3.0` while CI uses `tox!=3.0`.
