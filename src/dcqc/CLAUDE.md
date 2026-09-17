@@ -8,11 +8,15 @@ Core object model and CLI. See the root CLAUDE.md for stack, commands, and the e
 
 **`BaseTest`, `SuiteABC` and `BaseTarget` are lazy.** `SubclassRegistryMixin.list_subclasses` (`mixins.py:149-155`) walks `__subclasses__()` **recursively**, so the full transitive subclass tree is registered and deduped — but **a class exists only if its module has been imported.** There is no importlib scan, no entry point, no decorator. `src/dcqc/__init__.py:19-21` imports `tests`, `suite_abc` and `suites` for exactly this reason, and carries `# isort: skip_file` at line 3 because the import order avoids a circular import. Do not reorder it.
 
+**Two list methods, and name resolution must use the concrete one.** `list_subclasses` returns the whole tree, abstract intermediates included — `ExternalTestMixin`, `InternalBaseTest` and `ExternalBaseTest` are all in it. `list_concrete_subclasses` (`mixins.py:167-185`) drops anything with an unimplemented `@abstractmethod`, via `inspect.isabstract`. Every name-to-class lookup goes through the latter: `get_subclass_by_name` and all three maps in `JsonParser.get_class` (`parsers.py:80-104`). Do not switch one of those back to `list_subclasses`, or a `"type"` of `"ExternalTestMixin"` resolves, and the failure moves to `test_cls(target)` as `TypeError: Can't instantiate abstract class ... 'generate_process'` instead of a `ValueError` about an unrecognized type. Guards: `tests/test_parsers.py::test_for_an_error_when_parsing_an_abstract_type` and the two abstract-name tests at the top of `tests/test_internal_tests.py`.
+
+Use `list_subclasses` only for introspection over the tree itself; `tests/test_external_tests.py` needs the unfiltered list, because the MRO order it asserts is declared on `ExternalBaseTest`, which is abstract.
+
 Registry gotchas that fail silently:
 
-- `list_subclasses()` includes abstract intermediates, so `JsonParser.get_class("ExternalTestMixin")` returns an abstract class rather than erroring.
 - The base class is not in its own subclass list — `BaseTarget.get_subclass_by_name("BaseTarget")` raises.
 - A new registry root must implement `get_base_class()` (`mixins.py:145`), because `get_subclass_by_name` always resolves through the base, never through `cls`.
+- `isabstract` catches only an unimplemented `@abstractmethod`. `SuiteABC` declares none, so no suite is ever filtered, and an intermediate class that implements everything stays in the concrete list.
 
 ## Serialization
 
@@ -50,6 +54,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 - `File.name` issues an `fs.info()` network call on remote files, then caches.
 - `BaseTest.import_module(name)` — use for optional extras instead of a top-level import, so the error tells the user to `pip install dcqc[all]`.
 - `JsonParser.from_dict(dictionary)` — the polymorphic factory. Use it when the concrete class is not known.
+- `list_concrete_subclasses()` — the registry list to build a name lookup from. `list_subclasses()` also holds the abstract intermediates; see the registry section above.
 - `JsonReport(paths_relative_to=None)` with `.generate()`, `.save()`, `.save_many()`. All accept fsspec URLs. `save` refuses to overwrite unless told.
 - `CsvParser(path, stage_files=False)` — `create_files`, `create_targets` and `create_suites` return **generators**, not lists. `list_rows()` indexes from 1.
 - MD5 chunking (`md5_checksum_test.py:25-31`) and compression-agnostic FASTQ opening (`paired_fastq_parity_test.py:49-63`) already exist.
