@@ -1,7 +1,8 @@
 import pytest
 
 from dcqc import tests
-from dcqc.target import PairedTarget
+from dcqc.file import File
+from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -49,6 +50,14 @@ class TestFileExtensionTest:
 
     def test_that_a_tiff_file_with_good_extensions_is_passed(self):
         assert self.good_tiff_test.get_status() == TestStatus.PASS
+
+    def test_that_a_file_with_no_declared_file_type_is_passed(self, tmp_path):
+        path = tmp_path / "sample.txt"
+        path.touch()
+        file = File(str(path), {})
+        assert file.get_file_type().name == "*"
+        target = SingleTarget(file)
+        assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
