@@ -303,10 +303,10 @@ dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
 
 Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
 
-The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, `PairedFastqParityTest` records the line count of each FASTQ file:
+The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, when `Md5ChecksumTest` fails, it records the MD5 checksum that it computed:
 
 ```json
-{"PairedFastqParityTest": {"line_counts": [400, 400]}}
+{"Md5ChecksumTest": {"md5_checksum": "<computed MD5 checksum>"}}
 ```
 
 IF comparing two outputs directly, do not use BYTE comparison, compare the set of names, not the text of the cell.

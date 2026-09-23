@@ -27,9 +27,9 @@ Also note: the `BaseTest` docstring claims a `ValueError` when a single-file tes
 
 Implement `compute_status()` returning `TestStatus.PASS` or `TestStatus.FAIL`. On the failure path, set `self.status_reason` to a user-facing explanation before returning — that string reaches the `suites.json` report and the output CSV.
 
-A test can also record extra values in `self.metrics`, a dict that `BaseTest.__init__` sets to `{}`. Set it inside `compute_status()`. The values must be JSON-serializable. They are written to `suites.json` and, keyed by test name, to the `dcqc_metrics` column of the output CSV. `PairedFastqParityTest` is the example: it records `line_counts` on both the pass and the mismatch path.
+A test can also record extra values in `self.metrics`, a dict that `BaseTest.__init__` sets to `{}`. Set it inside `compute_status()`. The values must be JSON-serializable. They are written to `suites.json` and, keyed by test name, to the `dcqc_metrics` column of the output CSV. `Md5ChecksumTest` is the example: it records the computed `md5_checksum` only on the failure path.
 
-Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:178`). Grep before rewording one.
+Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:189`). Grep before rewording one.
 
 ## External tests
 
