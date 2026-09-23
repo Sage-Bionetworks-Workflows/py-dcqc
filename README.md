@@ -280,18 +280,18 @@ The output is a tabular file with your original targets files but additional col
 
 - Here is an example of the output of a single file target that ran through dcqc:
 
-  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                | dcqc_skipped_tests | dcqc_failed_tests | dcqc_errored_tests |
-  |-------------------|----------|----------------------------------|-------------|------------------------------------|--------------------|-------------------|--------------------|
-  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest |                    |                   |                    |
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                | dcqc_skipped_tests | dcqc_failed_tests | dcqc_errored_tests | dcqc_metrics |
+  |-------------------|----------|----------------------------------|-------------|------------------------------------|--------------------|-------------------|--------------------|--------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest |                    |                   |                    | {}           |
 
 - Here is an example of the output of multi-file targets that ran through dcqc:
 
-  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                                 | dcqc_skipped_tests | dcqc_failed_tests                 | dcqc_errored_tests     |
-  |-------------------|----------|----------------------------------|-------------|-----------------------------------------------------|--------------------|-----------------------------------|------------------------|
-  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest                   |                    |                                   |                        |
-  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        |
-  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest |
-  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest |
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                                 | dcqc_skipped_tests | dcqc_failed_tests                 | dcqc_errored_tests     | dcqc_metrics |
+  |-------------------|----------|----------------------------------|-------------|-----------------------------------------------------|--------------------|-----------------------------------|------------------------|--------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest                   |                    |                                   |                        | {}           |
+  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {}           |
+  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}           |
+  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}           |
 
 `dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type.
 
@@ -302,6 +302,12 @@ dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
 ```
 
 Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
+
+The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, `PairedFastqParityTest` records the line count of each FASTQ file:
+
+```json
+{"PairedFastqParityTest": {"line_counts": [400, 400]}}
+```
 
 IF comparing two outputs directly, do not use BYTE comparison, compare the set of names, not the text of the cell.
 **The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run.

@@ -9,7 +9,7 @@ from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Generic, Optional, TypeVar
+from typing import Any, ClassVar, Generic, Optional, TypeVar
 
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 from dcqc.target import BaseTarget
@@ -59,11 +59,13 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     type: str
     target: Target
     status_reason: str = ""
+    metrics: dict[str, Any]
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
         self.target = target
         self._status = TestStatus.SKIP if skip else TestStatus.NONE
+        self.metrics = {}
 
     def skip(self) -> None:
         """Force the test to be skipped."""
@@ -86,6 +88,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             "is_external_test": self.is_external_test,
             "status": self._status.value,
             "status_reason": self.status_reason,
+            "metrics": self.metrics,
             "target": self.target.to_dict(),
         }
         return test_dict
@@ -111,6 +114,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         status = TestStatus(dictionary["status"])
         test._status = status
         test.status_reason = dictionary["status_reason"]
+        # Tests serialized before metrics were added do not have this key
+        test.metrics = dictionary.get("metrics", {})
 
         return test
 

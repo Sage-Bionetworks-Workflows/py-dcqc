@@ -29,6 +29,31 @@ def test_that_an_existing_module_can_be_imported(test_targets):
     assert imported is pytest
 
 
+def test_that_metrics_are_empty_by_default(test_targets):
+    target = test_targets["good_txt"]
+    test = tests.FileExtensionTest(target)
+    assert test.metrics == {}
+    assert test.to_dict()["metrics"] == {}
+
+
+def test_that_metrics_survive_serialization(test_targets):
+    target = test_targets["good_txt"]
+    test = tests.FileExtensionTest(target)
+    test.metrics = {"metric1": 1, "metric2": "A"}
+    test_dict = test.to_dict()
+    test_from_dict = BaseTest.from_dict(test_dict)
+    assert test_from_dict.metrics == {"metric1": 1, "metric2": "A"}
+
+
+def test_that_a_test_without_serialized_metrics_has_empty_metrics(test_targets):
+    # Simulate a test serialized before metrics were added
+    target = test_targets["good_txt"]
+    dictionary = tests.FileExtensionTest(target).to_dict()
+    del dictionary["metrics"]
+    test = BaseTest.from_dict(dictionary)
+    assert test.metrics == {}
+
+
 class TestFileExtensionTest:
     @pytest.fixture(scope="function", autouse=True)
     def setup_method(self, test_targets):
@@ -152,3 +177,13 @@ class TestPairedFastqParityTest:
             self.bad_paired_test.status_reason
             == "FASTQ files do not have the same number of lines"
         )
+
+    def test_that_paired_fastq_parity_test_records_line_counts_as_metrics(self):
+        self.good_paired_test.get_status()
+        counts = self.good_paired_test.metrics["line_counts"]
+        assert len(counts) == 2
+        assert counts[0] == counts[1]
+        self.bad_paired_test.get_status()
+        counts = self.bad_paired_test.metrics["line_counts"]
+        assert len(counts) == 2
+        assert counts[0] != counts[1]
