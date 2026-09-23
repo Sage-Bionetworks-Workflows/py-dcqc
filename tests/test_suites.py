@@ -139,3 +139,17 @@ def test_that_status_is_computed_if_not_already_assigned(test_targets):
         suite_status = suite.get_status()
         assert suite_status == SuiteStatus.GREEN
         patch_compute_status.assert_called_once()
+
+
+def test_that_test_metrics_survive_suite_serialization(test_targets):
+    target = test_targets["good_txt"]
+    suite = SuiteABC.from_target(target)
+    # Test order is not deterministic, so look up the test by type
+    test = next(test for test in suite.tests if test.type == "Md5ChecksumTest")
+    test.metrics = {"metric1": 1, "metric2": "A"}
+    suite_dict = suite.to_dict()
+    test_dicts = {test_dict["type"]: test_dict for test_dict in suite_dict["tests"]}
+    assert test_dicts["Md5ChecksumTest"]["metrics"] == {"metric1": 1, "metric2": "A"}
+    suite_from_dict = SuiteABC.from_dict(suite_dict)
+    tests = {test.type: test for test in suite_from_dict.tests}
+    assert tests["Md5ChecksumTest"].metrics == {"metric1": 1, "metric2": "A"}

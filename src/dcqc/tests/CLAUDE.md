@@ -27,7 +27,9 @@ Also note: the `BaseTest` docstring claims a `ValueError` when a single-file tes
 
 Implement `compute_status()` returning `TestStatus.PASS` or `TestStatus.FAIL`. On the failure path, set `self.status_reason` to a user-facing explanation before returning — that string reaches the `suites.json` report and the output CSV.
 
-Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:153`). Grep before rewording one.
+A test can also record extra values in `self.metrics`, a dict that `BaseTest.__init__` sets to `{}`. Set it inside `compute_status()`. The values must be JSON-serializable. They are written to `suites.json` and, keyed by test name, to the `dcqc_metrics` column of the output CSV. `PairedFastqParityTest` is the example: it records `line_counts` on both the pass and the mismatch path.
+
+Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:178`). Grep before rewording one.
 
 ## External tests
 
@@ -62,11 +64,13 @@ Prefer contributing a tool whose failure and error exit codes differ. Many curre
 
 ### Status computation reads the current working directory
 
-`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:190-216`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
+`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:195-221`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
 
 If the files are absent, `FileNotFoundError` propagates and crashes `dcqc compute-test`; it does not degrade to `TestStatus.ERROR`.
 
-Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:232-237`, and `dcqc create-process` regenerates it on demand.
+Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:237-242`, and `dcqc create-process` regenerates it on demand.
+
+External tests cannot set `metrics`. `_interpret_process_outputs()` reads only the exit code, `std_out` and `std_err`, so their `metrics` stays `{}`. Getting metrics out of a container needs a new output file or a parse step, which changes the file contract with nf-dcqc.
 
 ## Naming
 
