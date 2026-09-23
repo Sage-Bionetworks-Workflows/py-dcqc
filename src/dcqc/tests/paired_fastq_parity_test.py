@@ -24,9 +24,6 @@ class PairedFastqParityTest(InternalBaseTest):
                 return TestStatus.FAIL
             counts.append(count)
 
-        # Line counts are listed in the same order as the target files
-        self.metrics["line_counts"] = counts
-
         # Check that there counts are all the same (i.e., equal)
         if len(set(counts)) <= 1:
             status = TestStatus.PASS
