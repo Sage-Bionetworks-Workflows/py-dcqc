@@ -20,6 +20,7 @@ class Md5ChecksumTest(InternalBaseTest):
         else:
             status = TestStatus.FAIL
             self.status_reason = "Computed MD5 checksum does not match provided value"
+            self.metrics["md5_checksum"] = actual_md5
         return status
 
     def _compute_md5_checksum(self, path: Path) -> str:
