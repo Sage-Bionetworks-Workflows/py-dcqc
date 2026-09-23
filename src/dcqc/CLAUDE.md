@@ -52,7 +52,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 - `JsonParser.from_dict(dictionary)` — the polymorphic factory. Use it when the concrete class is not known.
 - `JsonReport(paths_relative_to=None)` with `.generate()`, `.save()`, `.save_many()`. All accept fsspec URLs. `save` refuses to overwrite unless told.
 - `CsvParser(path, stage_files=False)` — `create_files`, `create_targets` and `create_suites` return **generators**, not lists. `list_rows()` indexes from 1.
-- MD5 chunking (`md5_checksum_test.py:25-31`) and compression-agnostic FASTQ opening (`paired_fastq_parity_test.py:49-63`) already exist.
+- MD5 chunking (`md5_checksum_test.py:26-32`) and compression-agnostic FASTQ opening (`paired_fastq_parity_test.py:49-63`) already exist.
 
 ## Naming traps
 

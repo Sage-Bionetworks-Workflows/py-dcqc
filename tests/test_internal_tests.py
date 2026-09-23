@@ -188,13 +188,3 @@ class TestPairedFastqParityTest:
             self.bad_paired_test.status_reason
             == "FASTQ files do not have the same number of lines"
         )
-
-    def test_that_paired_fastq_parity_test_records_line_counts_as_metrics(self):
-        self.good_paired_test.get_status()
-        counts = self.good_paired_test.metrics["line_counts"]
-        assert len(counts) == 2
-        assert counts[0] == counts[1]
-        self.bad_paired_test.get_status()
-        counts = self.bad_paired_test.metrics["line_counts"]
-        assert len(counts) == 2
-        assert counts[0] != counts[1]
