@@ -154,6 +154,7 @@ When contributing an internal test be sure to do the following:
 
 6. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
    - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
+   - To report extra values that the test computes (for example, a count or a size), set them in `self.metrics`. They must be JSON-serializable. They appear in `suites.json` and in the `dcqc_metrics` column of the output CSV.
    - Call `self.target.file.stage()` to get a local `Path` to the file. This works for remote URLs, such as `syn://`, as well as local files.
 
 7. Register the test with the two steps in the "Registering a New Test" section above. Without them the test never runs.
