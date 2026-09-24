@@ -6,7 +6,7 @@ The pytest suite. Not to be confused with `src/dcqc/tests/`, which is production
 
 setup.cfg `[tool:pytest] addopts` puts `-m "not slow"` there, so a bare `pytest` **skips every slow test**. tox.ini `[testenv] commands` overrides it with `-m ""` and runs them. Slow tests hit live Synapse.
 
-`slow` is the only registered marker. `acceptance` is commented out in setup.cfg — do not use it.
+`slow` is the only registered marker.
 
 There is **no fixture that skips when `SYNAPSE_AUTH_TOKEN` is missing**; token presence checks were added in `39e4795` and deliberately removed in `eb67219`. A slow test without credentials errors rather than skipping.
 
