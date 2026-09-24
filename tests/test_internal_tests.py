@@ -29,6 +29,31 @@ def test_that_an_existing_module_can_be_imported(test_targets):
     assert imported is pytest
 
 
+def test_that_metrics_are_empty_by_default(test_targets):
+    target = test_targets["good_txt"]
+    test = tests.FileExtensionTest(target)
+    assert test.metrics == {}
+    assert test.to_dict()["metrics"] == {}
+
+
+def test_that_metrics_survive_serialization(test_targets):
+    target = test_targets["good_txt"]
+    test = tests.FileExtensionTest(target)
+    test.metrics = {"metric1": 1, "metric2": "A"}
+    test_dict = test.to_dict()
+    test_from_dict = BaseTest.from_dict(test_dict)
+    assert test_from_dict.metrics == {"metric1": 1, "metric2": "A"}
+
+
+def test_that_a_test_without_serialized_metrics_has_empty_metrics(test_targets):
+    # Simulate a test serialized before metrics were added
+    target = test_targets["good_txt"]
+    dictionary = tests.FileExtensionTest(target).to_dict()
+    del dictionary["metrics"]
+    test = BaseTest.from_dict(dictionary)
+    assert test.metrics == {}
+
+
 class TestFileExtensionTest:
     @pytest.fixture(scope="function", autouse=True)
     def setup_method(self, test_targets):
@@ -58,7 +83,7 @@ class TestFileExtensionTest:
         )
 
 
-class Md5ChecksumTest:
+class TestMd5ChecksumTest:
     @pytest.fixture(scope="function", autouse=True)
     def setup_method(self, test_targets):
         self.good_txt_target = test_targets["good_txt"]
@@ -67,14 +92,25 @@ class Md5ChecksumTest:
         self.bad_txt_test = tests.Md5ChecksumTest(self.bad_txt_target)
 
     def test_that_the_md5_checksum_test_works_on_a_correct_file(self):
-        assert self.good_txt_test.get_status() == TestStatus.PASS
+        # GIVEN a file whose provided MD5 checksum matches its contents
+        # WHEN I compute the test status
+        status = self.good_txt_test.get_status()
+        # THEN the test passes and no checksum is recorded as a metric
+        assert status == TestStatus.PASS
+        assert self.good_txt_test.metrics == {}
 
     def test_that_the_md5_checksum_test_works_on_incorrect_files(self):
-        assert self.bad_txt_test.get_status() == TestStatus.FAIL
+        # GIVEN a file whose provided MD5 checksum does not match its contents
+        actual_md5 = self.good_txt_target.file.get_metadata("md5_checksum")
+        # WHEN I compute the test status
+        status = self.bad_txt_test.get_status()
+        # THEN the test fails and the computed checksum is recorded as a metric
+        assert status == TestStatus.FAIL
         assert (
             self.bad_txt_test.status_reason
             == "Computed MD5 checksum does not match provided value"
         )
+        assert self.bad_txt_test.metrics == {"md5_checksum": actual_md5}
 
 
 class TestJsonLoadTest:

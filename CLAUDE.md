@@ -61,7 +61,7 @@ Suite  ── target ──> Target ── files ──> [File]
 
 **Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:225`) and `md5_checksum` (read by `Md5ChecksumTest`).
 
-**Output** is the input CSV plus five appended columns, written by `src/dcqc/updaters.py:45-57`: `dcqc_status`, `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, `dcqc_errored_tests`. The four list columns are comma-joined inside a single cell.
+**Output** is the input CSV plus six appended columns, written by `src/dcqc/updaters.py:49-65`: `dcqc_status`, `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, `dcqc_errored_tests`, `dcqc_metrics`. The four list columns are comma-joined inside a single cell. `dcqc_metrics` is a JSON object keyed by test name (sorted keys), which holds only the tests with non-empty `BaseTest.metrics`.
 
 **Statuses** are two distinct enums — do not mix them. `TestStatus` (`base_test.py:20`) is `pending`/`passed`/`failed`/`skipped`/`error`; note the member is `NONE` but the serialized value is `"pending"`. `SuiteStatus` (`suite_abc.py:17`) is `NONE`/`GREEN`/`RED`/`AMBER`/`GREY`.
 
@@ -118,7 +118,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do NOT change the test name in `test_that_skipped_tests_are_skipped_when_building_suite_from_tests`** — it must stay `LibTiffInfoTest`; swapping it was reverted in `9971463`.
 - **Do NOT add auth-token presence checks to CI** — added in `39e4795`, removed in `eb67219`.
 - **Do NOT re-enable Windows in the CI matrix casually** — it has been toggled on and off repeatedly and is currently parked behind ORCA-348.
-- **Do NOT reword a `status_reason` string without grepping the tests** — several are asserted verbatim, for example `tests/test_internal_tests.py:153` pins "FASTQ files do not have the same number of lines".
+- **Do NOT reword a `status_reason` string without grepping the tests** — several are asserted verbatim, for example `tests/test_internal_tests.py:189` pins "FASTQ files do not have the same number of lines".
 - **Do NOT rename a `BaseTest`, `SuiteABC`, or `BaseTarget` subclass casually** — the serialized `"type"` field is the bare class name with no aliasing or migration table, so every previously written JSON and every `nf-dcqc` run that references it breaks.
 
 ## Known Broken / Stale

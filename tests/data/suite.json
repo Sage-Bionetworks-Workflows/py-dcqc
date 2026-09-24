@@ -30,14 +30,16 @@
       "tier": 1,
       "is_external_test": false,
       "status": "passed",
-      "status_reason": ""
+      "status_reason": "",
+      "metrics": {}
     },
     {
       "type": "LibTiffInfoTest",
       "tier": 2,
       "is_external_test": true,
       "status": "skipped",
-      "status_reason": ""
+      "status_reason": "",
+      "metrics": {}
     }
   ]
 }

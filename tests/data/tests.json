@@ -5,6 +5,7 @@
     "is_external_test": false,
     "status": "pending",
     "status_reason": "",
+    "metrics": {},
     "target": {
       "id": "001",
       "files": [
@@ -27,6 +28,7 @@
     "is_external_test": true,
     "status": "pending",
     "status_reason": "",
+    "metrics": {},
     "target": {
       "id": "001",
       "files": [
@@ -49,6 +51,7 @@
     "is_external_test": false,
     "status": "passed",
     "status_reason": "",
+    "metrics": {},
     "target": {
       "id": "001",
       "files": [

@@ -4,6 +4,7 @@
   "is_external_test": true,
   "status": "pending",
   "status_reason": "",
+  "metrics": {},
   "target": {
     "id": "001",
     "files": [
@@ -14,7 +15,7 @@
         },
         "type": "TIFF",
         "name": "test.txt",
-        "local_path": "tests/data/dcqc-staged-test/test.txt"
+        "local_path": "tests/data/test.txt"
       }
     ],
     "type": "SingleTarget"
