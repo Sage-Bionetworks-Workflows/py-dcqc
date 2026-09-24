@@ -122,7 +122,7 @@ jobs:
           TWINE_REPOSITORY: pypi
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: pipx run --spec 'tox!=3.0' tox -e publish
+        run: pipx run --spec 'tox>=4.2' tox -e publish
 
   docker-publish:
     permissions: write-all
