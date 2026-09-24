@@ -286,12 +286,12 @@ The output is a tabular file with your original targets files but additional col
 
 - Here is an example of the output of multi-file targets that ran through dcqc:
 
-  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                                 | dcqc_skipped_tests | dcqc_failed_tests                 | dcqc_errored_tests     | dcqc_metrics |
-  |-------------------|----------|----------------------------------|-------------|-----------------------------------------------------|--------------------|-----------------------------------|------------------------|--------------|
-  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest                   |                    |                                   |                        | {}           |
-  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {}           |
-  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}           |
-  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}           |
+  | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                                 | dcqc_skipped_tests | dcqc_failed_tests                 | dcqc_errored_tests     | dcqc_metrics                                        |
+  |-------------------|----------|----------------------------------|-------------|-----------------------------------------------------|--------------------|-----------------------------------|------------------------|-----------------------------------------------------|
+  | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest                   |                    |                                   |                        | {}                                                  |
+  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {"Md5ChecksumTest": {"md5_checksum": "<computed>"}} |
+  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
+  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
 
 `dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type.
 
