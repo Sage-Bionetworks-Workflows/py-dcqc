@@ -2,6 +2,7 @@ import csv
 import json
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -29,7 +30,7 @@ def test_that_csv_updater_updates_csv_as_expected_with_single_targets(
 
 def test_that_csv_updater_writes_test_metrics_keyed_by_test_name(
     get_data: Callable[[str], Path],
-    mocked_suites_single_targets: list[MagicMock],
+    mocked_suites_single_targets: list[Any],
     tmp_path: Path,
 ) -> None:
     """Test that only tests with metrics are written to dcqc_metrics."""
