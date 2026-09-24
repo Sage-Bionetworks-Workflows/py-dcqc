@@ -110,6 +110,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do not remove the `sphinx-apidoc` call from `docs/conf.py`.** Read the Docs does not run apidoc itself, so the module reference disappears without it (conf.py:23-29).
 - **Do not rename the `SYNAPSE_AUTH_TOKEN` CI secret.** That rename was made and reverted in `1cd983a`.
 - **Version lives in two places.** setup.cfg `[metadata] version` carries the static value, while setup.py and `[tool.setuptools_scm]` also derive one from git. CI needs `fetch-depth: 0` for that. Bump setup.cfg when releasing; the tag alone is not enough.
+- **tox.ini `[tox] minversion` is the tox version floor.** `src/docker/build.sh` and the `pypi-publish` job in CI.yml pin tox explicitly with `pipx run --spec 'tox>=...'`; the `prepare` and `test` jobs get tox indirectly through `tox-gh`. Keep the explicit pins equal to `minversion`, and flag any mismatch to the user instead of silently fixing it.
 
 ## Anti-Patterns — Do NOT
 
