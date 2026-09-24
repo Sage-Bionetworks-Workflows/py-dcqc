@@ -104,6 +104,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **`tox` and bare `pytest` do not run the same tests.** setup.cfg `[tool:pytest] addopts` sets `-m "not slow"`; tox.ini `[testenv] commands` overrides it with `-m ""`. Slow tests hit live Synapse and need `SYNAPSE_AUTH_TOKEN` — because there is no fixture that skips when the token is absent (that was tried and deliberately removed in `eb67219`).
 - **Never work on `main`** (CONTRIBUTING.md "Implement your changes"). Branch first.
 - **Adding a runtime dependency means editing two files.** Add it to `install_requires` in setup.cfg *and* to `docs/requirements.txt`, or the API docs fail to build — the comment above `install_requires` in `[options]` says so.
+- **Changing `python_requires` means checking `.readthedocs.yml`.** Its `build.tools.python` must satisfy setup.cfg `[options] python_requires`, because RTD pip-installs the package (`python.install`). It drifted to an unsupported 3.9 once already.
 - **Do not drop the explicit `click>=8.0` dependency.** Newer Typer no longer pulls Click in transitively, and `tests/test_main.py` imports `click.testing` directly (setup.cfg `[options] install_requires`).
 - **Do not loosen `requests`.** 2.22.0 and 2.23.0 have security issues (setup.cfg `[options] install_requires`).
 - **Do not touch the `[pyscaffold]` block** in setup.cfg — it is consumed by PyScaffold's updater, and the block itself says "This will be used when updating. Do not change!".
