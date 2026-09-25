@@ -111,6 +111,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do not remove the `sphinx-apidoc` call from `docs/conf.py`.** Read the Docs does not run apidoc itself, so the module reference disappears without it (conf.py:23-29).
 - **Do not rename the `SYNAPSE_AUTH_TOKEN` CI secret.** That rename was made and reverted in `1cd983a`.
 - **Version lives in two places.** setup.cfg `[metadata] version` carries the static value, while setup.py and `[tool.setuptools_scm]` also derive one from git. CI needs `fetch-depth: 0` for that. Bump setup.cfg when releasing; the tag alone is not enough.
+- **tox.ini `[tox] minversion` is the tox version floor.** `src/docker/build.sh` and the `pypi-publish` job in CI.yml pin tox explicitly with `pipx run --spec 'tox>=...'`; the `prepare` and `test` jobs get tox indirectly through `tox-gh`. Keep the explicit pins equal to `minversion`, and flag any mismatch to the user instead of silently fixing it.
 
 ## Anti-Patterns — Do NOT
 
@@ -129,7 +130,6 @@ Do not treat these as things you introduced, and do not "fix" them as drive-by c
 - **TSV, CSV, BAM and H5AD extension validation is effectively disabled** by missing trailing commas at `src/dcqc/file.py:112,113,114,117`. Fixing it changes QC outcomes and deserves its own PR. Details, and the other confirmed bugs in the object model, are in `src/dcqc/CLAUDE.md`.
 - **Issue #71** — `tests/test_acceptance.py::test_json_report_generation` fails on every CI run with `UnsupportedProtocol: protocol 'syn' is not supported`, because tox installs from the built wheel.
 - **No docs site is live.** The repo is wired for Read the Docs (`.readthedocs.yml`, the "Requirements file for ReadTheDocs" header in `docs/requirements.txt`) and `README.md:4` carries an RTD badge, but every hosted URL 404s: `dcqc.readthedocs.io`, the RTD project `readthedocs.org/projects/dcqc`, and the badge's own link target `sage-bionetworks-workflows.github.io/dcqc/` (a GitHub Pages URL that does not match the RTD badge). No CI job builds or deploys docs — `.github/workflows/` has only `CI.yml` — and there is no `gh-pages` branch. `tox -e docs` is the only working build.
-- `src/docker/build.sh` pins `tox~=3.0` while CI uses `tox!=3.0`.
 
 ## Related Systems
 
