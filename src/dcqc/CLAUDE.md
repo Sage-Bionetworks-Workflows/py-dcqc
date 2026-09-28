@@ -33,7 +33,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 ### Rules that are easy to violate
 
 - **`BaseTest.from_dict` mutates its argument** (`base_test.py:103` pops `"type"`), unlike every other `from_dict`, which deepcopies first. Calling it twice on the same dict raises `KeyError: 'type'`.
-- **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:61-62`), so only top-level paths get relativized. `tests/data/suites.json` still contains an absolute `/tmp/dcqc-staged-.../circuit.tif` because of this.
+- **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:61-62`), so only top-level paths get relativized.
 - **A property that raises serializes as `null`,** not as an error — `mixins.py:104-107` swallows every exception. This is how an unstaged `File` gets `"local_path": null`.
 - **`Process` round-trips lossily.** `command` is emitted space-joined and re-split with `shlex.split`, which strips the hand-written quotes around filenames.
 - **`from_dict_prepare`** (which validates `"type"` against the class name) is called only by `BaseTarget.from_dict`. The other three `from_dict` implementations do no type checking.

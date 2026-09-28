@@ -10,7 +10,7 @@
                 },
                 "type": "TIFF",
                 "name": "circuit.tif",
-                "local_path": "/tmp/dcqc-staged-7onezxv1/circuit.tif"
+                "local_path": null
             }
         ],
         "type": "SingleTarget"

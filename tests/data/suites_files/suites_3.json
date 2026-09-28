@@ -10,7 +10,7 @@
                 },
                 "type": "TIFF",
                 "name": "test_image_dirty_datetime.tif",
-                "local_path": "/tmp/dcqc-staged-5m6d8fdj/test_image_dirty_datetime.tif"
+                "local_path": null
             }
         ],
         "type": "SingleTarget"
