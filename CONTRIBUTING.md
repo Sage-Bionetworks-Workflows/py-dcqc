@@ -410,12 +410,10 @@ on [PyPI], the following steps can be used to release a new version for
 
 6. Update [nf-dcqc] to use the new image. _nf-dcqc_ pins the `py-dcqc`
    container to one version tag, so a new `py-dcqc` release has
-   no effect on the workflow until you change that tag. In a pull request to
-   _nf-dcqc_ (its default branch is `dev`), set the tag in the
+   no effect on the workflow until you change that tag. Set the tag in the
    `withLabel:dcqc` block of `conf/base.config` to the new version, e.g.,
-   `ghcr.io/sage-bionetworks-workflows/py-dcqc:1.2.3`. Run the workflow's
-   `test` profile before you merge, because the CLI contract between the two
-   repositories can change between versions.
+   `ghcr.io/sage-bionetworks-workflows/py-dcqc:1.2.3`. To submit the change,
+   follow the [nf-dcqc contribution workflow].
 
 [^contrib1]:
     Even though, these resources focus on open source projects and
@@ -440,6 +438,7 @@ on [PyPI], the following steps can be used to release a new version for
 [miniconda]: https://docs.conda.io/en/latest/miniconda.html
 [myst]: https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html
 [nf-dcqc]: https://github.com/Sage-Bionetworks-Workflows/nf-dcqc
+[nf-dcqc contribution workflow]: https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/main/.github/CONTRIBUTING.md#contribution-workflow
 [other kinds of contributions]: https://opensource.guide/how-to-contribute
 [package page]: https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pkgs/container/py-dcqc
 [pipenv]: https://pipenv.pypa.io/
