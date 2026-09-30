@@ -100,7 +100,7 @@ myst_enable_extensions = [
     "tasklist",
 ]
 
-myst_heading_anchors = 3
+myst_heading_anchors = 5
 
 # The suffix of source filenames.
 source_suffix = [".rst", ".md"]
