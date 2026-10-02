@@ -1,3 +1,4 @@
+import json
 from csv import DictWriter
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,12 +32,15 @@ class CsvUpdater:
                 "skipped_tests": suite.skipped_tests,
                 "failed_tests": [],
                 "errored_tests": [],
+                "metrics": {},
             }
             for test in suite.tests:
                 if test._status == TestStatus.FAIL:
                     suite_dict[url]["failed_tests"].append(test.type)
                 if test._status == TestStatus.ERROR:
                     suite_dict[url]["errored_tests"].append(test.type)
+                if test.metrics:
+                    suite_dict[url]["metrics"][test.type] = test.metrics
 
         # Create CSV data structure
         row_list = []
@@ -54,6 +58,10 @@ class CsvUpdater:
             )
             csv_data["dcqc_errored_tests"] = ",".join(
                 suite_dict[csv_data["url"]]["errored_tests"]
+            )
+            # Keys are sorted because the order of tests in a suite is not stable
+            csv_data["dcqc_metrics"] = json.dumps(
+                suite_dict[csv_data["url"]]["metrics"], sort_keys=True
             )
             row_list.append(csv_data)
 

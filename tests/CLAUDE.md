@@ -46,14 +46,14 @@ Fixture keys follow `good_<type>` for valid files and `<reason_it_is_bad>_<type>
 - `parametrize` is reserved for pure input-to-expected-classification tables; everything else uses class grouping.
 - The external-test exit-code pattern (write `"0"`/`"1"` to temp files, then `mocker.patch.object(test, "_find_process_outputs", ...)`) is repeated for each test. Copy the nearest neighbour, and check whether that test's codes are inverted — see `src/dcqc/tests/CLAUDE.md`.
 
-**A class must start with `Test` to be collected.** `test_internal_tests.py:61` defines `class Md5ChecksumTest:` and pytest therefore never runs its two tests — a real, currently-unfixed gap, not a pattern to copy.
+**A class must start with `Test` to be collected.** pytest silently ignores a class with any other name, so its tests never run.
 
 ## `tests/data`
 
 Four distinct categories. Treat them differently.
 
 1. **Generated JSON — regenerate, do not hand-edit.** `file.json`, `target.json`, `test.internal.json`, `test.external.json`, `test.computed.json`, `tests.json`, `suite.json`, `suites.json` all come from `tests/data/generate.py`. **Run it from the repo root** — it emits repo-relative paths via `paths_relative_to=Path.cwd()`, and running it elsewhere changes the fixture shape (that relativity was a deliberate fix in `9c2935d`).
-2. **`suites_files/` are hand-maintained *inputs* to `generate.py`, not outputs.** Editing them changes the generated `suites.json`, which `test_main.py`'s `update-csv` test depends on. They contain stale machine-specific absolute paths such as `/tmp/dcqc-staged-.../circuit.tif` — harmless today because nothing dereferences them, but a trap if you start resolving those paths.
+2. **`suites_files/` are hand-maintained *inputs* to `generate.py`, not outputs.** Editing them changes the generated `suites.json`, which `test_main.py`'s `update-csv` test depends on. They contain stale machine-specific absolute paths such as `/tmp/dcqc-staged-.../circuit.tif` — harmless today because nothing dereferences them, but a trap if you start resolving those paths. Each test entry in them must have a `status_reason` key, because `BaseTest.from_dict` reads it without a default and `generate.py` fails with `KeyError: 'status_reason'` without it. `metrics` is optional there, because `from_dict` defaults it to `{}`.
 3. **`tiffinfo/` is a hand-captured real process output triple** — `std_out.txt`, `std_err.txt` (intentionally empty), `exit_code.txt`. Those three filenames are the contract with `ExternalTestMixin._find_process_outputs`; renaming them breaks discovery.
 4. **Binary samples are committed as-is** with no generator and no LFS, including three ~11 MB h5ad files. `example.bam`, `example.fastq` and `example.fastq.gz` are 7-byte **placeholders**, not real format files. Fixture md5 checksums are duplicated across up to three places: the placeholders share `14758f1a...`, recorded in `conftest.py:76` and `files.csv:9-11`, while `circuit.tif`'s `c7b08f6d...` additionally appears in `test_main.py:133,148,165`. **Grep the hex string before changing any fixture byte.**
 
@@ -62,7 +62,7 @@ Note that `files.csv` contains a `syn://` row, so parsing it can touch the netwo
 ## Side effects to be aware of
 
 - `tests/outputs/` is created at conftest import time (gitignored).
-- `test_updaters.py` rewrites `tests/data/test_output.csv`, a **committed fixture**, on every run. What it writes is byte-identical today, so `git status` stays clean and only the mtime moves — but change the fixture statuses or `mocked_suites_single_targets` and the suite starts dirtying the working tree.
+- `test_updaters.py` rewrites `tests/data/test_output.csv`, a **committed fixture**, on every run. What it writes is byte-identical today, so `git status` stays clean and only the mtime moves — but change the fixture statuses or `mocked_suites_single_targets` and the suite starts dirtying the working tree. For the same reason, `test_that_csv_updater_writes_test_metrics_keyed_by_test_name` writes to `tmp_path`, so that its non-empty metrics do not go into the tracked fixture.
 - `tests/data/staged_files/` is created by the tests that use `CsvParser(stage_files=True)`. It is invisible to `git status` only because `.gitignore` carries a bare `test.txt` pattern, which is accidental rather than deliberate — that same pattern shadows the tracked `tests/data/test.txt`. Clean it up by hand; nothing removes it.
 - `test_suites.py:17-18` registers `FileType("None", ())` and `FileType("Unpaired", ())` at import time. `FileType` registration is global and duplicates raise, so those two names are taken for the whole session.
 - Slow tests create and delete real folders under `syn://syn50696607` and resolve `syn://syn50555279`.
