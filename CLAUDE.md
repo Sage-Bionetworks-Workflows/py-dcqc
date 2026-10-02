@@ -48,7 +48,7 @@ Serve built docs: `python3 -m http.server --directory 'docs/_build/html'`.
 
 Debugging a single test: `tox -- -k <TEST NAME> --pdb`. Note the CAUTION comment in setup.cfg `[tool:pytest] addopts` — the `--cov` flags there can prevent breakpoints from being hit; comment them out locally if `--pdb` misbehaves.
 
-Release (CONTRIBUTING.md "Releases"): bump `version` in setup.cfg `[metadata]` and merge it, tag `vX.Y.Z`, push the tag. The `v*` tag starts the `pypi-publish` job in CI and that normally completes the release — confirm PyPI serves the new version. `tox -e clean`, `tox -e build`, `tox -e publish -- --repository pypi` is the manual fallback for when CI does not run or fails, not the routine path.
+Release (CONTRIBUTING.md "Releases"): bump `version` in setup.cfg `[metadata]` and merge it, tag `vX.Y.Z`, push the tag. The `v*` tag starts the `pypi-publish` job in CI — confirm PyPI serves the new version. The same tag starts `docker-publish`, which pushes image tags `X.Y.Z`, `X.Y` and `X` to ghcr. The last step is a PR to nf-dcqc (`dev` branch) that sets the new tag in the `withLabel:dcqc` block of its `conf/base.config`; nf-dcqc pins one version and does not pick up a release on its own. `tox -e clean`, `tox -e build`, `tox -e publish -- --repository pypi` is the manual fallback for when CI does not run or fails, not the routine path.
 
 ## Data Models
 

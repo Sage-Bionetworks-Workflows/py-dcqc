@@ -185,8 +185,13 @@ You can also use the official Docker container:
 docker pull ghcr.io/sage-bionetworks-workflows/py-dcqc:main
 ```
 
-**Use the `main` tag.** It is built from the default branch on every push, so it
-matches the code in this repository.
+**Use the `main` tag** to try the code in this repository. It is built from the
+default branch on every push, so it can change at any time.
+
+**Use a version tag, e.g., `1.8.0`, when you need results you can reproduce.**
+Each release tag `vX.Y.Z` publishes the image as `X.Y.Z`, `X.Y` and `X`. See the
+[package page](https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pkgs/container/py-dcqc)
+for all available tags.
 
 
 To run commands using the Docker container:
@@ -403,6 +408,8 @@ The script checks for the token before it makes any directory, so a plain `sudo 
 ## Integration with nf-dcqc
 
 Early versions of this package were developed to be used by its sibling, the [nf-dcqc](https://github.com/Sage-Bionetworks-Workflows/nf-dcqc) Nextflow workflow. The initial command-line interface was developed with nf-dcqc in mind, favoring smaller steps to enable parallelism in Nextflow.
+
+nf-dcqc pins the `py-dcqc` container to one version tag in the `withLabel:dcqc` block of its `conf/base.config`. A new `py-dcqc` release does not change the workflow until that tag is updated, which is the last step of a release. See "Releases" in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 # PyScaffold
 

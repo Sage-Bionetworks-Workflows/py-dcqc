@@ -384,11 +384,14 @@ on [PyPI], the following steps can be used to release a new version for
    e.g., `git push upstream v1.2.3`
 
    A `v*` tag starts the `pypi-publish` job in `.github/workflows/CI.yml`, which
-   builds the distribution and uploads it to [PyPI]. In normal conditions the
-   release is complete at this point. Confirm that PyPI serves the new version
-   before you go on.
+   builds the distribution and uploads it to [PyPI]. The same tag also starts
+   the `docker-publish` job, which pushes the container image to
+   `ghcr.io/sage-bionetworks-workflows/py-dcqc` with the tags `1.2.3`, `1.2`
+   and `1`.
 
-5. If the CI job did not run or did not succeed, do the release manually with
+5. Confirm that PyPI serves the new version and that the `1.2.3` image tag is
+   on the [package page] before you go on.
+6. If the CI job did not run or did not succeed, do the release manually with
    the steps below.
 
    1. Clean up the `dist` and `build` folders with `tox -e clean`
@@ -401,6 +404,19 @@ on [PyPI], the following steps can be used to release a new version for
    3. Run `tox -e publish -- --repository pypi` and check that everything was
       uploaded to [PyPI] correctly. `tox -e publish` alone uploads to
       TestPyPI, so the `--repository pypi` argument is necessary.
+
+   These steps do not publish the container image. If `docker-publish` did not
+   succeed, fix the cause and re-run that CI job for the tag before you do
+   step 7.
+
+7. Update [nf-dcqc] to use the new image. _nf-dcqc_ pins the `py-dcqc`
+   container to one version tag, so a new `py-dcqc` release has
+   no effect on the workflow until you change that tag. Set the tag in the
+   `withLabel:dcqc` block of `conf/base.config` to the new version, e.g.,
+   `ghcr.io/sage-bionetworks-workflows/py-dcqc:1.2.3`.
+
+8. To submit the change to _nf-dcqc_, follow the
+   [nf-dcqc contribution workflow].
 
 [^contrib1]:
     Even though, these resources focus on open source projects and
@@ -424,7 +440,10 @@ on [PyPI], the following steps can be used to release a new version for
 [guide created by freecodecamp]: https://github.com/freecodecamp/how-to-contribute-to-open-source
 [miniconda]: https://docs.conda.io/en/latest/miniconda.html
 [myst]: https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html
+[nf-dcqc]: https://github.com/Sage-Bionetworks-Workflows/nf-dcqc
+[nf-dcqc contribution workflow]: https://github.com/Sage-Bionetworks-Workflows/nf-dcqc/blob/main/.github/CONTRIBUTING.md#contribution-workflow
 [other kinds of contributions]: https://opensource.guide/how-to-contribute
+[package page]: https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pkgs/container/py-dcqc
 [pipenv]: https://pipenv.pypa.io/
 [pre-commit]: https://pre-commit.com/
 [pypi]: https://pypi.org/
