@@ -413,8 +413,10 @@ on [PyPI], the following steps can be used to release a new version for
    container to one version tag, so a new `py-dcqc` release has
    no effect on the workflow until you change that tag. Set the tag in the
    `withLabel:dcqc` block of `conf/base.config` to the new version, e.g.,
-   `ghcr.io/sage-bionetworks-workflows/py-dcqc:1.2.3`. To submit the change,
-   follow the [nf-dcqc contribution workflow].
+   `ghcr.io/sage-bionetworks-workflows/py-dcqc:1.2.3`.
+
+8. To submit the change to _nf-dcqc_, follow the
+   [nf-dcqc contribution workflow].
 
 [^contrib1]:
     Even though, these resources focus on open source projects and
