@@ -14,7 +14,7 @@
         },
         "type": "TIFF",
         "name": "test.txt",
-        "local_path": "tests/data/dcqc-staged-test/test.txt"
+        "local_path": "tests/data/test.txt"
       }
     ],
     "type": "SingleTarget"

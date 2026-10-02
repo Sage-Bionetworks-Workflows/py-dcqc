@@ -1,5 +1,6 @@
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
+from dcqc.tests.constants import TIFFTOOLS_CONTAINER
 
 
 class TiffDateTimeTest(ExternalBaseTest):
@@ -32,7 +33,7 @@ class TiffDateTimeTest(ExternalBaseTest):
             "'date|time'",
         ]
         process = Process(
-            container="ghcr.io/sage-bionetworks-workflows/tifftools:latest",
+            container=TIFFTOOLS_CONTAINER,
             command_args=command_args,
         )
         return process

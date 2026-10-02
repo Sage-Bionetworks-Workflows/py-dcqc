@@ -1,7 +1,10 @@
+import re
+
 import pytest
 
 from dcqc import tests
-from dcqc.target import PairedTarget
+from dcqc.file import File
+from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -18,8 +21,12 @@ def test_for_an_error_when_retrieving_a_test_that_does_not_exist_by_name():
 def test_for_error_when_importing_unavailable_module(test_targets):
     target = test_targets["good_txt"]
     test = tests.FileExtensionTest(target)
-    with pytest.raises(ModuleNotFoundError):
+    with pytest.raises(
+        ModuleNotFoundError, match=re.escape("pip install dcqc[all]")
+    ) as excinfo:
         test.import_module("foobar")
+    # The message must be a single string, not a tuple of string fragments.
+    assert isinstance(excinfo.value.args[0], str)
 
 
 def test_that_an_existing_module_can_be_imported(test_targets):
@@ -49,6 +56,14 @@ class TestFileExtensionTest:
 
     def test_that_a_tiff_file_with_good_extensions_is_passed(self):
         assert self.good_tiff_test.get_status() == TestStatus.PASS
+
+    def test_that_a_file_with_no_declared_file_type_is_passed(self, tmp_path):
+        path = tmp_path / "sample.txt"
+        path.touch()
+        file = File(str(path), {})
+        assert file.get_file_type().name == "*"
+        target = SingleTarget(file)
+        assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL

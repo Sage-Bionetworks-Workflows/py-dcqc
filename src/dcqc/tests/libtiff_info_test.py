@@ -1,5 +1,6 @@
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
+from dcqc.tests.constants import LIBTIFF_CONTAINER
 
 
 class LibTiffInfoTest(ExternalBaseTest):
@@ -19,7 +20,7 @@ class LibTiffInfoTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="quay.io/sagebionetworks/libtiff:2.0",
+            container=LIBTIFF_CONTAINER,
             command_args=command_args,
         )
         return process

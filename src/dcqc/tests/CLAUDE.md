@@ -1,6 +1,6 @@
 # CLAUDE.md — `src/dcqc/tests`
 
-**This directory is production code: one QC check per module. It is not the pytest suite.** The pytest suite is `/tests/`. Modules here use the suffix `*_test.py`; pytest files use the prefix `test_*.py`, and `testpaths` never collects this directory.
+**This directory is production code: one QC check per module. It is not the pytest suite.** The pytest suite is `/tests/`. QC checks here use the suffix `*_test.py`; pytest files use the prefix `test_*.py`, and `testpaths` never collects this directory. The one module that is not a QC check is `constants.py`, which holds the container images.
 
 When asked to "add a test", first decide which is meant: a QC check belongs here, a unit test belongs in `/tests/`.
 
@@ -39,7 +39,7 @@ Several `status_reason` strings are asserted verbatim by unit tests (for example
 
 1. `path = self.target.file.stage()` — mandatory; the container needs a local file.
 2. Build `command_args` using **`path.name` only**, never the full path, because the file is mounted at the container's working directory.
-3. Return `Process(container=..., command_args=...)`.
+3. Return `Process(container=..., command_args=...)`, with the container taken from `constants.py` — see Container images.
 
 Conventions to match:
 
@@ -72,8 +72,10 @@ Serialized external tests deliberately **omit** their `Process` — the override
 
 Module names are `<snake_case>_test.py`, but the existing set is inconsistent: `jsonld_load_test.py` versus `json_load_test.py`, and `tiff_tag_306_date_time_test.py` splits the number. Class names are inconsistent too — `H5adHtanValidatorTest` uses lowercase `ad` while the corresponding suite is `H5ADSuite`. Match the neighbouring files rather than "correcting" them.
 
-## Duplicated constants
+## Container images
 
-Keep these in sync when touching them: `quay.io/sagebionetworks/bftools:latest` appears in `bioformats_info_test.py` and `ome_xml_schema_test.py`; `ghcr.io/sage-bionetworks-workflows/tifftools:latest` appears in `tiff_date_time_test.py` and `tiff_tag_306_date_time_test.py`.
+Every container image lives in `constants.py`, one module-level constant per image. No test module holds an image literal — a new external test imports its constant from there, and adds one if the image is new.
 
-The odd quoting at `tiff_date_time_test.py:28` (`"'.[].ifds[].tags[]'.data"`, with `.data` outside the quotes) looks wrong but determines the current exit codes. Do not change it without re-running the Docker tests.
+Two images are shared: `BFTOOLS_CONTAINER` by `bioformats_info_test.py` and `ome_xml_schema_test.py`, `TIFFTOOLS_CONTAINER` by `tiff_date_time_test.py` and `tiff_tag_306_date_time_test.py`. Changing either constant changes both tests.
+
+The odd quoting at `tiff_date_time_test.py:29` (`"'.[].ifds[].tags[]'.data"`, with `.data` outside the quotes) looks wrong but determines the current exit codes. Do not change it without re-running the Docker tests.
