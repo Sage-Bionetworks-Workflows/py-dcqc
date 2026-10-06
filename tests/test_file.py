@@ -57,15 +57,38 @@ def test_for_an_error_if_registering_a_duplicate_file_type() -> None:
         FileType("txt", (".foo",))
 
 
-def test_for_an_error_if_a_file_type_is_given_a_string_of_extensions() -> None:
-    """Extensions given as a string should raise, not be split into characters.
+@pytest.mark.parametrize(
+    "file_extensions, message",
+    [
+        (".foo", r"single extension needs a trailing comma"),
+        ([".foo", 123], r"must all be strings\. These are not: \[123\]"),
+        (123, r"must be a collection of strings, not int"),
+    ],
+    ids=["string", "collection_with_a_non_string", "not_a_collection"],
+)
+def test_for_an_error_if_a_file_type_is_given_invalid_extensions(
+    file_extensions, message
+) -> None:
+    """Extensions that are not a collection of strings should raise.
 
     A parenthesized single extension such as (".foo") is a plain string and not
     a tuple, so tuple() turns it into ('.', 'f', 'o', 'o') and every extension
     check against that file type matches almost any file name.
     """
-    with pytest.raises(TypeError):
-        FileType("FooStringExtensions", ".foo")
+    with pytest.raises(TypeError, match=message):
+        FileType("FooInvalidExtensions", file_extensions)
+
+
+def test_that_a_single_extension_with_a_trailing_comma_is_accepted() -> None:
+    """A one-item tuple such as (".foo",) is the correct way to give one extension.
+
+    It must be stored unchanged and match only that extension, not any file
+    name that ends in one of its characters.
+    """
+    file_type = FileType("FooSingleExtension", (".foo",))
+    assert file_type.file_extensions == (".foo",)
+    assert "test.foo".endswith(file_type.file_extensions)
+    assert not "test.zoo".endswith(file_type.file_extensions)
 
 
 def test_that_a_list_of_extensions_is_stored_as_a_tuple() -> None:
