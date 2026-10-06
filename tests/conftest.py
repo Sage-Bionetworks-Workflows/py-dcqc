@@ -53,6 +53,35 @@ def get_data():
 
 
 @pytest.fixture
+def relative_manifest(tmp_path: Path) -> Path:
+    """Write a manifest into a directory that is not the work directory.
+
+    The manifest has three rows. The first row has a relative local URL, the
+    second row has an absolute local URL, and the third row has a remote URL.
+    The two local files exist.
+
+    Args:
+        tmp_path: A temporary directory that pytest gives to each test.
+
+    Returns:
+        The path of the manifest.
+    """
+    manifest_dir = tmp_path / "manifests"
+    manifest_dir.mkdir()
+    (manifest_dir / "test.txt").write_text("Hello world!\n")
+    absolute_path = tmp_path / "absolute.txt"
+    absolute_path.write_text("Hello world!\n")
+    manifest = manifest_dir / "input.csv"
+    manifest.write_text(
+        "url,file_type\n"
+        "test.txt,TXT\n"
+        f"{absolute_path},TXT\n"
+        "syn://syn50555279,TXT\n"
+    )
+    return manifest
+
+
+@pytest.fixture
 def test_files(get_data):
     txt_path = get_data("test.txt")
     date_path = get_data("test_contains_word_date.txt")

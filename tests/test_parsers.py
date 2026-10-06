@@ -31,35 +31,6 @@ def test_that_parsing_a_csv_file_stages_remote_files(get_data, test_files, mocke
     assert all(file.local_path is not None for _, file in files)
 
 
-@pytest.fixture
-def relative_manifest(tmp_path: Path) -> Path:
-    """Write a manifest into a directory that is not the work directory.
-
-    The manifest has three rows. The first row has a relative local URL, the
-    second row has an absolute local URL, and the third row has a remote URL.
-    The two local files exist.
-
-    Args:
-        tmp_path: A temporary directory that pytest gives to each test.
-
-    Returns:
-        The path of the manifest.
-    """
-    manifest_dir = tmp_path / "manifests"
-    manifest_dir.mkdir()
-    (manifest_dir / "test.txt").write_text("Hello world!\n")
-    absolute_path = tmp_path / "absolute.txt"
-    absolute_path.write_text("Hello world!\n")
-    manifest = manifest_dir / "input.csv"
-    manifest.write_text(
-        "url,file_type\n"
-        "test.txt,TXT\n"
-        f"{absolute_path},TXT\n"
-        "syn://syn50555279,TXT\n"
-    )
-    return manifest
-
-
 def test_that_list_rows_yields_urls_as_written_in_the_manifest(
     relative_manifest: Path,
 ) -> None:
