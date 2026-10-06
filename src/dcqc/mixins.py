@@ -168,11 +168,17 @@ class SubclassRegistryMixin(ABC, Generic[U]):
     def list_concrete_subclasses(cls) -> tuple[Type[U], ...]:
         """List the subclasses that can be instantiated.
 
-        A class is left out if it still has an abstract method, such as
-        ExternalTestMixin, which does not implement generate_process. Such
-        a class must not be the result of a name lookup: it accepts the
-        name, and then raises a TypeError about the abstract method when
-        the caller tries to construct it.
+        The name lookups (get_subclass_by_name and JsonParser.get_class) use
+        this list to change a serialized "type" value into a class, and then
+        make an instance of that class. An abstract class cannot have an
+        instance, so this list leaves out each class that has an abstract
+        method with no implementation. For example, ExternalTestMixin does
+        not implement generate_process.
+
+        Without this filter, a "type" of "ExternalTestMixin" would pass the
+        lookup and fail later with a TypeError about the abstract method.
+        With the filter, the lookup itself raises a ValueError that says the
+        name is not available.
 
         Returns:
             Every subclass that has no abstract method, in no particular
