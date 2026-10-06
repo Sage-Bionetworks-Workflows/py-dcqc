@@ -4,6 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import fields
+from inspect import isabstract
 from itertools import chain
 from pathlib import Path, PurePath
 from typing import Any, ClassVar, Generic, Optional, Type, TypeVar, cast
@@ -147,7 +148,16 @@ class SubclassRegistryMixin(ABC, Generic[U]):
 
     @classmethod
     def list_subclasses(cls) -> tuple[Type[U], ...]:
-        """List all subclasses."""
+        """List all subclasses.
+
+        The whole transitive subclass tree is given, which includes the
+        abstract intermediate classes. Use list_concrete_subclasses to
+        resolve a serialized name, because an abstract class cannot be
+        instantiated.
+
+        Returns:
+            Every subclass, in no particular order.
+        """
         subclasses = cls.__subclasses__()
         subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
         subclasses_chain = chain(subclasses, *subsubclasses_list)
@@ -155,9 +165,35 @@ class SubclassRegistryMixin(ABC, Generic[U]):
         return all_subclasses  # type: ignore[return-value]
 
     @classmethod
+    def list_concrete_subclasses(cls) -> tuple[Type[U], ...]:
+        """List the subclasses that can be instantiated.
+
+        The name lookups (get_subclass_by_name and JsonParser.get_class) use
+        this list to change a serialized "type" value into a class, and then
+        make an instance of that class. An abstract class cannot have an
+        instance, so this list leaves out each class that has an abstract
+        method with no implementation. For example, ExternalTestMixin does
+        not implement generate_process.
+
+        Without this filter, a "type" of "ExternalTestMixin" would pass the
+        lookup and fail later with a TypeError about the abstract method.
+        With the filter, the lookup itself raises a ValueError that says the
+        name is not available.
+
+        Returns:
+            Every subclass that has no abstract method, in no particular
+            order.
+        """
+        subclasses = cls.list_subclasses()
+        concrete_subclasses = tuple(
+            subcls for subcls in subclasses if not isabstract(subcls)
+        )
+        return concrete_subclasses
+
+    @classmethod
     def get_subclass_by_name(cls, name: str) -> Type[U]:
         """Retrieve a subclass by name."""
-        subclasses = cls.get_base_class().list_subclasses()
+        subclasses = cls.get_base_class().list_concrete_subclasses()
         registry = {subcls.__name__: subcls for subcls in subclasses}
         if name not in registry:
             options = list(registry)
