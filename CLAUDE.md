@@ -59,7 +59,7 @@ Suite  ── target ──> Target ── files ──> [File]
   └──── tests ────> [Test]   (each Test's own `target` key is stripped when nested in a Suite)
 ```
 
-**Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:225`) and `md5_checksum` (read by `Md5ChecksumTest`).
+**Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:271`) and `md5_checksum` (read by `Md5ChecksumTest`).
 
 **Output** is the input CSV plus five appended columns, written by `src/dcqc/updaters.py:45-57`: `dcqc_status`, `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, `dcqc_errored_tests`. The four list columns are comma-joined inside a single cell.
 

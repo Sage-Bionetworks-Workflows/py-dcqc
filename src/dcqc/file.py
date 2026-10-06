@@ -53,8 +53,7 @@ class FileType:
             edam_iri: EDAM format ontology identifier.
 
         Raises:
-            TypeError: If file_extensions is a string, or is not a
-                collection of strings.
+            TypeError: If file_extensions is not a collection of strings.
         """
         self._validate_file_extensions(name, file_extensions)
         self.name = name
@@ -66,17 +65,24 @@ class FileType:
     def _validate_file_extensions(name: str, file_extensions: Collection[str]) -> None:
         """Reject file extensions that are not a collection of strings.
 
-        A string is itself a collection of characters, so tuple(".txt") gives
-        ('.', 't', 'x', 't') and str.endswith() against it matches almost any
-        file name. A single extension therefore needs a trailing comma.
+        Accepted:
+            (".txt",)
+            (".tif", ".tiff")
+            [".csv"]
+            ()
+
+        Not accepted:
+            ".txt" (a bare string, often from (".txt") without a trailing
+                comma; it would be split into single characters)
+            [".txt", 123] (an item that is not a string)
+            None (not a collection)
 
         Args:
             name: File type name, used in the error message.
             file_extensions: Valid file extensions.
 
         Raises:
-            TypeError: If file_extensions is a string, or is not a
-                collection of strings.
+            TypeError: If file_extensions is not a collection of strings.
         """
         if isinstance(file_extensions, str) or not isinstance(
             file_extensions, Collection
