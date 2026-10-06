@@ -82,7 +82,7 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
         dictionary = target_cls.from_dict_prepare(dictionary)
         files = [File.from_dict(d) for d in dictionary["files"]]
         id = dictionary["id"]
-        target = target_cls(*files, id=id)
+        target = target_cls(files, id=id)
         return target
 
     @classmethod

@@ -33,7 +33,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 ### Rules that are easy to violate
 
 - **`BaseTest.from_dict` mutates its argument** (`base_test.py:103` pops `"type"`), unlike every other `from_dict`, which deepcopies first. Calling it twice on the same dict raises `KeyError: 'type'`.
-- **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:61-62`), so only top-level paths get relativized. `tests/data/suites.json` still contains an absolute `/tmp/dcqc-staged-.../circuit.tif` because of this.
+- **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:61-62`), so only top-level paths get relativized.
 - **A property that raises serializes as `null`,** not as an error — `mixins.py:104-107` swallows every exception. This is how an unstaged `File` gets `"local_path": null`.
 - **`Process` round-trips lossily.** `command` is emitted space-joined and re-split with `shlex.split`, which strips the hand-written quotes around filenames.
 - **`from_dict_prepare`** (which validates `"type"` against the class name) is called only by `BaseTarget.from_dict`. The other three `from_dict` implementations do no type checking.
@@ -66,12 +66,9 @@ To include a `@property` in the output, list its name in `_serialized_properties
 
 Documented so you do not trust the behaviour or "fix" the symptom. None of these are yours to fix as a drive-by.
 
-- **`FileType("*", (), ...)`** has an empty extension tuple, and `str.endswith(())` is always `False`. Any file without a `file_type` falls back to `"*"`, lands in `FileSuite`, and therefore **always fails** `FileExtensionTest`.
-- **`PairedTarget` cannot be deserialized.** `BaseTarget.from_dict` calls `target_cls(*files, id=id)` (`target.py:85`) against an `__init__` of `(file_or_files, id=None)`, so two files raise `TypeError`. No test covers it.
 - **`CsvUpdater.parser` is declared but never assigned** (`updaters.py:17` vs the `__init__` at 19-21). Touching `self.parser` raises `AttributeError`; `update()` builds a local one instead.
 - **`update-csv` joins suites to CSV rows by raw URL string.** `CsvParser` rewrites relative local URLs via `relative_to=self.path.parent` (`parsers.py:36`), but `CsvUpdater` looks up the unrewritten column value (`updaters.py:45`), so the two keys diverge and the lookup raises `KeyError`. Confirmed by running it, not just by reading: a manifest at `manifests/input.csv` holding `url=test.txt` fails with `KeyError: 'test.txt'` while every earlier pipeline step succeeds. The precise trigger is the manifest living in a **different directory from the URL base** — it works with remote URLs, with absolute paths, and also with relative paths when the CSV is in the current working directory, because `path.parent` is then `.` and the rewrite is a no-op. The README pipeline examples pass despite reading `../examples/*.csv` from a working directory of their own, because those manifests hold `syn://` URLs; every fixture using `syn://` hides the bug the same way. The README documents the limitation without naming the cause ("A manifest of relative local paths does not survive this join from another directory").
 - **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:25-27`).
-- `BaseTest.import_module`'s error message is accidentally a tuple (a stray trailing comma at `base_test.py:121-125`).
 - `dcqc list-tests` indexes `rows[0]` unguarded (`main.py:174`) and crashes if nothing is registered.
 
 ## CLI notes (`main.py`)
