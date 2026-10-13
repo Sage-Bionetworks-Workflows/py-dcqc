@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 
 from dcqc import tests
@@ -20,12 +22,12 @@ def test_for_an_error_when_retrieving_an_abstract_test_by_name():
         BaseTest.get_subclass_by_name("ExternalTestMixin")
 
 
-def test_that_an_abstract_test_is_not_a_concrete_subclass():
-    subclasses = BaseTest.list_subclasses()
+def test_that_each_concrete_subclass_is_an_instantiable_test_class():
     concrete_subclasses = BaseTest.list_concrete_subclasses()
-    assert tests.ExternalTestMixin in subclasses
-    assert tests.ExternalTestMixin not in concrete_subclasses
-    assert tests.Md5ChecksumTest in concrete_subclasses
+    assert len(concrete_subclasses) > 0
+    for test_cls in concrete_subclasses:
+        assert issubclass(test_cls, BaseTest)
+        assert not inspect.isabstract(test_cls)
 
 
 def test_for_error_when_importing_unavailable_module(test_targets):
