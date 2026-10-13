@@ -175,11 +175,6 @@ class SubclassRegistryMixin(ABC, Generic[U]):
         method with no implementation. For example, ExternalTestMixin does
         not implement generate_process.
 
-        Without this filter, a "type" of "ExternalTestMixin" would pass the
-        lookup and fail later with a TypeError about the abstract method.
-        With the filter, the lookup itself raises a ValueError that says the
-        name is not available.
-
         Returns:
             Every subclass that has no abstract method, in no particular
             order.
