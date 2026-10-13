@@ -187,7 +187,24 @@ class SubclassRegistryMixin(ABC, Generic[U]):
 
     @classmethod
     def get_subclass_by_name(cls, name: str) -> Type[U]:
-        """Retrieve a subclass by name."""
+        """Retrieve a subclass by name.
+
+        The search starts at the base class (see get_base_class), not at
+        cls. Thus a call on any class in a hierarchy finds every sibling
+        class too. Only concrete subclasses are found (see
+        list_concrete_subclasses).
+
+        Args:
+            name: The bare class name, for example the serialized "type"
+                value of an object.
+
+        Raises:
+            ValueError: If no concrete subclass of the base class has
+                this name. The message gives the names that are available.
+
+        Returns:
+            The subclass with this name.
+        """
         subclasses = cls.get_base_class().list_concrete_subclasses()
         registry = {subcls.__name__: subcls for subcls in subclasses}
         if name not in registry:

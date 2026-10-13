@@ -79,6 +79,27 @@ class JsonParser:
 
     @classmethod
     def get_class(cls, cls_name: str) -> Type[SerializableMixin]:
+        """Get the class for a serialized "type" value.
+
+        The name is compared with the concrete subclasses of BaseTarget,
+        BaseTest and SuiteABC, in that sequence, and then with the
+        FileType names. The first match is used. The class name
+        comparisons are case-sensitive. The FileType comparison is not
+        case-sensitive, and a FileType match always gives File.
+
+        Abstract classes are not found (see list_concrete_subclasses),
+        because they cannot be instantiated.
+
+        Args:
+            cls_name: The "type" value of a serialized object. This is a
+                class name, or a FileType name for a File.
+
+        Raises:
+            ValueError: If no class or FileType has this name.
+
+        Returns:
+            The class to use to deserialize the object.
+        """
         test_classes = BaseTest.list_concrete_subclasses()
         test_cls_map = {cls.__name__: cls for cls in test_classes}
 
