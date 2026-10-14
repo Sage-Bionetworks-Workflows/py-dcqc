@@ -4,6 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import fields
+from inspect import isabstract
 from itertools import chain
 from pathlib import Path, PurePath
 from typing import Any, ClassVar, Generic, Optional, Type, TypeVar, cast
@@ -147,7 +148,16 @@ class SubclassRegistryMixin(ABC, Generic[U]):
 
     @classmethod
     def list_subclasses(cls) -> tuple[Type[U], ...]:
-        """List all subclasses."""
+        """List all subclasses.
+
+        The whole transitive subclass tree is given, which includes the
+        abstract intermediate classes. Use list_concrete_subclasses to
+        resolve a serialized name, because an abstract class cannot be
+        instantiated.
+
+        Returns:
+            Every subclass, in no particular order.
+        """
         subclasses = cls.__subclasses__()
         subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
         subclasses_chain = chain(subclasses, *subsubclasses_list)
@@ -155,9 +165,29 @@ class SubclassRegistryMixin(ABC, Generic[U]):
         return all_subclasses  # type: ignore[return-value]
 
     @classmethod
+    def list_concrete_subclasses(cls) -> tuple[Type[U], ...]:
+        """List the subclasses that can be instantiated.
+
+        A class is left out if it still has an abstract method, such as
+        ExternalTestMixin, which does not implement generate_process. Such
+        a class must not be the result of a name lookup: it accepts the
+        name, and then raises a TypeError about the abstract method when
+        the caller tries to construct it.
+
+        Returns:
+            Every subclass that has no abstract method, in no particular
+            order.
+        """
+        subclasses = cls.list_subclasses()
+        concrete_subclasses = tuple(
+            subcls for subcls in subclasses if not isabstract(subcls)
+        )
+        return concrete_subclasses
+
+    @classmethod
     def get_subclass_by_name(cls, name: str) -> Type[U]:
         """Retrieve a subclass by name."""
-        subclasses = cls.get_base_class().list_subclasses()
+        subclasses = cls.get_base_class().list_concrete_subclasses()
         registry = {subcls.__name__: subcls for subcls in subclasses}
         if name not in registry:
             options = list(registry)

@@ -1,5 +1,6 @@
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
+from dcqc.tests.constants import HTAN_H5AD_VALIDATOR_CONTAINER
 
 
 class H5adHtanValidatorTest(ExternalBaseTest):
@@ -23,7 +24,7 @@ class H5adHtanValidatorTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="ghcr.io/sage-bionetworks-workflows/htan-h5ad-validator:0.1.1",
+            container=HTAN_H5AD_VALIDATOR_CONTAINER,
             command_args=command_args,
         )
         return process

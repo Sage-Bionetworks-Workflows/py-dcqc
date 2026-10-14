@@ -1,5 +1,6 @@
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
+from dcqc.tests.constants import COREUTILS_CONTAINER
 
 
 class GrepDateTest(ExternalBaseTest):
@@ -25,7 +26,7 @@ class GrepDateTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="quay.io/biocontainers/coreutils:9.3",
+            container=COREUTILS_CONTAINER,
             command_args=command_args,
         )
         return process
