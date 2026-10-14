@@ -57,6 +57,30 @@ def test_for_an_error_if_registering_a_duplicate_file_type() -> None:
         FileType("txt", (".foo",))
 
 
+def test_for_an_error_if_a_file_type_is_given_a_string_of_extensions() -> None:
+    """Extensions given as a string should raise, not be split into characters.
+
+    A parenthesized single extension such as (".foo") is a plain string and not
+    a tuple, so tuple() turns it into ('.', 'f', 'o', 'o') and every extension
+    check against that file type matches almost any file name.
+    """
+    with pytest.raises(TypeError):
+        FileType("FooStringExtensions", ".foo")
+
+
+def test_that_a_list_of_extensions_is_stored_as_a_tuple() -> None:
+    """Extensions given as a list must be normalized to a tuple.
+
+    FileExtensionTest hands file_extensions straight to str.endswith, which
+    accepts only a string or a tuple of strings. A list raises TypeError, so
+    the tuple() call in FileType.__init__ is the only thing that lets a file
+    type declared with a list be checked at all.
+    """
+    file_type = FileType("FooListExtensions", [".foo", ".bar"])
+    assert isinstance(file_type.file_extensions, tuple)
+    assert "test.foo".endswith(file_type.file_extensions)
+
+
 def test_for_an_error_when_requesting_for_an_unregistered_file_type() -> None:
     """Requesting a file type that was never registered should raise."""
     with pytest.raises(ValueError):

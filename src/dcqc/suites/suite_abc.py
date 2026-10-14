@@ -145,7 +145,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
     @classmethod
     def list_test_classes(cls) -> tuple[Type[BaseTest], ...]:
-        """List all applicable test classes"""
+        """List all applicable test classes, sorted by class name"""
         all_tests: set[Type[BaseTest]]
         all_tests = set()
 
@@ -158,7 +158,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
                 del_tests = set(cls.del_tests)  # type: ignore
                 all_tests.difference_update(del_tests)
 
-        return tuple(all_tests)
+        return tuple(sorted(all_tests, key=lambda test_cls: test_cls.__name__))
 
     @classmethod
     def list_test_classes_by_file_type(cls) -> dict[str, list[Type[BaseTest]]]:
