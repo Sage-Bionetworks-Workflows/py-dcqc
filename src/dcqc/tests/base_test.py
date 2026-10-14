@@ -119,8 +119,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             module = import_module(name)
         except ModuleNotFoundError:
             message = (
-                f"{self.type} cannot be computed without the '{name}' package. ",
-                "Re-install `dcqc` with the `all` extra: pip install dcqc[all].",
+                f"{self.type} cannot be computed without the '{name}' package. "
+                "Re-install `dcqc` with the `all` extra: pip install dcqc[all]."
             )
             raise ModuleNotFoundError(message)
         return module

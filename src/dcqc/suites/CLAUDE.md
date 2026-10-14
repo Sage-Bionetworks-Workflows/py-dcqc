@@ -6,6 +6,8 @@ One suite class per file type. `suite_abc.py` holds the base class and the regis
 
 `list_test_classes` (`suite_abc.py:147-161`) walks `reversed(cls.__mro__)` and unions each class's `add_tests`. So `JsonLdSuite` yields `FileExtensionTest`, `Md5ChecksumTest`, `JsonLoadTest` **and** `JsonLdLoadTest`.
 
+The union is a `set`, so the result is sorted by class name before it is returned (`suite_abc.py:161`). That order is the one that reaches `init_test_classes`, the `"tests"` array of a serialized suite, and `dcqc list-tests`. Do not drop the sort — without it the order varies with `PYTHONHASHSEED`.
+
 Suites compose by inheritance. To make a subtype inherit a parent's checks, subclass it — `H5ADSuite(HDF5Suite)`, `OmeTiffSuite(TiffSuite)`, `JsonLdSuite(JsonSuite)`. Writing `add_tests = (...)` expecting to replace the parent's list is wrong.
 
 `del_tests` exists but is never assigned anywhere in `src/`, and for good reason: the loop uses `hasattr`, so a subclass that does not declare its own `del_tests` still re-applies an ancestor's deletion at its own MRO position, which can silently wipe that subclass's `add_tests`. Restructure the hierarchy instead of using it.
@@ -25,7 +27,6 @@ Class naming is genuinely inconsistent — ALL-CAPS acronyms (`TSVSuite`, `BAMSu
 
 - **An unrecognized file type silently falls back to the `"*"` suite.** `get_subclass_by_file_type` catches the `ValueError` from `FileType.get_file_type` and substitutes `"*"` (`suite_abc.py:198-208`), so a typo'd `--file-type` yields a generic `FileSuite` instead of an error.
 - **Two suites claiming the same `file_type` collide silently.** The registry is a dict keyed by `file_type.name` (`suite_abc.py:204`); the last one wins, with no warning.
-- **Test ordering is non-deterministic.** `list_test_classes` builds from a `set`, so order varies with `PYTHONHASHSEED` across runs. It propagates into `init_test_classes`, the `"tests"` array of serialized suites, and `dcqc list-tests`. Never assert on it.
 - **Unknown names in `required_tests` / `skipped_tests` are silently dropped,** because the sets are computed with `.intersection(test_names)`. A typo'd `--required-tests` is not rejected.
 
 ## Serializing a suite runs QC

@@ -13,6 +13,9 @@ class FileExtensionTest(InternalBaseTest):
         for file in self.target.files:
             file_type = file.get_file_type()
             file_extensions = file_type.file_extensions
+            if not file_extensions:
+                # The generic file type ("*") declares no extensions to check.
+                continue
             if not file.name.endswith(file_extensions):
                 status = TestStatus.FAIL
                 self.status_reason = (
