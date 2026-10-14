@@ -1,3 +1,4 @@
+import inspect
 import re
 
 import pytest
@@ -16,6 +17,19 @@ def test_that_the_a_test_can_be_correctly_retrieved_by_name():
 def test_for_an_error_when_retrieving_a_test_that_does_not_exist_by_name():
     with pytest.raises(ValueError):
         BaseTest.get_subclass_by_name("FooBar")
+
+
+def test_for_an_error_when_retrieving_an_abstract_test_by_name():
+    with pytest.raises(ValueError):
+        BaseTest.get_subclass_by_name("ExternalTestMixin")
+
+
+def test_that_each_concrete_subclass_is_an_instantiable_test_class():
+    concrete_subclasses = BaseTest.list_concrete_subclasses()
+    assert len(concrete_subclasses) > 0
+    for test_cls in concrete_subclasses:
+        assert issubclass(test_cls, BaseTest)
+        assert not inspect.isabstract(test_cls)
 
 
 def test_for_error_when_importing_unavailable_module(test_targets):
