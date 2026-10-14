@@ -1,3 +1,4 @@
+import json
 from csv import DictWriter
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,10 +13,11 @@ from dcqc.tests.base_test import TestStatus
 class CsvUpdater:
     """Updates the CSV manifest file with DCQC results.
 
-    The output is the input manifest with five columns appended,
-    dcqc_status, dcqc_required_tests, dcqc_skipped_tests, dcqc_failed_tests
-    and dcqc_errored_tests. The four list columns are comma-joined into a
-    single cell.
+    The output is the input manifest with six columns appended,
+    dcqc_status, dcqc_required_tests, dcqc_skipped_tests, dcqc_failed_tests,
+    dcqc_errored_tests and dcqc_metrics. The four list columns are
+    comma-joined into a single cell. dcqc_metrics is a JSON object keyed by
+    test name, with only the tests that recorded metrics.
 
     Attributes:
         input_path: Location of the input CSV manifest.
@@ -67,12 +69,15 @@ class CsvUpdater:
                 "skipped_tests": suite.skipped_tests,
                 "failed_tests": [],
                 "errored_tests": [],
+                "metrics": {},
             }
             for test in suite.tests:
                 if test._status == TestStatus.FAIL:
                     suite_dict[url]["failed_tests"].append(test.type)
                 if test._status == TestStatus.ERROR:
                     suite_dict[url]["errored_tests"].append(test.type)
+                if test.metrics:
+                    suite_dict[url]["metrics"][test.type] = test.metrics
 
         # Create CSV data structure
         row_list = []
@@ -89,6 +94,8 @@ class CsvUpdater:
             csv_data["dcqc_skipped_tests"] = ",".join(suite_data["skipped_tests"])
             csv_data["dcqc_failed_tests"] = ",".join(suite_data["failed_tests"])
             csv_data["dcqc_errored_tests"] = ",".join(suite_data["errored_tests"])
+            # Keys are sorted because the order of tests in a suite is not stable
+            csv_data["dcqc_metrics"] = json.dumps(suite_data["metrics"], sort_keys=True)
             row_list.append(csv_data)
 
         if row_list:
