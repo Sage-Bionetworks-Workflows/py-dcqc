@@ -31,35 +31,40 @@
         "tier": 1,
         "is_external_test": false,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "GrepDateTest",
         "tier": 4,
         "is_external_test": true,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "LibTiffInfoTest",
         "tier": 2,
         "is_external_test": true,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "Md5ChecksumTest",
         "tier": 1,
         "is_external_test": false,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "TiffTag306DateTimeTest",
         "tier": 4,
         "is_external_test": true,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       }
     ]
   },
@@ -95,35 +100,40 @@
         "tier": 1,
         "is_external_test": false,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "GrepDateTest",
         "tier": 4,
         "is_external_test": true,
         "status": "failed",
-        "status_reason": "test failed"
+        "status_reason": "test failed",
+        "metrics": {}
       },
       {
         "type": "LibTiffInfoTest",
         "tier": 2,
         "is_external_test": true,
         "status": "failed",
-        "status_reason": "test failed"
+        "status_reason": "test failed",
+        "metrics": {}
       },
       {
         "type": "Md5ChecksumTest",
         "tier": 1,
         "is_external_test": false,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "TiffTag306DateTimeTest",
         "tier": 4,
         "is_external_test": true,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       }
     ]
   },
@@ -159,35 +169,40 @@
         "tier": 1,
         "is_external_test": false,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "GrepDateTest",
         "tier": 4,
         "is_external_test": true,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "LibTiffInfoTest",
         "tier": 2,
         "is_external_test": true,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "Md5ChecksumTest",
         "tier": 1,
         "is_external_test": false,
         "status": "passed",
-        "status_reason": ""
+        "status_reason": "",
+        "metrics": {}
       },
       {
         "type": "TiffTag306DateTimeTest",
         "tier": 4,
         "is_external_test": true,
         "status": "failed",
-        "status_reason": "test failed"
+        "status_reason": "test failed",
+        "metrics": {}
       }
     ]
   }

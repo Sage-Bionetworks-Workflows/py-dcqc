@@ -4,6 +4,7 @@
   "is_external_test": false,
   "status": "pending",
   "status_reason": "",
+  "metrics": {},
   "target": {
     "id": "001",
     "files": [

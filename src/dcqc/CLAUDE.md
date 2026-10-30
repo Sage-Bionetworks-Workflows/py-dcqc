@@ -38,8 +38,8 @@ To include a `@property` in the output, list its name in `_serialized_properties
 
 ### Rules that are easy to violate
 
-- **`BaseTest.from_dict` mutates its argument** (`base_test.py:103` pops `"type"`), unlike every other `from_dict`, which deepcopies first. Calling it twice on the same dict raises `KeyError: 'type'`.
-- **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:62-63`), so only top-level paths get relativized. `tests/data/suites.json` still contains an absolute `/tmp/dcqc-staged-.../circuit.tif` because of this.
+- **`BaseTest.from_dict` mutates its argument** (`base_test.py:106` pops `"type"`), unlike every other `from_dict`, which deepcopies first. Calling it twice on the same dict raises `KeyError: 'type'`. It also keeps a reference to the `metrics` dict of its input, not a copy.
+- **`serialize_paths_relative_to` must be called before `to_dict`, and it does not recurse.** `serialize_value` calls `to_dict()` on nested objects without propagating the setting (`mixins.py:63`), so only top-level paths get relativized. `tests/data/suites.json` still contains an absolute `/tmp/dcqc-staged-.../circuit.tif` because of this.
 - **A property that raises serializes as `null`,** not as an error — `mixins.py:105-108` swallows every exception. This is how an unstaged `File` gets `"local_path": null`.
 - **`Process` round-trips lossily.** `command` is emitted space-joined and re-split with `shlex.split`, which strips the hand-written quotes around filenames.
 - **`BaseTarget.from_dict` passes the file list as one argument** — `target_cls(files, id=id)` (`target.py:114`). Do not "tidy" it into `target_cls(*files, id=id)`. The constructor is `(file_or_files, id=None)`, so unpacking put the second file in the `id` position and every `PairedTarget` failed to load with `TypeError: got multiple values for argument 'id'`. That was the bug fixed in `caacef7`; the guard is `tests/test_target.py::test_that_a_paired_target_can_be_saved_and_restored_without_changing`. `__post_init__` accepts a list or a lone `File` (`target.py:43-54`), so the list form is correct for both subclasses.
@@ -61,7 +61,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 - `JsonReport(paths_relative_to=None)` with `.generate()`, `.save()`, `.save_many()`. All accept fsspec URLs. `save` refuses to overwrite unless told.
 - `CsvParser(path, stage_files=False)` — `create_files`, `create_targets` and `create_suites` return **generators**, not lists. `list_rows()` indexes from 1.
 - **`CsvParser.list_rows_and_files()` (`parsers.py:85`) is the single source of the URL of a manifest row.** It yields `(index, row, file)`, where `row` still has its `url` column and `file.url` is relative to the manifest directory. Both `create_files` and `CsvUpdater.update` go through it. Do not pair `list_rows()` with your own `File`: that duplicate was the `update-csv` `KeyError: 'test.txt'` bug, where a manifest of relative local paths in another directory could not be joined to its suites. Every `syn://` fixture hid it, so the guard is `tests/test_updaters.py::test_that_csv_updater_joins_a_manifest_of_relative_local_paths`.
-- MD5 chunking (`md5_checksum_test.py:25-31`) and compression-agnostic FASTQ opening (`paired_fastq_parity_test.py:49-63`) already exist.
+- MD5 chunking (`md5_checksum_test.py:26-32`) and compression-agnostic FASTQ opening (`paired_fastq_parity_test.py:49-63`) already exist.
 
 ## Naming traps
 
@@ -75,7 +75,7 @@ To include a `@property` in the output, list its name in `_serialized_properties
 
 Documented so you do not trust the behaviour or "fix" the symptom. None of these are yours to fix as a drive-by.
 
-- **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:63`).
+- **`CsvUpdater` reads only `files[0]`**, so multi-file targets collapse to their first file (`updaters.py:65`).
 - `dcqc list-tests` indexes `rows[0]` unguarded (`main.py:174`) and crashes if nothing is registered.
 
 ## CLI notes (`main.py`)
