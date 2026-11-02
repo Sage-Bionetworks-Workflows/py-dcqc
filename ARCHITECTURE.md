@@ -191,11 +191,7 @@ When contributing an internal test be sure to do the following:
 6. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
    - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
    - To report extra values that the test computes (for example, a count or a size), set them in `self.metrics`. They must be JSON-serializable. They appear in `suites.json` and in the `dcqc_metrics` column of the output CSV.
-<<<<<<< HEAD
    - Call `self.target.file.stage()` to get a local `Path` to the file. This works for remote URLs, such as `syn://`, as well as local files. Only `SingleTarget` has the `file` property. In a `BaseTarget` or `PairedTarget` test, loop over `self.target.files` and call `stage()` on each file, as `Md5ChecksumTest` does.
-=======
-   - Call `self.target.file.stage()` to get a local `Path` to the file. This works for remote URLs, such as `syn://`, as well as local files.
->>>>>>> DPE-1821
 
 7. Register the test with the two steps in the "Registering a New Test" section above. Without them the test never runs.
 
@@ -254,11 +250,7 @@ Put the class in a new module at `src/dcqc/tests/<snake_case>_test.py`, with one
 - **Import `ExternalBaseTest` from `dcqc.tests.base_test`.** The `dcqc.tests` package does not re-export it. `Process`, `TestStatus` and `TestTier` also come from `dcqc.tests.base_test`. `SingleTarget` and `PairedTarget` come from `dcqc.target`.
 - **Give the class a docstring that tells the purpose of the test.** The docstring goes into the Sphinx API documentation. `dcqc list-tests` does not show it: that command prints only the file type, the EDAM identifier, the test name, the tier and the test type.
 - **Set `tier` to a `TestTier` value.** The values are `FILE_INTEGRITY`, `INTERNAL_CONFORMANCE`, `EXTERNAL_CONFORMANCE` and `SUBJECTIVE_CONFORMANCE`. See [Contributing Internal Tests] for the meaning of each tier.
-<<<<<<< HEAD
 - **Give `SingleTarget` as the type argument of `ExternalBaseTest`,** as in `ExternalBaseTest[SingleTarget]`. This sets the type of `self.target` and the `target_cls` of the test.
-=======
-- **Set `target` to `SingleTarget`.**
->>>>>>> DPE-1821
 - **Set `pass_code` and `fail_code`.** These are the exit codes of the command for a passed test and for a failed test. See [Return Codes](#return-codes).
 - **Set `failure_reason_location` to `"std_out"` or `"std_err"`.** This is the stream that holds the reason for a failure. Any other value raises a `KeyError`, but only when a test fails, so a test on good files does not find the mistake.
 
@@ -273,21 +265,13 @@ from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestStatus, TestTier
 
 
-<<<<<<< HEAD
 class MyTypeValidatorTest(ExternalBaseTest[SingleTarget]):
-=======
-class MyTypeValidatorTest(ExternalBaseTest):
->>>>>>> DPE-1821
     """Tests if a file is a valid MY-TYPE file."""
 
     tier = TestTier.INTERNAL_CONFORMANCE
     pass_code = 0
     fail_code = 1
     failure_reason_location = "std_err"
-<<<<<<< HEAD
-=======
-    target: SingleTarget
->>>>>>> DPE-1821
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()

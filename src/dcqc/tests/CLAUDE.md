@@ -28,15 +28,9 @@ Also note: the `BaseTest` docstring claims a `ValueError` when a single-file tes
 
 Implement `compute_status()` returning `TestStatus.PASS` or `TestStatus.FAIL`. On the failure path, set `self.status_reason` to a user-facing explanation before returning — that string reaches the `suites.json` report and the output CSV.
 
-<<<<<<< HEAD
 A test can also record extra values in `self.metrics`, a dict that `BaseTest.__init__` sets to `{}`. Set it inside `compute_status()`. The values must be JSON-serializable. They are written to `suites.json` and, keyed by test name, to the `dcqc_metrics` column of the output CSV. `Md5ChecksumTest` is the example: only on the failure path, it records `md5_checksum` as a dict that maps the URL of each file that does not match to its computed checksum.
 
 Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:274`). Grep before rewording one.
-=======
-A test can also record extra values in `self.metrics`, a dict that `BaseTest.__init__` sets to `{}`. Set it inside `compute_status()`. The values must be JSON-serializable. They are written to `suites.json` and, keyed by test name, to the `dcqc_metrics` column of the output CSV. `Md5ChecksumTest` is the example: it records the computed `md5_checksum` only on the failure path.
-
-Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:240`). Grep before rewording one.
->>>>>>> DPE-1821
 
 ## External tests
 
@@ -71,7 +65,6 @@ Prefer contributing a tool whose failure and error exit codes differ. Many curre
 
 ### Status computation reads the current working directory
 
-<<<<<<< HEAD
 `ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:235-275`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
 
 If the files are absent, `FileNotFoundError` propagates and crashes `dcqc compute-test`; it does not degrade to `TestStatus.ERROR`.
@@ -79,15 +72,6 @@ If the files are absent, `FileNotFoundError` propagates and crashes `dcqc comput
 Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:277-282`, and `dcqc create-process` regenerates it on demand.
 
 The base class does not read `metrics` from the container. `_interpret_process_outputs()` reads only the exit code, `std_out` and `std_err`, so `metrics` stays `{}` unless the class overrides `compute_status()` and fills it, for example from one JSON object on stdout. That needs no change to nf-dcqc, which already keeps `std_out.txt` (ARCHITECTURE.md "Creating the Test Class").
-=======
-`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:206-223`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
-
-If the files are absent, `FileNotFoundError` propagates and crashes `dcqc compute-test`; it does not degrade to `TestStatus.ERROR`.
-
-Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:256-260`, and `dcqc create-process` regenerates it on demand.
-
-External tests cannot set `metrics`. `_interpret_process_outputs()` reads only the exit code, `std_out` and `std_err`, so their `metrics` stays `{}`. Getting metrics out of a container needs a new output file or a parse step, which changes the file contract with nf-dcqc.
->>>>>>> DPE-1821
 
 ## Naming
 

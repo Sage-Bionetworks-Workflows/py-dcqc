@@ -161,7 +161,6 @@ class TestMd5ChecksumTest:
             self.bad_txt_test.status_reason
             == "Computed MD5 checksum does not match provided value"
         )
-<<<<<<< HEAD
         url = self.bad_txt_target.file.url
         assert self.bad_txt_test.metrics == {"md5_checksum": {url: actual_md5}}
 
@@ -197,9 +196,6 @@ class TestMd5ChecksumTest:
         # THEN the test fails and the metrics hold one entry for each file
         assert status == TestStatus.FAIL
         assert set(test.metrics["md5_checksum"]) == {file.url for file in files}
-=======
-        assert self.bad_txt_test.metrics == {"md5_checksum": actual_md5}
->>>>>>> DPE-1821
 
 
 class TestJsonLoadTest:

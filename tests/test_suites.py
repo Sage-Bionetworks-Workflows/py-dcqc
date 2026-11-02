@@ -308,7 +308,6 @@ def test_that_test_metrics_survive_suite_serialization(test_targets):
     suite_from_dict = SuiteABC.from_dict(suite_dict)
     tests = {test.type: test for test in suite_from_dict.tests}
     assert tests["Md5ChecksumTest"].metrics == {"metric1": 1, "metric2": "A"}
-<<<<<<< HEAD
 
 
 class ChildSingleTarget(SingleTarget):
@@ -413,5 +412,3 @@ class TestEnsureAcceptsTargetCls:
         message = "but FileSuite for file type 'Unpaired'"
         with pytest.raises(ValueError, match=message):
             suite_cls.ensure_accepts_target_cls(PairedTarget, file_type, ["a", "b"])
-=======
->>>>>>> DPE-1821

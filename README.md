@@ -344,17 +344,11 @@ The output is a tabular file with your original targets files but additional col
   | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                                 | dcqc_skipped_tests | dcqc_failed_tests                 | dcqc_errored_tests     | dcqc_metrics                                        |
   |-------------------|----------|----------------------------------|-------------|-----------------------------------------------------|--------------------|-----------------------------------|------------------------|-----------------------------------------------------|
   | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest                   |                    |                                   |                        | {}                                                  |
-<<<<<<< HEAD
   | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {"Md5ChecksumTest": {"md5_checksum": {"syn://syn41864977": "<computed>"}}} |
   | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
   | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
 
 The two rows of a `PairedTarget` get the same results in all six `dcqc_` columns, because the suite checks the two files together. If the input has a `dcqc_grouping` column, the output keeps it unchanged.
-=======
-  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {"Md5ChecksumTest": {"md5_checksum": "<computed>"}} |
-  | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
-  | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
->>>>>>> DPE-1821
 
 `dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type. Give `--required-tests` to `create-suite` or `qc-file` to use a different set.
 
@@ -366,17 +360,10 @@ dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
 
 Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
 
-<<<<<<< HEAD
 The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, when `Md5ChecksumTest` fails, it records the MD5 checksum that it computed for each file that does not match, keyed by file URL:
 
 ```json
 {"Md5ChecksumTest": {"md5_checksum": {"<file URL>": "<computed MD5 checksum>"}}}
-=======
-The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, when `Md5ChecksumTest` fails, it records the MD5 checksum that it computed:
-
-```json
-{"Md5ChecksumTest": {"md5_checksum": "<computed MD5 checksum>"}}
->>>>>>> DPE-1821
 ```
 
 **The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run. Compare the set of names, not the text of the cell, and do not use these cells in a byte comparison against an expected file.
