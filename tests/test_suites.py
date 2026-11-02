@@ -253,8 +253,9 @@ def test_for_an_error_when_building_a_fastq_suite_from_a_single_target(test_targ
 
 def test_for_an_error_when_building_a_tiff_suite_from_a_paired_target(test_files):
     files = [test_files["good_tiff"], test_files["date_in_tag_tiff"]]
+    target = PairedTarget(files)
     with pytest.raises(ValueError, match="requires a SingleTarget"):
-        SuiteABC.from_target(PairedTarget(files))
+        SuiteABC.from_target(target)
 
 
 def test_that_a_suite_will_consider_non_required_failed_tests(test_targets):

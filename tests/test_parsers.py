@@ -589,8 +589,9 @@ class TestPlanTargets:
 
         # WHEN the rows are read and checked
         # THEN an error tells the bad group value and its row numbers
+        parser = CsvParser(manifest)
         with pytest.raises(ValueError, match=re.escape("Group (b) in rows [3]")):
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
     def test_that_grouping_values_are_case_sensitive(
         self, write_manifest: Callable
@@ -606,11 +607,12 @@ class TestPlanTargets:
 
         # WHEN the rows are read and checked
         # THEN each value is its own group of one file, which raises an error
+        parser = CsvParser(manifest)
         with pytest.raises(
             ValueError,
             match=re.escape("Group (A) in rows [1] has a file count of 1"),
         ):
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
     def test_for_an_error_when_a_group_has_two_file_types(
         self, write_manifest: Callable
@@ -627,8 +629,9 @@ class TestPlanTargets:
         # WHEN the rows are read and checked
         # THEN an error tells the group value, the row numbers and the types
         message = "Group (a) in rows [1, 2] has different file types: ['FASTQ', 'TXT']."
+        parser = CsvParser(manifest)
         with pytest.raises(ValueError, match=re.escape(message)):
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
     def test_for_an_error_when_a_group_has_three_files(
         self, write_manifest: Callable
@@ -649,8 +652,9 @@ class TestPlanTargets:
         # WHEN the rows are read and checked
         # THEN an error tells the group value, the row numbers and the count
         message = "Group (a) in rows [1, 2, 3] has a file count of 3."
+        parser = CsvParser(manifest)
         with pytest.raises(ValueError, match=re.escape(message)):
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
     def test_that_one_error_tells_about_all_bad_groups(
         self, write_manifest: Callable
@@ -678,8 +682,9 @@ class TestPlanTargets:
         manifest = write_manifest(rows)
 
         # WHEN the rows are read and checked
+        parser = CsvParser(manifest)
         with pytest.raises(ValueError) as info:
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
         # THEN the error tells about each bad group
         message = str(info.value)
@@ -715,8 +720,9 @@ class TestPlanTargets:
             writer.writerow([txt, "txtx", ""])
 
         # WHEN the rows are read and checked
+        parser = CsvParser(manifest)
         with pytest.raises(ValueError) as info:
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
         # THEN the error tells about each bad single row and then the bad group
         lines = str(info.value).splitlines()
@@ -750,8 +756,9 @@ class TestPlanTargets:
         manifest = write_manifest(rows)
 
         # WHEN the rows are read and checked
+        parser = CsvParser(manifest)
         with pytest.raises(ValueError) as info:
-            CsvParser(manifest)._plan_targets()
+            parser._plan_targets()
 
         # THEN the error tells about each bad single row and then each bad
         # group

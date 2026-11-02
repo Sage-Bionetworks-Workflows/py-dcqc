@@ -5,6 +5,7 @@ from collections.abc import Collection, Sequence
 from copy import deepcopy
 from enum import Enum
 from typing import (
+    Any,
     ClassVar,
     Generic,
     Optional,
@@ -83,7 +84,7 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         self.tests = self.init_test_classes()
         self._status = SuiteStatus.NONE
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Set target_cls, and check the tests against it.
 
         target_cls is set from the type argument of the base class, as in

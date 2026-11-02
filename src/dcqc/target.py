@@ -45,7 +45,7 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
     id: Optional[str] = None
     type: str = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Check the files argument and fill in the target type.
 
         Raises:
@@ -197,7 +197,7 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
 class SingleTarget(BaseTarget):
     """Single-file target."""
 
-    n_files = 1
+    n_files: ClassVar[int] = 1
 
     @property
     def file(self):
@@ -209,7 +209,7 @@ class SingleTarget(BaseTarget):
 class PairedTarget(BaseTarget):
     """Paired (two-file) target."""
 
-    n_files = 2
+    n_files: ClassVar[int] = 2
 
 
 Target = TypeVar("Target", bound=BaseTarget)
