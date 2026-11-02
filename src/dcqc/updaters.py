@@ -73,12 +73,18 @@ class CsvUpdater:
                 if test._status == TestStatus.FAIL:
                     suite_data["failed_tests"].append(test.type)
                 if test._status == TestStatus.ERROR:
+<<<<<<< HEAD
                     suite_data["errored_tests"].append(test.type)
                 if test.metrics:
                     suite_data["metrics"][test.type] = test.metrics
             # The rows only read this data, so the files of a target share it
             for file in suite.target.files:
                 suite_dict[file.url] = suite_data
+=======
+                    suite_dict[url]["errored_tests"].append(test.type)
+                if test.metrics:
+                    suite_dict[url]["metrics"][test.type] = test.metrics
+>>>>>>> DPE-1821
 
         # Create CSV data structure
         row_list = []

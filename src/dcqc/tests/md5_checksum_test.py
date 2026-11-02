@@ -11,6 +11,7 @@ class Md5ChecksumTest(InternalBaseTest[BaseTarget]):
     tier = TestTier.FILE_INTEGRITY
 
     def compute_status(self) -> TestStatus:
+<<<<<<< HEAD
         """Check the MD5 checksum of every file against its metadata.
 
         All files are checked, also after a file fails, so that the metrics
@@ -33,6 +34,18 @@ class Md5ChecksumTest(InternalBaseTest[BaseTarget]):
         self.status_reason = "Computed MD5 checksum does not match provided value"
         self.metrics["md5_checksum"] = mismatches
         return TestStatus.FAIL
+=======
+        path = self.target.file.stage()
+        expected_md5 = self.target.file.get_metadata("md5_checksum")
+        actual_md5 = self._compute_md5_checksum(path)
+        if expected_md5 == actual_md5:
+            status = TestStatus.PASS
+        else:
+            status = TestStatus.FAIL
+            self.status_reason = "Computed MD5 checksum does not match provided value"
+            self.metrics["md5_checksum"] = actual_md5
+        return status
+>>>>>>> DPE-1821
 
     def _compute_md5_checksum(self, path: Path) -> str:
         hash_md5 = hashlib.md5()

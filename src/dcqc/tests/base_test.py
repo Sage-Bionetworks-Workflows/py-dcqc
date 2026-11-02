@@ -9,7 +9,11 @@ from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
+<<<<<<< HEAD
 from typing import Any, ClassVar, Generic, Optional
+=======
+from typing import Any, ClassVar, Generic, Optional, TypeVar
+>>>>>>> DPE-1821
 
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 from dcqc.target import BaseTarget, Target, get_target_type_argument
@@ -59,6 +63,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     target: Target
     status_reason: str = ""
     metrics: dict[str, Any]
+<<<<<<< HEAD
 
     def __init_subclass__(cls, **kwargs) -> None:
         """Set target_cls from the type argument of the base class.
@@ -82,6 +87,8 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             raise
         if target_cls is not None:
             cls.target_cls = target_cls
+=======
+>>>>>>> DPE-1821
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
