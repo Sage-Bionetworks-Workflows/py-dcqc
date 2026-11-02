@@ -1,4 +1,6 @@
+import csv
 import shutil
+from pathlib import Path
 from typing import Any
 
 from click.testing import Result
@@ -7,7 +9,10 @@ from typer.testing import CliRunner
 import dcqc
 from dcqc.main import app
 from dcqc.parsers import JsonParser
+from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
+from dcqc.target import PairedTarget
+from dcqc.tests.base_test import BaseTest
 
 
 def run_command(arguments: list[Any]):
@@ -66,6 +71,22 @@ def test_create_tests(get_data, get_output):
     result = run_command(args)
     check_command_result(result)
     assert len(list(output_dir.iterdir())) > 0
+
+
+def test_create_tests_with_paired_target(test_files, get_output):
+    output_dir = get_output("create_tests_with_paired_target")
+    shutil.rmtree(output_dir, ignore_errors=True)
+    output_dir.mkdir(parents=True)
+
+    files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
+    input_json = output_dir / "target.json"
+    JsonReport().save(PairedTarget(files), input_json.as_posix())
+
+    tests_dir = output_dir / "tests"
+    args = ["create-tests", input_json, tests_dir]
+    result = run_command(args)
+    check_command_result(result)
+    assert (tests_dir / "target.PairedFastqParityTest.json").exists()
 
 
 def test_create_process(get_data, get_output):
@@ -183,6 +204,115 @@ def test_qc_file_h5ad(get_data):
     ]
     result = run_command(args)
     check_command_result(result)
+
+
+def run_pipeline(input_csv: Path, output_dir: Path) -> list[dict[str, str]]:
+    """Run every CLI step in order, and give the rows of the updated CSV.
+
+    Each step reads the JSON files that the step before it wrote. The
+    external tests are skipped, because only nf-dcqc can run them.
+    """
+    shutil.rmtree(output_dir, ignore_errors=True)
+    external_tests = [
+        test.__name__ for test in BaseTest.list_subclasses() if test.is_external_test
+    ]
+    skip_args = [arg for name in external_tests for arg in ("-s", name)]
+
+    targets_dir = output_dir / "targets"
+    result = run_command(["create-targets", input_csv, targets_dir])
+    check_command_result(result)
+
+    suite_paths = []
+    for target_json in sorted(targets_dir.iterdir()):
+        tests_dir = output_dir / "tests" / target_json.stem
+        args = ["create-tests", *skip_args, target_json, tests_dir]
+        check_command_result(run_command(args))
+
+        computed_paths = []
+        for test_json in sorted(tests_dir.iterdir()):
+            computed_path = output_dir / "computed" / target_json.stem / test_json.name
+            args = ["compute-test", test_json, computed_path]
+            check_command_result(run_command(args))
+            computed_paths.append(computed_path)
+
+        suite_path = output_dir / "suites" / f"{target_json.stem}.json"
+        args = ["create-suite", *skip_args, suite_path, *computed_paths]
+        check_command_result(run_command(args))
+        suite_paths.append(suite_path)
+
+    suites_path = output_dir / "suites.json"
+    args = ["combine-suites", suites_path, *suite_paths]
+    check_command_result(run_command(args))
+
+    output_csv = output_dir / "output.csv"
+    args = ["update-csv", suites_path, input_csv, output_csv]
+    check_command_result(run_command(args))
+
+    with output_csv.open(newline="") as file:
+        return list(csv.DictReader(file))
+
+
+def split_cell(cell: str) -> set[str]:
+    """Split a comma-joined list cell, whose order is not stable."""
+    return set(cell.split(",")) if cell else set()
+
+
+def test_pipeline_with_single_targets(get_data, get_output):
+    input_csv = get_data("pipeline_single.csv")
+    output_dir = get_output("pipeline_single")
+    rows = run_pipeline(input_csv, output_dir)
+
+    assert len(list((output_dir / "targets").iterdir())) == 5
+    assert [row["url"] for row in rows] == [
+        "test.txt",
+        "circuit.tif",
+        "example.jsonld",
+        "example.tsv",
+        "example.bam",
+    ]
+    statuses = {row["url"]: row["dcqc_status"] for row in rows}
+    assert statuses == {
+        "test.txt": "GREEN",
+        "circuit.tif": "GREEN",
+        "example.jsonld": "GREEN",
+        "example.tsv": "GREEN",
+        "example.bam": "RED",
+    }
+    bam_row = rows[4]
+    assert split_cell(bam_row["dcqc_failed_tests"]) == {"Md5ChecksumTest"}
+    tiff_row = rows[1]
+    assert "LibTiffInfoTest" in split_cell(tiff_row["dcqc_skipped_tests"])
+
+
+def test_pipeline_with_grouped_targets(get_data, get_output):
+    input_csv = get_data("pipeline_grouped.csv")
+    output_dir = get_output("pipeline_grouped")
+    rows = run_pipeline(input_csv, output_dir)
+
+    # Three single-file targets and one PairedTarget for the two FASTQ rows
+    assert len(list((output_dir / "targets").iterdir())) == 4
+    assert [row["url"] for row in rows] == [
+        "test.txt",
+        "fastq1.fastq",
+        "circuit.tif",
+        "fastq2.fastq.gz",
+        "example.bam",
+    ]
+    statuses = {row["url"]: row["dcqc_status"] for row in rows}
+    assert statuses == {
+        "test.txt": "GREEN",
+        "fastq1.fastq": "RED",
+        "circuit.tif": "GREEN",
+        "fastq2.fastq.gz": "RED",
+        "example.bam": "RED",
+    }
+    # Both rows of the pair get the results of the same suite. The two
+    # FASTQ files do not have the same number of lines.
+    fastq_rows = [rows[1], rows[3]]
+    for row in fastq_rows:
+        assert "PairedFastqParityTest" in split_cell(row["dcqc_required_tests"])
+        assert split_cell(row["dcqc_failed_tests"]) == {"PairedFastqParityTest"}
+        assert row["dcqc_grouping"] == "fastq_pair"
 
 
 def test_update_csv(get_data, get_output):

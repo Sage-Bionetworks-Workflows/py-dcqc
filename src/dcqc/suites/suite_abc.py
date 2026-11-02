@@ -4,14 +4,18 @@ from abc import ABC
 from collections.abc import Collection, Sequence
 from copy import deepcopy
 from enum import Enum
-from typing import ClassVar, Generic, Optional, Type, TypeVar, Union
+from typing import (
+    ClassVar,
+    Generic,
+    Optional,
+    Type,
+    Union,
+)
 
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
-from dcqc.target import BaseTarget, SingleTarget
+from dcqc.target import BaseTarget, SingleTarget, Target, get_target_type_argument
 from dcqc.tests import BaseTest, TestStatus
-
-Target = TypeVar("Target", bound=BaseTarget)
 
 
 class SuiteStatus(Enum):
@@ -36,10 +40,17 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             which requires tier-1 and tier-2 tests.
         skipped_tests: List of tests that should not be
             evaluated. Defaults to None.
+
+    A suite gives the target class that it accepts one time, as the type
+    argument of its base class, for example FileSuite[PairedTarget]. The
+    target_cls class attribute is set from it. A suite that gives no type
+    argument inherits target_cls from its parent, and SuiteABC sets a
+    default of SingleTarget.
     """
 
     # Class attributes
     file_type: ClassVar[FileType]
+    target_cls: ClassVar[type[BaseTarget]] = SingleTarget
     add_tests: ClassVar[tuple[Type[BaseTest], ...]]
     del_tests: ClassVar[tuple[Type[BaseTest], ...]]
 
@@ -72,14 +83,58 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         self.tests = self.init_test_classes()
         self._status = SuiteStatus.NONE
 
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Set target_cls, and check the tests against it.
+
+        target_cls is set from the type argument of the base class, as in
+        BaseTest. Then every test of the new suite class must accept it.
+
+        If a check fails, the class is removed from the registry before the
+        error is raised, so that get_subclass_by_file_type cannot return it.
+
+        Raises:
+            TypeError: If the type argument is not a BaseTarget subclass,
+                or if a test does not accept the suite target class.
+        """
+        super().__init_subclass__(**kwargs)
+        try:
+            target_cls = get_target_type_argument(cls, SuiteABC)
+            if target_cls is not None:
+                cls.target_cls = target_cls
+            cls.ensure_tests_match_target_cls()
+        except TypeError:
+            cls.mark_registration_failed()
+            raise
+
+    @classmethod
+    def ensure_tests_match_target_cls(cls) -> None:
+        """Ensure that every test accepts the suite target class.
+
+        A test accepts the suite target class if the target class
+        is the same as, or a subclass of, the target_cls attribute
+        of the test. A test that does not set target_cls inherits
+        BaseTarget from BaseTest, and thus accepts any target.
+
+        Raises:
+            TypeError: If a test does not accept the suite target class.
+        """
+        for test_cls in cls.list_test_classes():
+            test_target_cls = test_cls.target_cls
+            if not issubclass(cls.target_cls, test_target_cls):
+                message = (
+                    f"{cls.__name__} uses target class {cls.target_cls.__name__}, "
+                    f"but {test_cls.__name__} requires {test_target_cls.__name__}."
+                )
+                raise TypeError(message)
+
     @classmethod
     def from_target(
         cls,
-        target: SingleTarget,
+        target: BaseTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> SuiteABC:
-        """Generate a suite from a single-file target.
+        """Generate a suite from a target.
 
         The suite is selected based on the target file type.
 
@@ -96,6 +151,8 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         """
         file_type = target.get_file_type()
         suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
+        urls = [file.url for file in target.files]
+        suite_cls.ensure_accepts_target_cls(type(target), file_type, urls)
         suite = suite_cls(target, required_tests, skipped_tests)
         return suite
 
@@ -136,8 +193,6 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         if not all(representative_target == target for target in targets):
             message = f"Not all tests refer to the same target ({targets})."
             raise ValueError(message)
-        if not isinstance(representative_target, SingleTarget):  # pragma: no cover
-            raise ValueError("Can only recreate suite from single-file target.")
         suite = cls.from_target(representative_target, required_tests, skipped_tests)
         suite.tests = suite_tests
 
@@ -207,6 +262,50 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             #       composite file types (e.g., BAM/BAI file pair)
             return registry["*"]
         return registry[name]
+
+    @classmethod
+    def ensure_accepts_target_cls(
+        cls,
+        target_cls: Type[BaseTarget],
+        file_type: FileType,
+        urls: Sequence[str],
+    ) -> None:
+        """Make sure that this suite class accepts a target class.
+
+        Each suite class sets the target class that it accepts in its
+        target_cls attribute. For example, FastqSuite accepts only a
+        PairedTarget, and TiffSuite accepts only a SingleTarget. This method
+        makes sure that target_cls is that class or a subclass of it.
+
+        The method uses classes and URLs, not a target instance. Thus
+        CsvParser can do the check before it stages the files, so a bad
+        manifest fails before any download. SuiteABC.from_target also calls
+        this method, on every target.
+
+        Args:
+            target_cls: The class of the target to check, for example
+                SingleTarget or PairedTarget.
+            file_type: The file type of the target. It is used only in the
+                error message. It can be different from the file_type of
+                the suite, because FileSuite is used for each file type
+                that no suite claims.
+            urls: The URLs of the files in the target. They are used only
+                in the error message.
+
+        Raises:
+            ValueError: If this suite class does not accept target_cls. The
+                message gives the URLs, the two target classes and the
+                suite class. It does not tell about the 'dcqc_grouping'
+                column, because some callers have no CSV manifest, for
+                example qc-file. CsvParser adds that hint.
+        """
+        if not issubclass(target_cls, cls.target_cls):
+            message = (
+                f"Target ({', '.join(urls)}) is a {target_cls.__name__}, but "
+                f"{cls.__name__} for file type '{file_type.name}' requires "
+                f"a {cls.target_cls.__name__}."
+            )
+            raise ValueError(message)
 
     @property
     def tests_by_name(self) -> dict[str, BaseTest]:

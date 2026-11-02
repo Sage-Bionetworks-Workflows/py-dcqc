@@ -1,12 +1,11 @@
-from dcqc.target import SingleTarget
+from dcqc.target import BaseTarget
 from dcqc.tests.base_test import InternalBaseTest, TestStatus, TestTier
 
 
-class FileExtensionTest(InternalBaseTest):
+class FileExtensionTest(InternalBaseTest[BaseTarget]):
     """Tests if a file has a valid extension for its file type."""
 
     tier = TestTier.FILE_INTEGRITY
-    target: SingleTarget
 
     def compute_status(self) -> TestStatus:
         """Check every file name against the extensions for its file type.

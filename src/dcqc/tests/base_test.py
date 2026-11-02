@@ -9,12 +9,10 @@ from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Generic, Optional, TypeVar
+from typing import Any, ClassVar, Generic, Optional
 
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
-from dcqc.target import BaseTarget
-
-Target = TypeVar("Target", bound=BaseTarget)
+from dcqc.target import BaseTarget, Target, get_target_type_argument
 
 
 class TestStatus(Enum):
@@ -53,6 +51,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
     # Class attributes
     tier: TestTier
+    target_cls: ClassVar[type[BaseTarget]] = BaseTarget
     is_external_test: bool = False
 
     # Instance attributes
@@ -60,6 +59,29 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     target: Target
     status_reason: str = ""
     metrics: dict[str, Any]
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Set target_cls from the type argument of the base class.
+
+        A test gives its target class one time, as the type argument of
+        its base class, for example InternalBaseTest[SingleTarget]. Then
+        mypy and target_cls get the same class. A test that does not give
+        a type argument inherits target_cls from its parent.
+
+        If the check fails, the class is removed from the registry before
+        the error is raised, so that get_subclass_by_name cannot return it.
+
+        Raises:
+            TypeError: If the type argument is not a BaseTarget subclass.
+        """
+        super().__init_subclass__(**kwargs)
+        try:
+            target_cls = get_target_type_argument(cls, BaseTest)
+        except TypeError:
+            cls.mark_registration_failed()
+            raise
+        if target_cls is not None:
+            cls.target_cls = target_cls
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
@@ -191,7 +213,7 @@ class Process(SerializableMixin):
         return process
 
 
-class ExternalTestMixin(BaseTest):
+class ExternalTestMixin(BaseTest[Target]):
     """Class Mixin for external tests."""
 
     # Class attributes
@@ -260,9 +282,9 @@ class ExternalTestMixin(BaseTest):
     #     return dictionary
 
 
-class InternalBaseTest(BaseTest):
+class InternalBaseTest(BaseTest[Target]):
     """Base class for all internal tests."""
 
 
-class ExternalBaseTest(ExternalTestMixin, BaseTest):
+class ExternalBaseTest(ExternalTestMixin[Target]):
     """Base class for all external tests."""
