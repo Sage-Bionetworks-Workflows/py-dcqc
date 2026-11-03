@@ -59,15 +59,24 @@ def test_that_the_ome_tiff_suite_has_a_superset_of_the_tiff_suite_tests():
 
 
 def test_that_every_suite_test_accepts_the_suite_target_class():
+    # GIVEN every registered suite
+    # WHEN I check its tests against its target class
+    # THEN no error is raised
     for suite_cls in SuiteABC.list_subclasses():
         suite_cls.ensure_tests_match_target_cls()
 
 
 def test_that_the_default_suite_target_class_is_single_target():
+    # GIVEN the base suite class
+    # WHEN I get its target class
+    # THEN it is SingleTarget
     assert SuiteABC.target_cls is SingleTarget
 
 
 def test_for_an_error_when_a_suite_test_does_not_accept_the_target_class():
+    # GIVEN a SingleTarget suite that adds a PairedTarget test
+    # WHEN I define the suite
+    # THEN an error tells that the test requires PairedTarget
     with pytest.raises(TypeError, match="requires PairedTarget"):
 
         class MismatchedSuite(FileSuite):
@@ -76,6 +85,9 @@ def test_for_an_error_when_a_suite_test_does_not_accept_the_target_class():
 
 
 def test_for_an_error_when_a_suite_target_class_does_not_suit_its_tests():
+    # GIVEN a PairedTarget suite that adds a SingleTarget test
+    # WHEN I define the suite
+    # THEN an error tells that the test requires SingleTarget
     with pytest.raises(TypeError, match="requires SingleTarget"):
 
         class MismatchedSuite(FileSuite):
@@ -85,16 +97,25 @@ def test_for_an_error_when_a_suite_target_class_does_not_suit_its_tests():
 
 
 def test_that_the_fastq_suite_target_class_is_paired_target():
+    # GIVEN the FASTQ suite
+    # WHEN I get its target class
+    # THEN it is PairedTarget
     assert FastqSuite.target_cls is PairedTarget
 
 
 def test_that_a_suite_without_a_target_class_inherits_the_target_class():
+    # GIVEN suites that do not set a target class
+    # WHEN I get their target classes
+    # THEN each one has the SingleTarget class of its parent
     assert FileSuite.target_cls is SingleTarget
     assert TiffSuite.target_cls is SingleTarget
     assert OmeTiffSuite.target_cls is SingleTarget
 
 
 def test_for_an_error_when_the_suite_target_class_is_not_a_target_class():
+    # GIVEN a suite whose target class is a union of two target classes
+    # WHEN I define the suite
+    # THEN an error tells that target_cls must be a BaseTarget subclass
     with pytest.raises(TypeError, match="must set target_cls to a BaseTarget"):
 
         class UnionSuite(FileSuite):
@@ -103,6 +124,9 @@ def test_for_an_error_when_the_suite_target_class_is_not_a_target_class():
 
 
 def test_for_an_error_when_a_suite_is_given_a_type_argument():
+    # GIVEN a suite class that is not generic
+    # WHEN I define a suite with a type argument
+    # THEN a TypeError is raised
     with pytest.raises(TypeError):
 
         class SubscriptedSuite(FileSuite[PairedTarget]):  # type: ignore
@@ -110,24 +134,36 @@ def test_for_an_error_when_a_suite_is_given_a_type_argument():
 
 
 def test_that_the_default_test_target_class_is_base_target():
+    # GIVEN the base test class and a test without a type argument
+    # WHEN I get their target classes
+    # THEN both are BaseTarget
     assert BaseTest.target_cls is BaseTarget
     assert DummyTest.target_cls is BaseTarget
 
 
 def test_that_the_test_target_class_is_set_from_the_type_argument():
+    # GIVEN tests with different type arguments
+    # WHEN I get their target classes
+    # THEN each one is the target class of its type argument
     assert LibTiffInfoTest.target_cls is SingleTarget
     assert PairedFastqParityTest.target_cls is PairedTarget
     assert FileExtensionTest.target_cls is BaseTarget
 
 
 def test_that_a_test_subclass_inherits_the_target_class_of_its_parent():
+    # GIVEN a subclass of a PairedTarget test with no type argument
     class ChildTest(PairedFastqParityTest):
         pass
 
+    # WHEN I get its target class
+    # THEN it is the PairedTarget class of its parent
     assert ChildTest.target_cls is PairedTarget
 
 
 def test_for_an_error_when_the_test_type_argument_is_not_a_target_class():
+    # GIVEN a test whose type argument is a union of two target classes
+    # WHEN I define the test
+    # THEN an error tells that it must give a BaseTarget subclass
     with pytest.raises(TypeError, match="must give a BaseTarget subclass"):
 
         class UnionTest(BaseTest[SingleTarget | PairedTarget]):  # type: ignore
@@ -136,24 +172,30 @@ def test_for_an_error_when_the_test_type_argument_is_not_a_target_class():
 
 
 def test_that_a_suite_that_fails_its_check_is_not_registered():
+    # GIVEN a suite that adds a test that does not accept its target class
+    # WHEN I define the suite
     with pytest.raises(TypeError, match="requires PairedTarget"):
 
         class UnregisteredSuite(FileSuite):
             file_type = FileType.get_file_type("Unpaired")
             add_tests = (PairedFastqParityTest,)
 
+    # THEN the suite is not registered and its file type gets the generic suite
     suite_names = [suite.__name__ for suite in SuiteABC.list_subclasses()]
     assert "UnregisteredSuite" not in suite_names
     assert SuiteABC.get_subclass_by_file_type("Unpaired") is FileSuite
 
 
 def test_that_a_test_that_fails_its_check_is_not_registered():
+    # GIVEN a test whose type argument is not a target class
+    # WHEN I define the test
     with pytest.raises(TypeError, match="must give a BaseTarget subclass"):
 
         class UnregisteredTest(BaseTest[int]):  # type: ignore
             def compute_status(self) -> TestStatus:
                 return TestStatus.NONE
 
+    # THEN the test is not registered
     test_names = [test.__name__ for test in BaseTest.list_subclasses()]
     assert "UnregisteredTest" not in test_names
 
@@ -163,14 +205,20 @@ class GenericBox(Generic[BoxValue]):
 
 
 def test_that_an_unrelated_generic_base_is_ignored():
+    # GIVEN a test with a generic base that is not a test and a PairedTarget base
     class BoxedTest(GenericBox[int], InternalBaseTest[PairedTarget]):
         def compute_status(self) -> TestStatus:
             return TestStatus.NONE
 
+    # WHEN I get its target class
+    # THEN it is PairedTarget
     assert BoxedTest.target_cls is PairedTarget
 
 
 def test_for_an_error_when_two_bases_give_a_target_class():
+    # GIVEN a test with two bases that give different target classes
+    # WHEN I define the test
+    # THEN an error tells that it must give one target type
     with pytest.raises(TypeError, match="must give one target type"):
 
         class TwiceTest(  # type: ignore
@@ -237,22 +285,31 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
 
 
 def test_that_a_fastq_suite_is_built_from_a_paired_target(test_files):
+    # GIVEN a paired target of two FASTQ files
     files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
+    # WHEN I build a suite from the target
     suite = SuiteABC.from_target(PairedTarget(files))
+    # THEN the suite is a FASTQ suite
     assert isinstance(suite, FastqSuite)
 
 
 def test_that_a_fastq_suite_is_built_from_tests_with_a_paired_target(test_files):
+    # GIVEN the tests of a FASTQ suite with a paired target
     files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
     suite = SuiteABC.from_target(PairedTarget(files))
+    # WHEN I build a suite from the tests
     new_suite = SuiteABC.from_tests(suite.tests)
+    # THEN the new suite is a FASTQ suite with the same target
     assert isinstance(new_suite, FastqSuite)
     assert new_suite.target == suite.target
 
 
 def test_for_an_error_when_building_a_fastq_suite_from_a_single_target(test_targets):
+    # GIVEN a single target of a FASTQ file
     target = test_targets["good_fastq"]
     url = target.files[0].url
+    # WHEN I build a suite from the target
+    # THEN an error tells the URL and that the suite requires a PairedTarget
     with pytest.raises(ValueError, match="requires a PairedTarget") as error:
         SuiteABC.from_target(target)
     assert url in str(error.value)
@@ -261,8 +318,11 @@ def test_for_an_error_when_building_a_fastq_suite_from_a_single_target(test_targ
 
 
 def test_for_an_error_when_building_a_tiff_suite_from_a_paired_target(test_files):
+    # GIVEN a paired target of two TIFF files
     files = [test_files["good_tiff"], test_files["date_in_tag_tiff"]]
     target = PairedTarget(files)
+    # WHEN I build a suite from the target
+    # THEN an error tells that the suite requires a SingleTarget
     with pytest.raises(ValueError, match="requires a SingleTarget"):
         SuiteABC.from_target(target)
 

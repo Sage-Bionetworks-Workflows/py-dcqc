@@ -45,6 +45,7 @@ Fixture keys follow `good_<type>` for valid files and `<reason_it_is_bad>_<type>
 
 - Classes are `Test<ClassUnderTest>` with an `autouse` fixture conventionally named `setup_method` that assigns `self.<name>_target` / `self.<name>_test`.
 - Functions are long full sentences: `test_that_...` for behaviour, `test_for_an_error_when_...` / `test_for_an_error_if_...` for expected raises. `test_main.py` mostly drops this and uses plain `test_<cli_command>`; the exceptions are `test_that_the_package_version_can_be_printed`, `test_pipeline_with_single_targets` and `test_pipeline_with_grouped_targets`.
+- Every new test has `# GIVEN`, `# WHEN` and `# THEN` comments. Put `# WHEN` and `# THEN` together above a `pytest.raises` block. Many older tests do not have them; do not add them to an old test as a drive-by change.
 - `parametrize` is reserved for pure input-to-expected-classification tables; everything else uses class grouping.
 - The external-test exit-code pattern (write `"0"`/`"1"` to temp files, then `mocker.patch.object(test, "_find_process_outputs", ...)`) is repeated for each test. Copy the nearest neighbour, and check whether that test's codes are inverted — see `src/dcqc/tests/CLAUDE.md`.
 

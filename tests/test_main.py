@@ -74,6 +74,7 @@ def test_create_tests(get_data, get_output):
 
 
 def test_create_tests_with_paired_target(test_files, get_output):
+    # GIVEN a target JSON file for a pair of FASTQ files
     output_dir = get_output("create_tests_with_paired_target")
     shutil.rmtree(output_dir, ignore_errors=True)
     output_dir.mkdir(parents=True)
@@ -82,9 +83,11 @@ def test_create_tests_with_paired_target(test_files, get_output):
     input_json = output_dir / "target.json"
     JsonReport().save(PairedTarget(files), input_json.as_posix())
 
+    # WHEN I run create-tests on the paired target
     tests_dir = output_dir / "tests"
     args = ["create-tests", input_json, tests_dir]
     result = run_command(args)
+    # THEN the command succeeds and writes the paired FASTQ test
     check_command_result(result)
     assert (tests_dir / "target.PairedFastqParityTest.json").exists()
 
@@ -258,10 +261,13 @@ def split_cell(cell: str) -> set[str]:
 
 
 def test_pipeline_with_single_targets(get_data, get_output):
+    # GIVEN a manifest of five local files with no grouping
     input_csv = get_data("pipeline_single.csv")
     output_dir = get_output("pipeline_single")
+    # WHEN I run every CLI step on the manifest
     rows = run_pipeline(input_csv, output_dir)
 
+    # THEN each row is one target and gets the status of its own suite
     assert len(list((output_dir / "targets").iterdir())) == 5
     assert [row["url"] for row in rows] == [
         "test.txt",
@@ -285,10 +291,13 @@ def test_pipeline_with_single_targets(get_data, get_output):
 
 
 def test_pipeline_with_grouped_targets(get_data, get_output):
+    # GIVEN a manifest where two FASTQ rows share a grouping value
     input_csv = get_data("pipeline_grouped.csv")
     output_dir = get_output("pipeline_grouped")
+    # WHEN I run every CLI step on the manifest
     rows = run_pipeline(input_csv, output_dir)
 
+    # THEN the two FASTQ rows are one target and both get its results
     # Three single-file targets and one PairedTarget for the two FASTQ rows
     assert len(list((output_dir / "targets").iterdir())) == 4
     assert [row["url"] for row in rows] == [
