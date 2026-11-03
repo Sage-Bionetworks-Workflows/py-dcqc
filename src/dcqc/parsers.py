@@ -170,21 +170,14 @@ class CsvParser:
         _build_targets stages a file. This method does not stage a file and
         does not build a target.
 
-        For each row, the dcqc_grouping value is removed from the file
-        metadata, and the spaces at its start and end are removed. A row
-        with an empty or missing value is a single row, and it becomes a
-        SingleTarget. All rows with the same value are one group, and each
-        group becomes a PairedTarget. The rows of a group do not have to be
-        next to each other in the manifest.
+        Each single row becomes a SingleTarget, and each group becomes a
+        PairedTarget. See _split_rows_by_grouping for the grouping rules, and
+        _plan_single_rows and _plan_groups for the checks.
 
-        A single row is bad if its file has an unknown file type. A group is
-        bad if it does not have exactly two files, if a file has an unknown
-        file type, or if the two files have different file types. A single
-        row or a group is also bad if the suite for its file type does not
-        accept its target class. All rows and groups are checked before an
-        error is raised, so that one error tells about all of them. The bad
-        single rows come first, in manifest order, and then the bad groups,
-        in the order of their first row.
+        All rows and groups are checked before an error is raised, so that
+        one error tells about all of them. The bad single rows come first,
+        in manifest order, and then the bad groups, in the order of their
+        first row.
 
         Raises:
             ValueError: If a single row or a group is bad. The message has
@@ -197,10 +190,32 @@ class CsvParser:
             then one for each group, in the order of its first row. The
             members of a group are in manifest order.
         """
-        # Rows without a grouping value, in manifest order.
+        singles, groups = self._split_rows_by_grouping()
+        plans, errors = self._plan_single_rows(singles)
+        group_plans, group_errors = self._plan_groups(groups)
+        plans.extend(group_plans)
+        errors.extend(group_errors)
+        if errors:
+            raise ValueError("\n".join(errors))
+        return plans
+
+    def _split_rows_by_grouping(
+        self,
+    ) -> tuple[list[tuple[int, File]], dict[str, list[tuple[int, File]]]]:
+        """Split the manifest rows into single rows and groups.
+
+        For each row, the dcqc_grouping value is removed from the file
+        metadata, and the spaces at its start and end are removed. A row
+        with an empty or missing value is a single row. All rows with the
+        same value are one group.
+
+        Returns:
+            The single rows, as pairs of a row number and the file, in
+            manifest order. Then a dictionary that maps each grouping value
+            to the pairs of a row number and the file of each row in that
+            group, in manifest order.
+        """
         singles: list[tuple[int, File]] = []
-        # Maps each grouping value to the pairs of a row number and the file
-        # of each row in that group, in manifest order.
         groups: dict[str, list[tuple[int, File]]] = {}
         for index, _, file in self.list_rows_and_files():
             group = (file.metadata.pop("dcqc_grouping", None) or "").strip()
@@ -208,10 +223,28 @@ class CsvParser:
                 groups.setdefault(group, []).append((index, file))
             else:
                 singles.append((index, file))
+        return singles, groups
 
+    @classmethod
+    def _plan_single_rows(
+        cls, singles: list[tuple[int, File]]
+    ) -> tuple[list[_PlannedTarget], list[str]]:
+        """Make a SingleTarget plan for each single row, and check it.
+
+        A single row is bad if its file has an unknown file type, or if the
+        suite for its file type does not accept a SingleTarget. All rows are
+        checked. This method does not raise an error for a bad row.
+
+        Args:
+            singles: The single rows, as pairs of a row number and the file,
+                in manifest order.
+
+        Returns:
+            The plans of the good rows, in manifest order. Then the error
+            messages of the bad rows, in manifest order. Each message starts
+            with the row number.
+        """
         plans: list[_PlannedTarget] = []
-        # One message for each bad single row, in manifest order, and then
-        # one message for each bad group, in the order of its first row.
         errors: list[str] = []
         for index, file in singles:
             try:
@@ -220,11 +253,36 @@ class CsvParser:
                 errors.append(f"Row {index} has an unknown file type. {error}")
                 continue
             plan = _PlannedTarget(SingleTarget, [(index, file)])
-            error_message = self._check_plan(plan, f"Row {index}")
+            error_message = cls._check_plan(plan, f"Row {index}")
             if error_message:
                 errors.append(error_message)
             else:
                 plans.append(plan)
+        return plans, errors
+
+    def _plan_groups(
+        self, groups: dict[str, list[tuple[int, File]]]
+    ) -> tuple[list[_PlannedTarget], list[str]]:
+        """Make a PairedTarget plan for each group, and check it.
+
+        A group is bad if a file has an unknown file type, if it does not
+        have exactly two files, if the files have different file types, or
+        if the suite for its file type does not accept a PairedTarget. All
+        groups are checked. This method does not raise an error for a bad
+        group.
+
+        Args:
+            groups: A dictionary that maps each grouping value to the pairs
+                of a row number and the file of each row in that group, in
+                manifest order.
+
+        Returns:
+            The plans of the good groups, in the order of the dictionary.
+            Then the error messages of the bad groups, in the same order.
+            Each message starts with the grouping value and the row numbers.
+        """
+        plans: list[_PlannedTarget] = []
+        errors: list[str] = []
         for group, members in groups.items():
             indices = [index for index, _ in members]
             try:
@@ -239,9 +297,7 @@ class CsvParser:
                 errors.append(error_message)
             else:
                 plans.append(plan)
-        if errors:
-            raise ValueError("\n".join(errors))
-        return plans
+        return plans, errors
 
     @classmethod
     def _check_plan(cls, plan: _PlannedTarget, location: str) -> Optional[str]:

@@ -1077,3 +1077,472 @@ class TestEnsureGroupFileTypesKnown:
         message = "Group (a) in rows [3, 7] has an unknown file type in row 7."
         with pytest.raises(ValueError, match=re.escape(message)):
             self.parser._ensure_group_file_types_known("a", members)
+
+
+class TestSplitRowsByGrouping:
+    """Tests for CsvParser._split_rows_by_grouping.
+
+    Most tests write a small manifest with a dcqc_grouping column to a
+    temporary directory. Each row points at a local test file, so no file is
+    downloaded.
+    """
+
+    @staticmethod
+    def indices(members: list[tuple[int, File]]) -> list[int]:
+        """Give the row numbers of a list of members.
+
+        Args:
+            members: Pairs of a row number and a file.
+
+        Returns:
+            The row numbers, in the order of the members.
+        """
+        return [index for index, _ in members]
+
+    def test_that_a_manifest_without_a_grouping_column_gives_only_single_rows(
+        self, get_data: Callable
+    ) -> None:
+        """Make sure that a manifest with no dcqc_grouping column has no groups.
+
+        Args:
+            get_data: Fixture factory that gives the path of a test data file.
+        """
+        # GIVEN a manifest of 8 rows with no dcqc_grouping column
+        csv_path = get_data("files_ungrouped.csv")
+
+        # WHEN the rows are split
+        singles, groups = CsvParser(csv_path)._split_rows_by_grouping()
+
+        # THEN each row is a single row, in manifest order
+        assert self.indices(singles) == list(range(1, 9))
+
+        # AND there are no groups
+        assert groups == {}
+
+    def test_that_rows_with_no_grouping_value_are_single_rows(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that empty, blank and missing grouping values give single rows.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest with an empty value, a value of only spaces and a
+        # row with no grouping cell
+        rows: list[tuple[str, str | None]] = [
+            ("TXT", ""),
+            ("TXT", "   "),
+            ("TXT", None),
+        ]
+        manifest = write_manifest(rows)
+
+        # WHEN the rows are split
+        singles, groups = CsvParser(manifest)._split_rows_by_grouping()
+
+        # THEN each row is a single row, in manifest order
+        assert self.indices(singles) == [1, 2, 3]
+        assert groups == {}
+
+    def test_that_rows_with_the_same_grouping_value_are_one_group(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that the rows of one group are collected in manifest order.
+
+        The rows of the group are not next to each other, and one value has
+        spaces around it.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest with two rows in group 1 that are not adjacent
+        # AND one group value with spaces around it
+        rows: list[tuple[str, str | None]] = [
+            ("FASTQ", " 1 "),
+            ("TXT", ""),
+            ("FASTQ", "1"),
+        ]
+        manifest = write_manifest(rows)
+
+        # WHEN the rows are split
+        singles, groups = CsvParser(manifest)._split_rows_by_grouping()
+
+        # THEN the TXT row is a single row
+        assert self.indices(singles) == [2]
+
+        # AND the grouping value has no spaces, and the members are in
+        # manifest order
+        assert list(groups) == ["1"]
+        assert self.indices(groups["1"]) == [1, 3]
+
+    def test_that_groups_are_in_the_order_of_their_first_row(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that the groups are in the order of their first row.
+
+        The order must not come from the grouping values.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest where group b starts before group a
+        rows: list[tuple[str, str | None]] = [
+            ("FASTQ", "b"),
+            ("FASTQ", "a"),
+            ("FASTQ", "b"),
+            ("FASTQ", "a"),
+        ]
+        manifest = write_manifest(rows)
+
+        # WHEN the rows are split
+        _, groups = CsvParser(manifest)._split_rows_by_grouping()
+
+        # THEN group b comes first
+        assert list(groups) == ["b", "a"]
+        assert self.indices(groups["b"]) == [1, 3]
+        assert self.indices(groups["a"]) == [2, 4]
+
+    def test_that_grouping_values_are_case_sensitive(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that A and a are two different groups.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest with the grouping values A and a
+        rows: list[tuple[str, str | None]] = [
+            ("FASTQ", "A"),
+            ("FASTQ", "a"),
+        ]
+        manifest = write_manifest(rows)
+
+        # WHEN the rows are split
+        _, groups = CsvParser(manifest)._split_rows_by_grouping()
+
+        # THEN there are two groups of one row each
+        assert {group: self.indices(members) for group, members in groups.items()} == {
+            "A": [1],
+            "a": [2],
+        }
+
+    def test_that_the_grouping_value_is_removed_from_the_file_metadata(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that no file keeps the dcqc_grouping value.
+
+        The other metadata and the file type must stay.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest with one single row and one group
+        rows: list[tuple[str, str | None]] = [
+            ("TXT", ""),
+            ("FASTQ", "1"),
+            ("FASTQ", "1"),
+        ]
+        manifest = write_manifest(rows)
+
+        # WHEN the rows are split
+        singles, groups = CsvParser(manifest)._split_rows_by_grouping()
+
+        # THEN no file has the grouping value in its metadata
+        files = [file for _, file in singles + groups["1"]]
+        assert all("dcqc_grouping" not in file.metadata for file in files)
+
+        # AND the other metadata stays. File moves file_type to File.type.
+        assert all(file.metadata == {"md5_checksum": "0" * 32} for file in files)
+        assert [file.type for file in files] == ["TXT", "FASTQ", "FASTQ"]
+
+    def test_that_the_rows_and_groups_are_not_checked(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that splitting does not check the files or the group sizes.
+
+        A group of three rows with mixed file types and an ungrouped FASTQ
+        row are errors in _plan_targets, but not here.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest with an ungrouped FASTQ row and a group of three
+        # rows with different file types
+        rows: list[tuple[str, str | None]] = [
+            ("FASTQ", ""),
+            ("TXT", "x"),
+            ("TIFF", "x"),
+            ("FASTQ", "x"),
+        ]
+        manifest = write_manifest(rows)
+
+        # WHEN the rows are split
+        singles, groups = CsvParser(manifest)._split_rows_by_grouping()
+
+        # THEN no error is raised, and the rows are split as they are
+        assert self.indices(singles) == [1]
+        assert self.indices(groups["x"]) == [2, 3, 4]
+
+
+class TestPlanSingleRows:
+    """Tests for CsvParser._plan_single_rows.
+
+    The tests give the row numbers and files directly, so no manifest is
+    read. The method is a classmethod, so no parser is made.
+    """
+
+    txt_file: File
+    tiff_file: File
+    fastq_file: File
+
+    @pytest.fixture(autouse=True)
+    def setup_method(self, test_files: dict[str, File]) -> None:
+        """Get the files for the single rows.
+
+        Args:
+            test_files: Fixture that maps a key to a test file.
+        """
+        self.txt_file = test_files["good_txt"]
+        self.tiff_file = test_files["good_tiff"]
+        self.fastq_file = test_files["good_fastq"]
+
+    def test_that_no_single_rows_give_no_plans_and_no_errors(self) -> None:
+        """Make sure that an empty list of single rows gives two empty lists."""
+        # GIVEN no single rows
+        # WHEN the single rows are planned
+        plans, errors = CsvParser._plan_single_rows([])
+
+        # THEN there are no plans and no errors
+        assert plans == []
+        assert errors == []
+
+    def test_that_good_single_rows_give_single_target_plans(self) -> None:
+        """Make sure that each good row gives one SingleTarget plan in order."""
+        # GIVEN a TXT row and a TIFF row
+        singles = [(2, self.txt_file), (5, self.tiff_file)]
+
+        # WHEN the single rows are planned
+        plans, errors = CsvParser._plan_single_rows(singles)
+
+        # THEN there are no errors
+        assert errors == []
+
+        # AND each row has one SingleTarget plan, in manifest order
+        assert [plan.target_cls for plan in plans] == [SingleTarget, SingleTarget]
+        assert plan_indices(plans) == [[2], [5]]
+        assert [plan.members[0][1] for plan in plans] == [
+            self.txt_file,
+            self.tiff_file,
+        ]
+
+    def test_for_an_error_message_when_a_row_has_an_unknown_file_type(
+        self,
+    ) -> None:
+        """Make sure that a row with an unknown file type gives a message."""
+        # GIVEN a row with an unknown file type
+        unknown_file = File(self.txt_file.url, {"file_type": "tiffx"})
+
+        # WHEN the single rows are planned
+        plans, errors = CsvParser._plan_single_rows([(3, unknown_file)])
+
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the row number
+        assert len(errors) == 1
+        assert errors[0].startswith("Row 3 has an unknown file type.")
+
+    def test_for_an_error_message_when_the_suite_rejects_a_single_target(
+        self,
+    ) -> None:
+        """Make sure that an ungrouped FASTQ row gives a message with a hint."""
+        # GIVEN an ungrouped FASTQ row
+        singles = [(4, self.fastq_file)]
+
+        # WHEN the single rows are planned
+        plans, errors = CsvParser._plan_single_rows(singles)
+
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the row number and how to fix the manifest
+        assert len(errors) == 1
+        assert errors[0].startswith("Row 4: ")
+        assert errors[0].endswith("Give the files the same 'dcqc_grouping' value.")
+
+    def test_that_all_rows_are_checked_and_no_error_is_raised(self) -> None:
+        """Make sure that bad rows do not stop the check of the other rows.
+
+        The good rows give plans and the bad rows give messages, both in
+        manifest order.
+        """
+        # GIVEN a good row, a row with an unknown file type, an ungrouped
+        # FASTQ row and one more good row
+        unknown_file = File(self.txt_file.url, {"file_type": "tiffx"})
+        singles = [
+            (1, self.txt_file),
+            (2, unknown_file),
+            (3, self.fastq_file),
+            (4, self.tiff_file),
+        ]
+
+        # WHEN the single rows are planned
+        plans, errors = CsvParser._plan_single_rows(singles)
+
+        # THEN the good rows have plans, in manifest order
+        assert plan_indices(plans) == [[1], [4]]
+
+        # AND the bad rows have messages, in manifest order
+        assert len(errors) == 2
+        assert errors[0].startswith("Row 2 has an unknown file type.")
+        assert errors[1].startswith("Row 3: ")
+
+
+class TestPlanGroups:
+    """Tests for CsvParser._plan_groups.
+
+    The tests give the grouping values, row numbers and files directly, so
+    no manifest is read. The parser path has no effect on the method.
+    """
+
+    parser: CsvParser
+    txt_file: File
+    fastq_file: File
+    compressed_fastq_file: File
+
+    @pytest.fixture(autouse=True)
+    def setup_method(self, get_data: Callable, test_files: dict[str, File]) -> None:
+        """Make a parser and the files for the groups.
+
+        Args:
+            get_data: Fixture factory that gives the path of a test data file.
+            test_files: Fixture that maps a key to a test file.
+        """
+        self.parser = CsvParser(get_data("files.csv"))
+        self.txt_file = test_files["good_txt"]
+        self.fastq_file = test_files["good_fastq"]
+        self.compressed_fastq_file = test_files["good_compressed_fastq"]
+
+    def test_that_no_groups_give_no_plans_and_no_errors(self) -> None:
+        """Make sure that an empty dictionary of groups gives two empty lists."""
+        # GIVEN no groups
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups({})
+
+        # THEN there are no plans and no errors
+        assert plans == []
+        assert errors == []
+
+    def test_that_a_good_group_gives_a_paired_target_plan(self) -> None:
+        """Make sure that a pair of FASTQ files gives one PairedTarget plan."""
+        # GIVEN a group of two FASTQ files
+        groups = {"a": [(2, self.fastq_file), (5, self.compressed_fastq_file)]}
+
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups(groups)
+
+        # THEN there are no errors
+        assert errors == []
+
+        # AND the group has one PairedTarget plan with its files in order
+        assert len(plans) == 1
+        assert plans[0].target_cls is PairedTarget
+        assert plans[0].members == groups["a"]
+
+    def test_for_an_error_message_when_a_file_has_an_unknown_file_type(
+        self,
+    ) -> None:
+        """Make sure that an unknown file type gives a message with its row."""
+        # GIVEN a group with a file that has an unknown file type
+        unknown_file = File(self.fastq_file.url, {"file_type": "tiffx"})
+        groups = {"a": [(3, self.fastq_file), (7, unknown_file)]}
+
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups(groups)
+
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the group value, the row numbers and the bad row
+        assert len(errors) == 1
+        assert errors[0].startswith(
+            "Group (a) in rows [3, 7] has an unknown file type in row 7."
+        )
+
+    def test_for_an_error_message_when_a_group_has_one_file(self) -> None:
+        """Make sure that a group with one file gives a file count message."""
+        # GIVEN a group with one FASTQ file
+        groups = {"a": [(4, self.fastq_file)]}
+
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups(groups)
+
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the group value and the file count
+        assert len(errors) == 1
+        assert errors[0].startswith("Group (a) in rows [4] has a file count of 1.")
+
+    def test_for_an_error_message_when_the_files_have_different_file_types(
+        self,
+    ) -> None:
+        """Make sure that a FASTQ file and a TXT file in a group give a message."""
+        # GIVEN a group of a FASTQ file and a TXT file
+        groups = {"a": [(1, self.fastq_file), (2, self.txt_file)]}
+
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups(groups)
+
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the group value and the file types
+        assert len(errors) == 1
+        assert errors[0].startswith(
+            "Group (a) in rows [1, 2] has different file types: ['FASTQ', 'TXT']."
+        )
+
+    def test_for_an_error_message_when_the_suite_rejects_a_paired_target(
+        self,
+    ) -> None:
+        """Make sure that a grouped TXT pair gives a message with a hint."""
+        # GIVEN a group of two TXT files
+        other_txt_file = File(self.txt_file.url, {"file_type": "TXT"})
+        groups = {"a": [(2, self.txt_file), (3, other_txt_file)]}
+
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups(groups)
+
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the rows and how to fix the manifest
+        assert len(errors) == 1
+        assert errors[0].startswith("Group (a) in rows [2, 3]: ")
+        assert errors[0].endswith("Remove the 'dcqc_grouping' value from these files.")
+
+    def test_that_all_groups_are_checked_and_no_error_is_raised(self) -> None:
+        """Make sure that bad groups do not stop the check of the other groups.
+
+        The good groups give plans and the bad groups give messages, both in
+        the order of the dictionary.
+        """
+        # GIVEN a good group, a group with one file, a group with different
+        # file types and one more good group
+        groups = {
+            "good1": [(1, self.fastq_file), (2, self.compressed_fastq_file)],
+            "one": [(3, self.fastq_file)],
+            "mixed": [(4, self.fastq_file), (5, self.txt_file)],
+            "good2": [(6, self.compressed_fastq_file), (7, self.fastq_file)],
+        }
+
+        # WHEN the groups are planned
+        plans, errors = self.parser._plan_groups(groups)
+
+        # THEN the good groups have plans, in order
+        assert plan_indices(plans) == [[1, 2], [6, 7]]
+
+        # AND the bad groups have messages, in order
+        assert len(errors) == 2
+        assert errors[0].startswith("Group (one) in rows [3] has a file count of 1.")
+        assert errors[1].startswith("Group (mixed) in rows [4, 5] has different")
