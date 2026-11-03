@@ -78,25 +78,34 @@ def test_for_an_error_when_a_suite_test_does_not_accept_the_target_class():
 def test_for_an_error_when_a_suite_target_class_does_not_suit_its_tests():
     with pytest.raises(TypeError, match="requires SingleTarget"):
 
-        class MismatchedSuite(FileSuite[PairedTarget]):
+        class MismatchedSuite(FileSuite):
+            target_cls = PairedTarget
             file_type = FileType.get_file_type("None")
             add_tests = (LibTiffInfoTest,)
 
 
-def test_that_the_suite_target_class_is_set_from_the_type_argument():
+def test_that_the_fastq_suite_target_class_is_paired_target():
     assert FastqSuite.target_cls is PairedTarget
 
 
-def test_that_a_suite_without_a_type_argument_inherits_the_target_class():
+def test_that_a_suite_without_a_target_class_inherits_the_target_class():
     assert FileSuite.target_cls is SingleTarget
     assert TiffSuite.target_cls is SingleTarget
     assert OmeTiffSuite.target_cls is SingleTarget
 
 
-def test_for_an_error_when_the_suite_type_argument_is_not_a_target_class():
-    with pytest.raises(TypeError, match="must give a BaseTarget subclass"):
+def test_for_an_error_when_the_suite_target_class_is_not_a_target_class():
+    with pytest.raises(TypeError, match="must set target_cls to a BaseTarget"):
 
-        class UnionSuite(FileSuite[SingleTarget | PairedTarget]):  # type: ignore
+        class UnionSuite(FileSuite):
+            target_cls = SingleTarget | PairedTarget  # type: ignore
+            file_type = FileType.get_file_type("None")
+
+
+def test_for_an_error_when_a_suite_is_given_a_type_argument():
+    with pytest.raises(TypeError):
+
+        class SubscriptedSuite(FileSuite[PairedTarget]):  # type: ignore
             file_type = FileType.get_file_type("None")
 
 

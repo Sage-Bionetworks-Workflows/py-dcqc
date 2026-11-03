@@ -7,7 +7,6 @@ from enum import Enum
 from typing import (
     Any,
     ClassVar,
-    Generic,
     Optional,
     Type,
     Union,
@@ -15,7 +14,7 @@ from typing import (
 
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
-from dcqc.target import BaseTarget, SingleTarget, Target, get_target_type_argument
+from dcqc.target import BaseTarget, SingleTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -31,7 +30,7 @@ class SuiteStatus(Enum):
 
 # TODO: Consider the Composite design pattern once
 #       we have higher-level QC suites
-class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
+class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
     """Abstract base class for QC test suites.
 
     Args:
@@ -42,11 +41,10 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         skipped_tests: List of tests that should not be
             evaluated. Defaults to None.
 
-    A suite gives the target class that it accepts one time, as the type
-    argument of its base class, for example FileSuite[PairedTarget]. The
-    target_cls class attribute is set from it. A suite that gives no type
-    argument inherits target_cls from its parent, and SuiteABC sets a
-    default of SingleTarget.
+    A suite gives the target class that it accepts in the target_cls class
+    attribute, for example target_cls = PairedTarget in FastqSuite. A suite
+    that does not set target_cls inherits it from its parent, and SuiteABC
+    sets a default of SingleTarget.
     """
 
     # Class attributes
@@ -57,13 +55,13 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
     # Instance attributes
     type: str
-    target: Target
+    target: BaseTarget
     required_tests: set[str]
     skipped_tests: set[str]
 
     def __init__(
         self,
-        target: Target,
+        target: BaseTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ):
@@ -85,27 +83,55 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         self._status = SuiteStatus.NONE
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Set target_cls, and check the tests against it.
+        """Set up and check each new suite class when it is defined.
 
-        target_cls is set from the type argument of the base class, as in
-        BaseTest. Then every test of the new suite class must accept it.
+        Python calls this hook one time for each subclass, when the class
+        statement runs (at import time). The hook does these steps:
 
-        If a check fails, the class is removed from the registry before the
-        error is raised, so that get_subclass_by_file_type cannot return it.
+        1. Make sure that target_cls is a BaseTarget subclass. A suite that
+           does not set target_cls inherits it from its parent (default
+           SingleTarget).
+        2. Make sure that every test of the suite, inherited tests included,
+           accepts target_cls (see ensure_tests_match_target_cls). Thus a
+           bad suite fails at import time, not during a QC run.
+        3. If step 1 or 2 fails, mark the class as failed before the error is
+           raised again. Python adds the class to __subclasses__() before
+           this hook runs, so the class stays there after the error. The mark
+           makes list_subclasses leave the class out, so that
+           get_subclass_by_file_type cannot return a broken suite in place
+           of a real one.
+
+        Args:
+            **kwargs: Keyword arguments from the class statement. They go
+                to the parent hook.
 
         Raises:
-            TypeError: If the type argument is not a BaseTarget subclass,
-                or if a test does not accept the suite target class.
+            TypeError: If target_cls is not a BaseTarget subclass, or if a
+                test does not accept the suite target class.
         """
         super().__init_subclass__(**kwargs)
         try:
-            target_cls = get_target_type_argument(cls, SuiteABC)
-            if target_cls is not None:
-                cls.target_cls = target_cls
+            cls.ensure_target_cls_is_a_target_class()
             cls.ensure_tests_match_target_cls()
         except TypeError:
             cls.mark_registration_failed()
             raise
+
+    @classmethod
+    def ensure_target_cls_is_a_target_class(cls) -> None:
+        """Ensure that the target_cls attribute is a BaseTarget subclass.
+
+        Raises:
+            TypeError: If target_cls is not a BaseTarget subclass, for
+                example a Union or an instance.
+        """
+        target_cls = cls.target_cls
+        if not (isinstance(target_cls, type) and issubclass(target_cls, BaseTarget)):
+            message = (
+                f"{cls.__name__} must set target_cls to a BaseTarget subclass, "
+                f"not {target_cls!r}."
+            )
+            raise TypeError(message)
 
     @classmethod
     def ensure_tests_match_target_cls(cls) -> None:

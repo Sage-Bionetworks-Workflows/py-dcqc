@@ -80,12 +80,12 @@ Do these two steps.
      every class in the method resolution order, so a subclass also runs the
      tests of its parents. Inheritance is the only way to share tests between
      suites.
-   - Give a target class only if the files of your type come in pairs. Give it
-     as the type argument of `FileSuite`, as in
-     `class FastqSuite(FileSuite[PairedTarget])`. `SuiteABC.__init_subclass__`
-     copies it into the `target_cls` class attribute. Do not set `target_cls`
-     in the class body. A suite with no type argument inherits `SingleTarget`,
-     the default of `SuiteABC`. Because `FastqSuite` gives `PairedTarget`, a FASTQ target must be
+   - Give a target class only if the files of your type come in pairs. Set
+     the `target_cls` class attribute in the class body, as `FastqSuite` does
+     with `target_cls = PairedTarget`. A suite that does not set `target_cls`
+     inherits it from its parent, and `SuiteABC` sets a default of
+     `SingleTarget`. Suites are not generic, so do not write
+     `FileSuite[PairedTarget]`. Because `FastqSuite` gives `PairedTarget`, a FASTQ target must be
      two manifest rows with the same `dcqc_grouping` value. A grouped row for a
      `SingleTarget` type, or an ungrouped row for a `PairedTarget` type, makes
      `CsvParser.create_targets` and `SuiteABC.from_target` raise a

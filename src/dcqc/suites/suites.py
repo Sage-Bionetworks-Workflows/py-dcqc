@@ -1,12 +1,10 @@
 from dcqc import tests
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import PairedTarget, Target
+from dcqc.target import PairedTarget
 
 
-# FileSuite stays generic, so that a subclass can give a target class other
-# than the SingleTarget default, as FastqSuite does.
-class FileSuite(SuiteABC[Target]):
+class FileSuite(SuiteABC):
     """Base class for all file-based test suites."""
 
     file_type = FileType.get_file_type("*")
@@ -57,9 +55,10 @@ class BAMSuite(FileSuite):
     file_type = FileType.get_file_type("BAM")
 
 
-class FastqSuite(FileSuite[PairedTarget]):
+class FastqSuite(FileSuite):
     """Suite class for FASTQ files."""
 
+    target_cls = PairedTarget
     file_type = FileType.get_file_type("FASTQ")
     add_tests = (tests.PairedFastqParityTest,)
 

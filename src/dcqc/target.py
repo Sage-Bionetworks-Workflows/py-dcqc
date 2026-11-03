@@ -245,9 +245,10 @@ Target = TypeVar("Target", bound=BaseTarget)
 def get_target_type_argument(cls: type, anchor: type) -> Optional[type[BaseTarget]]:
     """Get the target class that a class gives as the type argument of a base.
 
-    BaseTest and SuiteABC are generic in Target. A subclass gives its
-    target class one time, as the type argument of its base class, for
-    example InternalBaseTest[SingleTarget] or FileSuite[PairedTarget].
+    BaseTest is generic in Target. A subclass gives its target class one
+    time, as the type argument of its base class, for example
+    InternalBaseTest[SingleTarget]. (SuiteABC is not generic. A suite sets
+    its target_cls class attribute directly.)
     Base classes are evaluated when the class is defined, so this works
     on every supported Python version, with no eval.
 
@@ -255,12 +256,12 @@ def get_target_type_argument(cls: type, anchor: type) -> Optional[type[BaseTarge
     of its parents. Only a base whose origin is a subclass of anchor is
     read, so an unrelated generic base, for example SomeMixin[int], is
     ignored. A base whose type argument is still a TypeVar, for example
-    SuiteABC[Target], is ignored too.
+    InternalBaseTest[Target], is ignored too.
 
     Args:
         cls: The new class, from __init_subclass__.
-        anchor: The generic root class, BaseTest or SuiteABC. This module
-            cannot import them, because they import this module.
+        anchor: The generic root class, for example BaseTest. This module
+            cannot import it, because it imports this module.
 
     Raises:
         TypeError: If the type argument is not a BaseTarget subclass, for
