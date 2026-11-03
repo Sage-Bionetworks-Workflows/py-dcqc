@@ -1,5 +1,6 @@
 import pytest
 
+from dcqc.file import File
 from dcqc.target import BaseTarget, PairedTarget, SingleTarget
 
 
@@ -50,7 +51,9 @@ def test_for_an_error_when_creating_paired_file_target_with_one_file(test_files)
         PairedTarget(test_file)
 
 
-def test_for_an_error_when_creating_single_file_target_with_a_bare_file(test_files):
+def test_for_an_error_when_creating_single_file_target_with_a_bare_file(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN a file that is not in a list
     test_file = test_files["good_txt"]
     # WHEN I create a single target from the file
@@ -68,8 +71,8 @@ def test_for_an_error_when_creating_paired_file_target_with_one_file_in_list(
 
 
 def test_for_an_error_when_creating_paired_file_target_with_different_file_types(
-    test_files,
-):
+    test_files: dict[str, File],
+) -> None:
     # GIVEN a TXT file and a FASTQ file
     txt_file = test_files["good_txt"]
     fastq_file = test_files["good_fastq"]
@@ -79,7 +82,9 @@ def test_for_an_error_when_creating_paired_file_target_with_different_file_types
         PairedTarget([txt_file, fastq_file])
 
 
-def test_that_a_paired_target_returns_the_file_type_of_its_files(test_files):
+def test_that_a_paired_target_returns_the_file_type_of_its_files(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN a paired target of two FASTQ files
     fastq_file = test_files["good_fastq"]
     target = PairedTarget([fastq_file, fastq_file])
@@ -88,7 +93,9 @@ def test_that_a_paired_target_returns_the_file_type_of_its_files(test_files):
     assert target.get_file_type() == fastq_file.get_file_type()
 
 
-def test_that_a_single_target_returns_the_file_type_of_its_file(test_files):
+def test_that_a_single_target_returns_the_file_type_of_its_file(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN a single target of a TXT file
     txt_file = test_files["good_txt"]
     target = SingleTarget([txt_file])
@@ -97,7 +104,7 @@ def test_that_a_single_target_returns_the_file_type_of_its_file(test_files):
     assert target.get_file_type() == txt_file.get_file_type()
 
 
-def test_that_the_target_classes_set_their_file_count():
+def test_that_the_target_classes_set_their_file_count() -> None:
     # GIVEN the three target classes
     # WHEN I get their file counts
     # THEN BaseTarget accepts any count, SingleTarget 1 and PairedTarget 2
@@ -106,7 +113,9 @@ def test_that_the_target_classes_set_their_file_count():
     assert PairedTarget.n_files == 2
 
 
-def test_that_validate_files_finds_no_problem_with_good_files(test_files):
+def test_that_validate_files_finds_no_problem_with_good_files(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN the correct number of FASTQ files for each target class
     fastq_file = test_files["good_fastq"]
     # WHEN I validate the files
@@ -115,7 +124,9 @@ def test_that_validate_files_finds_no_problem_with_good_files(test_files):
     assert PairedTarget.validate_files([fastq_file, fastq_file]) == []
 
 
-def test_that_validate_files_reports_a_wrong_file_count(test_files):
+def test_that_validate_files_reports_a_wrong_file_count(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN three TXT files for a paired target
     txt_file = test_files["good_txt"]
     # WHEN I validate the files
@@ -126,8 +137,8 @@ def test_that_validate_files_reports_a_wrong_file_count(test_files):
 
 
 def test_that_validate_files_does_not_check_file_types_after_a_wrong_count(
-    test_files,
-):
+    test_files: dict[str, File],
+) -> None:
     # GIVEN two files of different file types for a single target
     txt_file = test_files["good_txt"]
     fastq_file = test_files["good_fastq"]
@@ -139,7 +150,9 @@ def test_that_validate_files_does_not_check_file_types_after_a_wrong_count(
     ]
 
 
-def test_that_validate_files_reports_different_file_types(test_files):
+def test_that_validate_files_reports_different_file_types(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN a TXT file and a FASTQ file for a paired target
     txt_file = test_files["good_txt"]
     fastq_file = test_files["good_fastq"]
@@ -150,7 +163,7 @@ def test_that_validate_files_reports_different_file_types(test_files):
     assert problems[0].startswith("has different file types: ['TXT', 'FASTQ'].")
 
 
-def test_that_validate_files_reports_no_files_for_any_target_class():
+def test_that_validate_files_reports_no_files_for_any_target_class() -> None:
     # GIVEN no files for the base target class
     # The base class accepts any file count, but not zero files
     # WHEN I validate the files
@@ -160,7 +173,9 @@ def test_that_validate_files_reports_no_files_for_any_target_class():
     ]
 
 
-def test_that_the_target_error_message_starts_with_the_class_name(test_files):
+def test_that_the_target_error_message_starts_with_the_class_name(
+    test_files: dict[str, File],
+) -> None:
     # GIVEN one TXT file for a paired target
     txt_file = test_files["good_txt"]
     message = "PairedTarget has a file count of 1."

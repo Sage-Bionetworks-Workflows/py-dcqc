@@ -1,5 +1,6 @@
 import csv
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,7 @@ from click.testing import Result
 from typer.testing import CliRunner
 
 import dcqc
+from dcqc.file import File
 from dcqc.main import app
 from dcqc.parsers import JsonParser
 from dcqc.reports import JsonReport
@@ -73,7 +75,9 @@ def test_create_tests(get_data, get_output):
     assert len(list(output_dir.iterdir())) > 0
 
 
-def test_create_tests_with_paired_target(test_files, get_output):
+def test_create_tests_with_paired_target(
+    test_files: dict[str, File], get_output: Callable
+) -> None:
     # GIVEN a target JSON file for a pair of FASTQ files
     output_dir = get_output("create_tests_with_paired_target")
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -260,7 +264,7 @@ def split_cell(cell: str) -> set[str]:
     return set(cell.split(",")) if cell else set()
 
 
-def test_pipeline_with_single_targets(get_data, get_output):
+def test_pipeline_with_single_targets(get_data: Callable, get_output: Callable) -> None:
     # GIVEN a manifest of five local files with no grouping
     input_csv = get_data("pipeline_single.csv")
     output_dir = get_output("pipeline_single")
@@ -290,7 +294,9 @@ def test_pipeline_with_single_targets(get_data, get_output):
     assert "LibTiffInfoTest" in split_cell(tiff_row["dcqc_skipped_tests"])
 
 
-def test_pipeline_with_grouped_targets(get_data, get_output):
+def test_pipeline_with_grouped_targets(
+    get_data: Callable, get_output: Callable
+) -> None:
     # GIVEN a manifest where two FASTQ rows share a grouping value
     input_csv = get_data("pipeline_grouped.csv")
     output_dir = get_output("pipeline_grouped")

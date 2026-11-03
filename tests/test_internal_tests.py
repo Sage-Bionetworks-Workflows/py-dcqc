@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from dcqc import tests
@@ -165,8 +167,8 @@ class TestMd5ChecksumTest:
         assert self.bad_txt_test.metrics == {"md5_checksum": {url: actual_md5}}
 
     def test_that_the_md5_checksum_test_records_only_the_failing_files_of_a_pair(
-        self, test_files
-    ):
+        self, test_files: dict[str, File]
+    ) -> None:
         # GIVEN a paired target where only the second file has a wrong checksum
         good_file = test_files["good_txt"]
         date_url = test_files["date_string_txt"].url
@@ -180,8 +182,8 @@ class TestMd5ChecksumTest:
         assert test.metrics == {"md5_checksum": {bad_file.url: actual_md5}}
 
     def test_that_the_md5_checksum_test_records_files_with_the_same_name(
-        self, tmp_path
-    ):
+        self, tmp_path: Path
+    ) -> None:
         # GIVEN a paired target of two files with the same name in different folders
         files = []
         for folder, text in [("run1", "first"), ("run2", "second")]:

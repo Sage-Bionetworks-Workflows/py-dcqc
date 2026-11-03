@@ -2,8 +2,10 @@ import csv
 import re
 from collections.abc import Callable, Generator
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
@@ -196,7 +198,7 @@ class TestCreateTargets:
         )
 
     def test_for_an_error_before_any_file_is_staged_when_a_group_is_bad(
-        self, mocker, write_manifest: Callable
+        self, mocker: MockerFixture, write_manifest: Callable
     ) -> None:
         """Make sure that a bad group raises an error before staging or yielding.
 
@@ -223,7 +225,7 @@ class TestCreateTargets:
         spy.assert_not_called()
 
     def test_for_an_error_before_any_file_is_staged_when_a_file_type_is_unknown(
-        self, mocker, tmp_path: Path, get_data: Callable
+        self, mocker: MockerFixture, tmp_path: Path, get_data: Callable
     ) -> None:
         """Make sure that an unknown file type in a group raises an error at once.
 
@@ -259,7 +261,7 @@ class TestCreateTargets:
         spy.assert_not_called()
 
     def test_for_an_error_before_any_file_is_staged_when_a_single_row_type_is_unknown(
-        self, mocker, tmp_path: Path, get_data: Callable
+        self, mocker: MockerFixture, tmp_path: Path, get_data: Callable
     ) -> None:
         """Make sure that an unknown file type in a single row raises an error at once.
 
@@ -294,7 +296,7 @@ class TestCreateTargets:
         spy.assert_not_called()
 
     def test_for_an_error_before_any_file_is_staged_when_a_group_has_two_file_types(
-        self, mocker, write_manifest: Callable
+        self, mocker: MockerFixture, write_manifest: Callable
     ) -> None:
         """Make sure that a group with two file types raises an error at once.
 
@@ -419,7 +421,7 @@ class TestCreateTargets:
     )
     def test_for_an_error_before_any_file_is_staged_when_a_suite_rejects_a_target(
         self,
-        mocker,
+        mocker: MockerFixture,
         write_manifest: Callable,
         rows: list[tuple[str, str | None]],
         message: str,
@@ -851,7 +853,7 @@ class TestCreateSuites:
             next(suites)
 
     def test_for_an_error_before_any_file_is_staged_when_a_tiff_pair_is_grouped(
-        self, mocker, write_manifest: Callable
+        self, mocker: MockerFixture, write_manifest: Callable
     ) -> None:
         """Make sure that a grouped TIFF target raises an error before staging.
 
@@ -879,7 +881,7 @@ class TestCreateSuites:
         spy.assert_not_called()
 
     def test_for_an_error_before_any_file_is_staged_when_a_fastq_row_is_not_grouped(
-        self, mocker, write_manifest: Callable
+        self, mocker: MockerFixture, write_manifest: Callable
     ) -> None:
         """Make sure that an ungrouped FASTQ row raises an error before staging.
 
@@ -953,7 +955,7 @@ class TestStageFile:
         """
         self.manifest = tmp_path / "manifest.csv"
 
-    def make_file(self, mocker, is_local: bool):
+    def make_file(self, mocker: MockerFixture, is_local: bool) -> MagicMock:
         """Make a mock File that tells if it is local.
 
         Args:
@@ -967,7 +969,9 @@ class TestStageFile:
         file.is_file_local.return_value = is_local
         return file
 
-    def test_that_a_remote_file_is_staged_next_to_the_manifest(self, mocker) -> None:
+    def test_that_a_remote_file_is_staged_next_to_the_manifest(
+        self, mocker: MockerFixture
+    ) -> None:
         """Make sure that a remote file is staged into its row directory.
 
         The directory must be staged_files/index_<number> next to the
@@ -991,7 +995,7 @@ class TestStageFile:
         assert destination.is_dir()
 
     def test_that_a_remote_file_is_not_staged_when_stage_files_is_false(
-        self, mocker
+        self, mocker: MockerFixture
     ) -> None:
         """Make sure that no file is staged when stage_files is False.
 
@@ -1011,7 +1015,7 @@ class TestStageFile:
         # AND no staged_files directory is made
         assert not (self.manifest.parent / "staged_files").exists()
 
-    def test_that_a_local_file_is_not_staged(self, mocker) -> None:
+    def test_that_a_local_file_is_not_staged(self, mocker: MockerFixture) -> None:
         """Make sure that a local file is not staged, also when stage_files is True.
 
         Args:
