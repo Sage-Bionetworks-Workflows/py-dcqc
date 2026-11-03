@@ -59,7 +59,7 @@ Suite  ── target ──> Target ── files ──> [File]
   └──── tests ────> [Test]   (each Test's own `target` key is stripped when nested in a Suite)
 ```
 
-**Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:263`) and `md5_checksum` (read by `Md5ChecksumTest`). One more column is optional: `dcqc_grouping`. `CsvParser` reads it and removes it from `File.metadata` (`parsers.py:206`), because it describes the target, not the file. A row with an empty value becomes a `SingleTarget`. The rows that share a value become one `PairedTarget`, so a group must have exactly two rows of the same file type. The suite for the file type sets the target class it accepts (`SuiteABC.target_cls`). Thus an ungrouped FASTQ row and a grouped TIFF row are both errors. The two rows of a pair get the same results in the output CSV.
+**Input** is a CSV manifest. A `url` column is required; every other column becomes `File.metadata`. Only two metadata keys are consumed by code: `file_type` (read by `File`, `file.py:263`) and `md5_checksum` (read by `Md5ChecksumTest`). One more column is optional: `dcqc_grouping`. `CsvParser` reads it and removes it from `File.metadata` (`parsers.py:221`), because it describes the target, not the file. A row with an empty value becomes a `SingleTarget`. The rows that share a value become one `PairedTarget`, so a group must have exactly two rows of the same file type. The suite for the file type sets the target class it accepts (`SuiteABC.target_cls`). Thus an ungrouped FASTQ row and a grouped TIFF row are both errors. The two rows of a pair get the same results in the output CSV.
 
 **Output** is the input CSV plus six appended columns, written by `src/dcqc/updaters.py:93-99`: `dcqc_status`, `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, `dcqc_errored_tests`, `dcqc_metrics`. The four list columns are comma-joined inside a single cell. `dcqc_metrics` is a JSON object keyed by test name (sorted keys), which holds only the tests with non-empty `BaseTest.metrics`.
 
@@ -116,7 +116,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 ## Anti-Patterns — Do NOT
 
 - **Do NOT commit an intentionally broken path or command to force a test failure** — because `fd09758` had to revert exactly that in `tiff_tag_306_date_time_test.py`, where the real argument `f"'{path.name}'"` had been swapped for a literal `"bad_file.file"`.
-- **Do NOT migrate the dataclasses to pydantic** — because it was tried and abandoned; it breaks `test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to`. The reason is recorded above `BaseTarget.__post_init__` in `src/dcqc/target.py`.
+- **Do NOT migrate the dataclasses to pydantic** — because it was tried and abandoned; it breaks `test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to`.
 - **Do NOT change the test name in `test_that_skipped_tests_are_skipped_when_building_suite_from_tests`** — it must stay `LibTiffInfoTest`; swapping it was reverted in `9971463`.
 - **Do NOT add auth-token presence asserts to the test fixtures** — asserts in the `tests/test_acceptance.py` fixture were added in `39e4795` and removed in `eb67219`.
 - **Do NOT re-enable Windows in the CI matrix casually** — it has been toggled on and off repeatedly and is currently parked behind ORCA-348.
