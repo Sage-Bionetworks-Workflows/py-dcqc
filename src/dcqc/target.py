@@ -88,25 +88,52 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
             starts with "has", so that the caller can put the name of the
             target class or the rows in front of it.
         """
+        # The file types are checked only if the file count is correct.
+        problem = cls._check_file_count(files) or cls._check_file_types(files)
+        return [problem] if problem else []
+
+    @classmethod
+    def _check_file_count(cls, files: list[File]) -> Optional[str]:
+        """Check the number of files against n_files.
+
+        Args:
+            files: The files to check.
+
+        Returns:
+            A message that starts with "has", or None if the count is correct.
+        """
         count = len(files)
         if count == 0:
-            return ["has no files. A target must have at least one file."]
+            return "has no files. A target must have at least one file."
         if cls.n_files is not None and count != cls.n_files:
             noun = "file" if cls.n_files == 1 else "files"
-            message = (
+            return (
                 f"has a file count of {count}. A {cls.__name__} must have "
                 f"exactly {cls.n_files} {noun}."
             )
-            return [message]
+        return None
+
+    @classmethod
+    def _check_file_types(cls, files: list[File]) -> Optional[str]:
+        """Check that all of the files have the same file type.
+
+        Args:
+            files: The files to check. The list must not be empty.
+
+        Raises:
+            ValueError: If a file has an unknown file type.
+
+        Returns:
+            A message that starts with "has", or None if the file types agree.
+        """
         file_types = [file.get_file_type() for file in files]
         if any(file_type != file_types[0] for file_type in file_types):
             names = [file_type.name for file_type in file_types]
-            message = (
+            return (
                 f"has different file types: {names}. The files of a "
                 f"{cls.__name__} must have the same file type."
             )
-            return [message]
-        return []
+        return None
 
     def stage(
         self,
