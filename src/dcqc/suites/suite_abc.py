@@ -121,6 +121,21 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
     def ensure_target_cls_is_a_target_class(cls) -> None:
         """Ensure that the target_cls attribute is a BaseTarget subclass.
 
+        This check examines the declaration of the suite only, not its
+        tests. SuiteABC sets SingleTarget as the default, and a suite
+        that does not set target_cls gets the value of its parent. Thus
+        the attribute always exists, and this method checks only its
+        value.
+
+        The isinstance check comes before the issubclass check, because
+        issubclass raises its own error for a value that is not a class.
+        With the isinstance check, such a value gives a clear message.
+
+        __init_subclass__ calls this method one time for each suite class,
+        at class definition (import) time. It must run before
+        ensure_tests_match_target_cls, because that method calls
+        issubclass on target_cls.
+
         Raises:
             TypeError: If target_cls is not a BaseTarget subclass, for
                 example a Union or an instance.
@@ -140,7 +155,20 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
         A test accepts the suite target class if the target class
         is the same as, or a subclass of, the target_cls attribute
         of the test. A test that does not set target_cls inherits
-        BaseTarget from BaseTest, and thus accepts any target.
+        BaseTarget from BaseTest, and thus accepts any target. A test
+        that needs a specific target shape sets a narrower class, for
+        example PairedTarget. Then only a suite whose target_cls is that
+        class, or a subclass of it, can include the test.
+
+        The check includes the tests that the suite inherits from its
+        parent suites (see list_test_classes). For example, if FastqSuite
+        (target_cls = PairedTarget) inherited a test that requires
+        SingleTarget, this method would raise TypeError at import time.
+
+        __init_subclass__ calls this method one time for each suite class,
+        after ensure_target_cls_is_a_target_class. This method checks the
+        suite classes only. To check the class of a real target at run
+        time, use ensure_accepts_target_cls.
 
         Raises:
             TypeError: If a test does not accept the suite target class.
