@@ -1035,52 +1035,66 @@ class TestStageFile:
         assert not (self.manifest.parent / "staged_files").exists()
 
 
-class TestEnsureGroupFileTypesKnown:
-    """Tests for CsvParser._ensure_group_file_types_known.
+class TestCheckFileTypesKnown:
+    """Tests for CsvParser._check_file_types_known.
 
-    The tests give the row numbers and files directly, so no manifest is
-    read. The parser path has no effect on the method.
+    The tests give the planned targets directly, so no manifest is read.
     """
 
-    parser: CsvParser
     fastq_file: File
-    compressed_fastq_file: File
 
     @pytest.fixture(autouse=True)
-    def setup_method(self, get_data: Callable, test_files: dict[str, File]) -> None:
-        """Make a parser and the files for the groups.
+    def setup_method(self, test_files: dict[str, File]) -> None:
+        """Get a file with a known file type.
 
         Args:
-            get_data: Fixture factory that gives the path of a test data file.
             test_files: Fixture that maps a key to a test file.
         """
-        self.parser = CsvParser(get_data("files.csv"))
         self.fastq_file = test_files["good_fastq"]
-        self.compressed_fastq_file = test_files["good_compressed_fastq"]
 
-    def test_that_a_group_of_known_file_types_raises_no_error(self) -> None:
+    def test_that_a_group_of_known_file_types_gives_no_message(self) -> None:
         """Make sure that a group with known file types passes the check."""
         # GIVEN a group of a FASTQ file and a TXT file
         txt_file = File(self.fastq_file.url, {"file_type": "TXT"})
-        members = [(3, self.fastq_file), (7, txt_file)]
+        plan = _PlannedTarget(PairedTarget, [(3, self.fastq_file), (7, txt_file)])
 
         # WHEN the file types are checked
-        # THEN no error is raised
-        self.parser._ensure_group_file_types_known("a", members)
+        message = CsvParser._check_file_types_known(plan, "Group (a) in rows [3, 7]")
 
-    def test_for_an_error_when_a_file_of_the_group_has_an_unknown_file_type(
+        # THEN there is no message
+        assert message is None
+
+    def test_that_an_unknown_file_type_in_a_group_gives_its_row_number(
         self,
     ) -> None:
-        """Make sure that an unknown file type raises an error with its row number."""
+        """Make sure that the message tells the row of the bad file in a group."""
         # GIVEN a group of a FASTQ file and a file with an unknown file type
         unknown_file = File(self.fastq_file.url, {"file_type": "tiffx"})
         members = [(3, self.fastq_file), (7, unknown_file)]
+        plan = _PlannedTarget(PairedTarget, members)
 
         # WHEN the file types are checked
-        # THEN an error tells the group value, the row numbers and the bad row
-        message = "Group (a) in rows [3, 7] has an unknown file type in row 7."
-        with pytest.raises(ValueError, match=re.escape(message)):
-            self.parser._ensure_group_file_types_known("a", members)
+        message = CsvParser._check_file_types_known(plan, "Group (a) in rows [3, 7]")
+
+        # THEN the message tells the group value, the row numbers and the bad row
+        assert message is not None
+        expected = "Group (a) in rows [3, 7] has an unknown file type in row 7."
+        assert message.startswith(expected)
+
+    def test_that_an_unknown_file_type_in_a_single_row_gives_no_extra_row(
+        self,
+    ) -> None:
+        """Make sure that the message for a single row does not repeat the row."""
+        # GIVEN a single row with an unknown file type
+        unknown_file = File(self.fastq_file.url, {"file_type": "tiffx"})
+        plan = _PlannedTarget(SingleTarget, [(2, unknown_file)])
+
+        # WHEN the file types are checked
+        message = CsvParser._check_file_types_known(plan, "Row 2")
+
+        # THEN the message starts with the row and names no other row
+        assert message is not None
+        assert message.startswith("Row 2 has an unknown file type.")
 
 
 class TestSplitRowsByGrouping:

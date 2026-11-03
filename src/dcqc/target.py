@@ -60,10 +60,6 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
         if problems:
             raise ValueError(f"{self.type} " + " ".join(problems))
 
-    # While this check makes sense as a pydantic validator,
-    # we can into strange issues with the following test after
-    # switching to @pydantic.dataclasses.dataclass:
-    # test_that_paths_are_unchanged_when_not_using_serialize_paths_relative_to
     @classmethod
     def validate_files(cls, files: list[File]) -> list[str]:
         """Check the files for a target of this class.

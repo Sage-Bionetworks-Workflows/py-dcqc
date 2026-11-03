@@ -131,8 +131,8 @@ class TestFileExtensionTest:
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
         assert self.bad_txt_test.status_reason == (
-            "File extension does not match one of: "
-            f"{self.bad_txt_target.get_file_type().file_extensions}"
+            f"File extension of {self.bad_txt_target.file.name} does not match "
+            f"one of: {self.bad_txt_target.get_file_type().file_extensions}"
         )
 
 
@@ -159,9 +159,9 @@ class TestMd5ChecksumTest:
         status = self.bad_txt_test.get_status()
         # THEN the test fails and the computed checksum is recorded as a metric
         assert status == TestStatus.FAIL
-        assert (
-            self.bad_txt_test.status_reason
-            == "Computed MD5 checksum does not match provided value"
+        assert self.bad_txt_test.status_reason == (
+            "Computed MD5 checksum does not match provided value for: "
+            f"{self.bad_txt_target.file.name}"
         )
         url = self.bad_txt_target.file.url
         assert self.bad_txt_test.metrics == {"md5_checksum": {url: actual_md5}}
@@ -180,6 +180,7 @@ class TestMd5ChecksumTest:
         assert status == TestStatus.FAIL
         actual_md5 = test_files["date_string_txt"].get_metadata("md5_checksum")
         assert test.metrics == {"md5_checksum": {bad_file.url: actual_md5}}
+        assert test.status_reason.endswith(f"for: {bad_file.name}")
 
     def test_that_the_md5_checksum_test_records_files_with_the_same_name(
         self, tmp_path: Path

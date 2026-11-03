@@ -16,21 +16,26 @@ class Md5ChecksumTest(InternalBaseTest[BaseTarget]):
         All files are checked, also after a file fails, so that the metrics
         hold the computed checksum of every file that does not match. The
         metrics map the URL of each such file to its computed checksum, under the
-        md5_checksum key.
+        md5_checksum key. The status reason gives the names of these files.
 
         Returns:
             TestStatus.PASS if all checksums match, otherwise TestStatus.FAIL.
         """
         mismatches: dict[str, str] = {}
+        mismatched_names: list[str] = []
         for file in self.target.files:
             path = file.stage()
             expected_md5 = file.get_metadata("md5_checksum")
             actual_md5 = self._compute_md5_checksum(path)
             if expected_md5 != actual_md5:
                 mismatches[file.url] = actual_md5
+                mismatched_names.append(file.name)
         if not mismatches:
             return TestStatus.PASS
-        self.status_reason = "Computed MD5 checksum does not match provided value"
+        self.status_reason = (
+            "Computed MD5 checksum does not match provided value for: "
+            f"{', '.join(mismatched_names)}"
+        )
         self.metrics["md5_checksum"] = mismatches
         return TestStatus.FAIL
 

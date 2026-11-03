@@ -247,11 +247,6 @@ class CsvParser:
         plans: list[_PlannedTarget] = []
         errors: list[str] = []
         for index, file in singles:
-            try:
-                file.get_file_type()
-            except ValueError as error:
-                errors.append(f"Row {index} has an unknown file type. {error}")
-                continue
             plan = _PlannedTarget(SingleTarget, [(index, file)])
             error_message = cls._check_plan(plan, f"Row {index}")
             if error_message:
@@ -260,8 +255,9 @@ class CsvParser:
                 plans.append(plan)
         return plans, errors
 
+    @classmethod
     def _plan_groups(
-        self, groups: dict[str, list[tuple[int, File]]]
+        cls, groups: dict[str, list[tuple[int, File]]]
     ) -> tuple[list[_PlannedTarget], list[str]]:
         """Make a PairedTarget plan for each group, and check it.
 
@@ -285,14 +281,9 @@ class CsvParser:
         errors: list[str] = []
         for group, members in groups.items():
             indices = [index for index, _ in members]
-            try:
-                self._ensure_group_file_types_known(group, members)
-            except ValueError as error:
-                errors.append(str(error))
-                continue
             plan = _PlannedTarget(PairedTarget, members)
             location = f"Group ({group}) in rows {indices}"
-            error_message = self._check_plan(plan, location)
+            error_message = cls._check_plan(plan, location)
             if error_message:
                 errors.append(error_message)
             else:
@@ -303,11 +294,11 @@ class CsvParser:
     def _check_plan(cls, plan: _PlannedTarget, location: str) -> Optional[str]:
         """Check the files and the target class of a plan.
 
-        The files are checked with the validate_files method of the target
-        class, so the parser and the target use the same rule. Then the
-        target class is checked against the suite for the file type.
-
-        Every file of the plan must have a known file type.
+        First, every file must have a known file type. Then the files are
+        checked with the validate_files method of the target class, so the
+        parser and the target use the same rule. Then the target class is
+        checked against the suite for the file type. The check stops at the
+        first problem.
 
         Args:
             plan: The planned target to check.
@@ -318,6 +309,9 @@ class CsvParser:
             None if the plan is good. If not, the error message, which
             starts with the location.
         """
+        unknown_message = cls._check_file_types_known(plan, location)
+        if unknown_message:
+            return unknown_message
         files = [file for _, file in plan.members]
         problems = plan.target_cls.validate_files(files)
         if problems:
@@ -325,9 +319,9 @@ class CsvParser:
         file_type = files[0].get_file_type()
         return cls._check_suite_accepts_plan(plan, file_type, location)
 
-    @staticmethod
+    @classmethod
     def _check_suite_accepts_plan(
-        plan: _PlannedTarget, file_type: FileType, location: str
+        cls, plan: _PlannedTarget, file_type: FileType, location: str
     ) -> Optional[str]:
         """Check the target class of a plan against its suite.
 
@@ -358,30 +352,31 @@ class CsvParser:
             return f"{location}: {error} {hint}"
         return None
 
-    def _ensure_group_file_types_known(
-        self, group: str, members: list[tuple[int, File]]
-    ) -> None:
-        """Ensure that each file of one group has a known file type.
+    @classmethod
+    def _check_file_types_known(
+        cls, plan: _PlannedTarget, location: str
+    ) -> Optional[str]:
+        """Check that each file of a plan has a known file type.
+
+        For a plan with more than one file, the message also gives the row
+        of the bad file.
 
         Args:
-            group: The grouping value of the rows.
-            members: Pairs of a row number and the file, in manifest order.
+            plan: The planned target to check.
+            location: The rows of the plan, for the start of the message,
+                for example "Row 3" or "Group (a) in rows [2, 5]".
 
-        Raises:
-            ValueError: If a file of the group has an unknown file type. The
-                message gives the grouping value, the row numbers of the
-                group and the row of the bad file.
+        Returns:
+            None if all file types are known. If not, the error message for
+            the first bad file, which starts with the location.
         """
-        indices = [index for index, _ in members]
-        for index, file in members:
+        for index, file in plan.members:
             try:
                 file.get_file_type()
             except ValueError as error:
-                message = (
-                    f"Group ({group}) in rows {indices} has an unknown file type "
-                    f"in row {index}. {error}"
-                )
-                raise ValueError(message) from error
+                row = f" in row {index}" if len(plan.members) > 1 else ""
+                return f"{location} has an unknown file type{row}. {error}"
+        return None
 
     def _build_targets(self, plans: list[_PlannedTarget]) -> Iterator[BaseTarget]:
         """Stage the files of the checked plans, and build their targets.
