@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from dcqc import tests
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
@@ -8,7 +10,10 @@ class FileSuite(SuiteABC):
     """Base class for all file-based test suites."""
 
     file_type = FileType.get_file_type("*")
-    add_tests = (tests.FileExtensionTest, tests.Md5ChecksumTest)
+    add_tests: ClassVar[tuple[type[tests.BaseTest], ...]] = (
+        tests.FileExtensionTest,
+        tests.Md5ChecksumTest,
+    )
 
 
 class JsonSuite(FileSuite):

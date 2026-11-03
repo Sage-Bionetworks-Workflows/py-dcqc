@@ -59,7 +59,7 @@ def test_for_an_error_when_creating_single_file_target_with_a_bare_file(
     # WHEN I create a single target from the file
     # THEN a TypeError is raised
     with pytest.raises(TypeError):
-        SingleTarget(test_file)
+        SingleTarget(test_file)  # type: ignore[arg-type]
 
 
 def test_for_an_error_when_creating_paired_file_target_with_one_file_in_list(
