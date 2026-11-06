@@ -141,6 +141,9 @@ class SerializableMixin(ABC):
 class SubclassRegistryMixin(ABC, Generic[U]):
     """Mixin for tracking subclasses."""
 
+    # Set only by mark_registration_failed. Read from the class __dict__.
+    _registration_failed: ClassVar[bool] = False
+
     @classmethod
     @abstractmethod
     def get_base_class(cls):
@@ -155,14 +158,33 @@ class SubclassRegistryMixin(ABC, Generic[U]):
         resolve a serialized name, because an abstract class cannot be
         instantiated.
 
+        A class whose __init_subclass__ check raised is left out. Python
+        adds a class to __subclasses__ before __init_subclass__ runs, and
+        the class stays there until it is garbage collected. Thus the check
+        marks such a class with mark_registration_failed.
+
         Returns:
             Every subclass, in no particular order.
         """
-        subclasses = cls.__subclasses__()
+        subclasses = [
+            subcls
+            for subcls in cls.__subclasses__()
+            if not subcls.__dict__.get("_registration_failed", False)
+        ]
         subsubclasses_list = [subcls.list_subclasses() for subcls in subclasses]
         subclasses_chain = chain(subclasses, *subsubclasses_list)
         all_subclasses = tuple(dict.fromkeys(subclasses_chain))
         return all_subclasses  # type: ignore[return-value]
+
+    @classmethod
+    def mark_registration_failed(cls) -> None:
+        """Remove this class from the registry.
+
+        Call this method in __init_subclass__ before you raise, so that a
+        class whose check failed is not returned by a lookup. The mark is
+        set in the class __dict__, so it is not inherited.
+        """
+        cls._registration_failed = True
 
     @classmethod
     def list_concrete_subclasses(cls) -> tuple[Type[U], ...]:

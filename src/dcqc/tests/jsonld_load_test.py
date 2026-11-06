@@ -4,11 +4,10 @@ from dcqc.target import SingleTarget
 from dcqc.tests.base_test import InternalBaseTest, TestStatus, TestTier
 
 
-class JsonLdLoadTest(InternalBaseTest):
+class JsonLdLoadTest(InternalBaseTest[SingleTarget]):
     """Tests if a file can be loaded as JSON-LD."""
 
     tier = TestTier.INTERNAL_CONFORMANCE
-    target: SingleTarget
 
     def compute_status(self) -> TestStatus:
         path = self.target.file.stage()

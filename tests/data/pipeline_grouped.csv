@@ -1,0 +1,6 @@
+url,file_type,md5_checksum,dcqc_grouping
+test.txt,TXT,14758f1afd44c09b7992073ccf00b43d,
+fastq1.fastq,FASTQ,cb7f5e5c765b1fc78547062ee6770596,fastq_pair
+circuit.tif,TIFF,c7b08f6decb5e7572efbe6074926a843,
+fastq2.fastq.gz,FASTQ,5c113614144e63fe01c6b1ea38d2f1a1,fastq_pair
+example.bam,BAM,definitelynottherightmd5checksum,

@@ -25,6 +25,7 @@
 - [Command Line Interface](#command-line-interface)
   - [Common options](#common-options)
 - [Input](#input)
+  - [Grouping files into one target](#grouping-files-into-one-target)
 - [Output](#output)
 - [Getting Started](#getting-started)
   - [Tutorials](#tutorials)
@@ -88,6 +89,8 @@ There are two types of targets:
 
 - `SingleTarget`: exactly one file.
 - `PairedTarget`: exactly two related files, such as paired-end sequencing data.
+
+The suite of each file type accepts one type of target. The FASTQ suite accepts only a `PairedTarget`. All other suites accept only a `SingleTarget`. In a manifest, a row becomes a `SingleTarget` by default. To make a `PairedTarget`, give two rows the same `dcqc_grouping` value. See [Input](#input).
 
 #### Why targets exist
 
@@ -259,7 +262,7 @@ python -m dcqc --help
 Main commands include:
 
 - `create-targets`: Create target JSON files from a targets CSV file
-- `create-tests`: Create test JSON files from a target JSON file
+- `create-tests`: Create test JSON files from a target JSON file (a `SingleTarget` or a `PairedTarget`)
 - `create-process`: Create external process JSON file from a test JSON file
 - `compute-test`: Compute the test status from a test JSON file
 - `create-suite`: Create a suite from a set of test JSON files sharing the same target
@@ -299,7 +302,7 @@ The input is a tabular file that contains a list of the file targets to run thro
   |-------------------|-----------|----------------------------------|
   | syn://syn41864974 | TXT       | 38b86a456d1f441008986c6f798d5ef9 |
 
-- Here is an input file example with several targets, also at [`examples/example_manifest_multiple.csv`](examples/example_manifest_multiple.csv). Every row becomes its own single-file target, so the rows are checked independently of one another.
+- Here is an input file example with several targets, also at [`examples/example_manifest_multiple.csv`](examples/example_manifest_multiple.csv). This manifest has no `dcqc_grouping` column, so every row becomes its own single-file target, and the rows are checked independently of one another.
 
   | url               | file_type | md5_checksum                     |
   |-------------------|----------|----------------------------------|
@@ -307,6 +310,24 @@ The input is a tabular file that contains a list of the file targets to run thro
   | syn://syn41864977 | TXT      | make-status-red                  |
   | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 |
   | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff |
+
+### Grouping files into one target
+
+The optional `dcqc_grouping` column tells which rows go into one target:
+
+- A row with an empty value, or a manifest with no `dcqc_grouping` column, gives a `SingleTarget`.
+- Two rows with the same value give one `PairedTarget`. The two rows must have the same file type. They do not have to be next to each other.
+- Spaces at the start and end of a value are removed. Values are case-sensitive, so `A` and `a` are two different groups.
+
+FASTQ files must be in pairs. Here is an example with two FASTQ files in one group and one TXT file alone (the URLs are examples only):
+
+  | url               | file_type | md5_checksum                     | dcqc_grouping |
+  |-------------------|-----------|----------------------------------|---------------|
+  | sample1_R1.fastq  | FASTQ     | cb7f5e5c765b1fc78547062ee6770596 | sample1       |
+  | sample1_R2.fastq  | FASTQ     | 5c113614144e63fe01c6b1ea38d2f1a1 | sample1       |
+  | notes.txt         | TXT       | 14758f1afd44c09b7992073ccf00b43d |               |
+
+`create-targets` stops with a `ValueError` if a group does not have exactly two rows, if a file in a group has an unknown file type, or if the two files in a group have different file types. It also stops if the target type is wrong for the file type: a FASTQ row with no grouping value, or a grouped row of a file type other than FASTQ. It checks all rows before it writes a target, so when one row or group is bad, no target file is written. One error message lists every bad row and group.
 
 ## Output
 
@@ -318,14 +339,16 @@ The output is a tabular file with your original targets files but additional col
   |-------------------|----------|----------------------------------|-------------|------------------------------------|--------------------|-------------------|--------------------|--------------|
   | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest |                    |                   |                    | {}           |
 
-- Here is an example of the output of multi-file targets that ran through dcqc:
+- Here is an example of the output of a manifest with several single-file targets that ran through dcqc:
 
   | url               | file_type | md5_checksum                     | dcqc_status | dcqc_required_tests                                 | dcqc_skipped_tests | dcqc_failed_tests                 | dcqc_errored_tests     | dcqc_metrics                                        |
   |-------------------|----------|----------------------------------|-------------|-----------------------------------------------------|--------------------|-----------------------------------|------------------------|-----------------------------------------------------|
   | syn://syn41864974 | TXT      | 38b86a456d1f441008986c6f798d5ef9 | GREEN       | Md5ChecksumTest,FileExtensionTest                   |                    |                                   |                        | {}                                                  |
-  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {"Md5ChecksumTest": {"md5_checksum": "<computed>"}} |
+  | syn://syn41864977 | TXT      | make-status-red                  | RED         | Md5ChecksumTest,FileExtensionTest                   |                    | Md5ChecksumTest                   |                        | {"Md5ChecksumTest": {"md5_checksum": {"syn://syn41864977": "<computed>"}}} |
   | syn://syn43716055 | TIFF     | 38b86a456d1f441008986c6f798d5ef9 | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
   | syn://syn43716711 | TIFF     | a542e9b744bedcfd874129ab0f98c4ff | GREY        | Md5ChecksumTest,FileExtensionTest,LibTiffInfoTest   |                    | FileExtensionTest,LibTiffInfoTest | TiffTag306DateTimeTest | {}                                                  |
+
+The two rows of a `PairedTarget` get the same results in all six `dcqc_` columns, because the suite checks the two files together. If the input has a `dcqc_grouping` column, the output keeps it unchanged.
 
 `dcqc_required_tests` holds the required set of the suite. Both tables above use the default, which is every tier-1 and tier-2 test of the file type. Give `--required-tests` to `create-suite` or `qc-file` to use a different set.
 
@@ -337,10 +360,10 @@ dcqc qc-file example.txt --file-type TXT --required-tests Md5ChecksumTest
 
 Repeat `--required-tests` for each test to require, for example `--required-tests Md5ChecksumTest --required-tests FileExtensionTest`. Any test not listed is still run and reported in `dcqc_failed_tests`/`dcqc_errored_tests` if it fails, but it can no longer turn the suite status RED.
 
-The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, when `Md5ChecksumTest` fails, it records the MD5 checksum that it computed:
+The last column, `dcqc_metrics`, holds a JSON object keyed by test name, with the extra values that each test recorded. Tests that recorded no metrics are left out, so a row where no test recorded metrics holds `{}`. For example, when `Md5ChecksumTest` fails, it records the MD5 checksum that it computed for each file that does not match, keyed by file URL:
 
 ```json
-{"Md5ChecksumTest": {"md5_checksum": "<computed MD5 checksum>"}}
+{"Md5ChecksumTest": {"md5_checksum": {"<file URL>": "<computed MD5 checksum>"}}}
 ```
 
 **The order of the names inside a cell is not stable.** This applies to the four list columns — `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, and `dcqc_errored_tests` — because they come from Python sets, so the same input can give the same names in a different order on the next run. Compare the set of names, not the text of the cell, and do not use these cells in a byte comparison against an expected file.

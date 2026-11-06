@@ -15,6 +15,7 @@ from dcqc.parsers import JsonParser
 from dcqc.reports import JsonReport
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.target import SingleTarget
+from dcqc.tests.base_test import BaseTest
 
 # Shared values
 data_dir = sys.path[0]
@@ -35,7 +36,7 @@ file = File(file_url, metadata)
 export(file, "file.json")
 
 # target.json
-target = SingleTarget(file, id="001")
+target = SingleTarget([file], id="001")
 export(target, "target.json")
 
 # test.internal.json
@@ -52,11 +53,11 @@ computed_test.get_status()
 export(computed_test, "test.computed.json")
 
 # tests.json
-test_list = [internal_test, external_test, computed_test]
+test_list: list[BaseTest] = [internal_test, external_test, computed_test]
 export(test_list, "tests.json")
 
 # suite.json
-suite_tests = [internal_test, external_test]
+suite_tests: list[BaseTest] = [internal_test, external_test]
 required_tests = ["Md5ChecksumTest"]
 skipped_tests = ["LibTiffInfoTest"]
 suite = SuiteABC.from_tests(suite_tests, required_tests, skipped_tests)

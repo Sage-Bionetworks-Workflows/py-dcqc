@@ -3,7 +3,7 @@ from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 from dcqc.tests.constants import COREUTILS_CONTAINER
 
 
-class GrepDateTest(ExternalBaseTest):
+class GrepDateTest(ExternalBaseTest[SingleTarget]):
     """Tests if a file has the word "date" or "time" in it.
     Used for dtecting potential PHI in files.
     """
@@ -12,7 +12,6 @@ class GrepDateTest(ExternalBaseTest):
     pass_code = 1
     fail_code = 0
     failure_reason_location = "std_out"
-    target: SingleTarget
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()
