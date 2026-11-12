@@ -12,7 +12,7 @@ See README.md for concepts and CLI usage, CONTRIBUTING.md for setup, ARCHITECTUR
 
 ## Stack
 
-- Python `>=3.11, <3.15` (setup.cfg `[options] python_requires`). CI matrix: 3.11–3.14 on ubuntu and macos. Windows is intentionally disabled (.github/workflows/CI.yml, the `test` job's platform matrix, ORCA-348).
+- Python `>=3.11, <3.16` (setup.cfg `[options] python_requires`). CI matrix: 3.11–3.15 on ubuntu and macos. Windows is intentionally disabled (.github/workflows/CI.yml, the `test` job's platform matrix, ORCA-348).
 - Typer + Click CLI; entry point `dcqc = dcqc.main:app` (setup.cfg `[options.entry_points]`). Also runnable as `python -m dcqc`.
 - fsspec for all I/O, with `fs-synapse` providing the `syn://` protocol. Every path argument accepts an fsspec URL, not just a local path.
 - tox for task running, pytest for tests, Sphinx + MyST for docs. The dev environment is pipenv-based (`Pipfile` plus a committed `Pipfile.lock`) — see Commands.
