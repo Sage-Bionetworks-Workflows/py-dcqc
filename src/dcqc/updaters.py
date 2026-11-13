@@ -45,9 +45,9 @@ class CsvUpdater:
     def update(self, suites: List[SuiteABC]) -> None:
         """Write the input manifest with the results of the given suites.
 
-        Each suite is matched to a manifest row by the URL of its target.
-        Only the first file of a multi-file target is read, so a multi-file
-        target collapses to that file.
+        Each suite is matched to a manifest row by the URL of each file of
+        its target. Thus every row of a multi-file target, for example a
+        PairedTarget, gets the same results.
 
         Both sides of this match use the URL that CsvParser computes for a
         row, so a relative local path matches whatever the work directory is.
@@ -60,10 +60,8 @@ class CsvUpdater:
             ValueError: If the input manifest has no rows.
         """
         suite_dict: dict[str, dict[str, Any]] = {}
-        # TODO add support for suites with multiple files in them (multi)
         for suite in suites:
-            url = suite.target.files[0].url
-            suite_dict[url] = {
+            suite_data: dict[str, Any] = {
                 "status": suite.get_status().value,
                 "required_tests": suite.required_tests,
                 "skipped_tests": suite.skipped_tests,
@@ -73,11 +71,14 @@ class CsvUpdater:
             }
             for test in suite.tests:
                 if test._status == TestStatus.FAIL:
-                    suite_dict[url]["failed_tests"].append(test.type)
+                    suite_data["failed_tests"].append(test.type)
                 if test._status == TestStatus.ERROR:
-                    suite_dict[url]["errored_tests"].append(test.type)
+                    suite_data["errored_tests"].append(test.type)
                 if test.metrics:
-                    suite_dict[url]["metrics"][test.type] = test.metrics
+                    suite_data["metrics"][test.type] = test.metrics
+            # The rows only read this data, so the files of a target share it
+            for file in suite.target.files:
+                suite_dict[file.url] = suite_data
 
         # Create CSV data structure
         row_list = []

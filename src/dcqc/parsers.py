@@ -1,18 +1,34 @@
 import csv
 import json
 from collections.abc import Collection, Iterator
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Type, TypeVar, cast
 
 from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import BaseTarget, SingleTarget
+from dcqc.target import BaseTarget, PairedTarget, SingleTarget
 from dcqc.tests.base_test import BaseTest
 
 # For context on TypeVar, check out this GitHub PR comment:
 # https://github.com/Sage-Bionetworks-Workflows/py-dcqc/pull/8#discussion_r1087141497
 T = TypeVar("T", bound=SerializableMixin)
+
+
+@dataclass
+class _PlannedTarget:
+    """A checked target of the manifest, before its files are staged.
+
+    Attributes:
+        target_cls: The class of the target, SingleTarget for a row with no
+            grouping value, or PairedTarget for a group.
+        members: Pairs of a row number, which starts at 1, and the file of
+            each row of the target, in manifest order.
+    """
+
+    target_cls: type[BaseTarget]
+    members: list[tuple[int, File]]
 
 
 # TODO: Add support for URLs instead of paths
@@ -27,7 +43,8 @@ class CsvParser:
     A local relative URL is interpreted relative to the directory that holds
     the manifest, not relative to the current work directory. Remote URLs and
     absolute paths are not changed. See File._relativize_url for the rewrite.
-    Note that list_rows does not apply this rewrite, but create_files does.
+    Note that list_rows does not apply this rewrite, but list_rows_and_files
+    does.
 
     Attributes:
         path: Location of the CSV manifest.
@@ -90,7 +107,7 @@ class CsvParser:
         unchanged, with its url column, while the URL of the file is
         relative to the manifest directory.
 
-        No file is staged here. Use create_files for that.
+        No file is staged here. Use create_targets for that.
 
         Yields:
             Triples of a row number, which starts at 1, the row as a
@@ -99,44 +116,298 @@ class CsvParser:
         for index, row in self.list_rows():
             yield index, row, self._row_to_file(dict(row))
 
-    def create_files(self) -> Iterator[tuple[int, File]]:
-        """Create a File object for each row of the manifest.
+    def _stage_file(self, index: int, file: File) -> None:
+        """Stage one file, if stage_files is True and the file is remote.
 
-        Each File is only a descriptor, which holds the URL and the metadata.
-        No data is read or copied, unless the file is staged.
-
-        A file is staged only if stage_files is True and the file is remote.
-        It is then downloaded into a staged_files/index_<number> directory
+        The file is downloaded into a staged_files/index_<number> directory
         next to the manifest, and an existing copy is overwritten.
 
-        Yields:
-            Pairs of a row number, which starts at 1, and the file.
+        Args:
+            index: The row number of the file, which starts at 1.
+            file: The file to stage.
         """
+        if not file.is_file_local() and self.stage_files:
+            destination = self.path.parent / "staged_files" / f"index_{index}"
+            destination.mkdir(parents=True, exist_ok=True)
+            file.stage(destination, overwrite=True)
+
+    def create_targets(self) -> Iterator[BaseTarget]:
+        """Create the targets for the rows of the manifest.
+
+        The optional dcqc_grouping column tells which rows go into one target.
+        Spaces at the start and end of each value are removed. The values
+        are case-sensitive, so A and a are two different groups. A row with
+        an empty or missing value becomes one SingleTarget. All rows with
+        the same value become one PairedTarget, in manifest order.
+        The rows of a group do not have to be next to each other.
+
+        The grouping value is removed from the file metadata, because it
+        describes the target, not the file.
+
+        Each row and group is checked before a file is staged or a target
+        is yielded. Thus a bad row or group raises an error before any
+        download, and the caller does not get part of the targets. See
+        _plan_targets for the checks.
+
+        Raises:
+            ValueError: If a file has an unknown file type, if a group does
+                not have exactly two files, if the files of a group have
+                different file types, or if the suite for the file type
+                does not accept the target class. For example, an ungrouped
+                FASTQ row and a grouped TIFF row are errors.
+
+        Yields:
+            The targets. Each identifier is the lowest row number of the
+            target with four digits, such as 0001. The single-file targets
+            come first, and the grouped targets come after the last row.
+        """
+        yield from self._build_targets(self._plan_targets())
+
+    def _plan_targets(self) -> list[_PlannedTarget]:
+        """Sort the manifest rows into planned targets, and check each one.
+
+        create_targets calls this first, so that all checks run before
+        _build_targets stages a file. This method does not stage a file and
+        does not build a target.
+
+        Each single row becomes a SingleTarget, and each group becomes a
+        PairedTarget. See _split_rows_by_grouping for the grouping rules, and
+        _plan_single_rows and _plan_groups for the checks.
+
+        All rows and groups are checked before an error is raised, so that
+        one error tells about all of them. The bad single rows come first,
+        in manifest order, and then the bad groups, in the order of their
+        first row.
+
+        Raises:
+            ValueError: If a single row or a group is bad. The message has
+                one line for each bad single row, with its row number, and
+                one line for each bad group, with its grouping value and its
+                row numbers.
+
+        Returns:
+            One planned target for each single row, in manifest order, and
+            then one for each group, in the order of its first row. The
+            members of a group are in manifest order.
+        """
+        singles, groups = self._split_rows_by_grouping()
+        plans, errors = self._plan_single_rows(singles)
+        group_plans, group_errors = self._plan_groups(groups)
+        plans.extend(group_plans)
+        errors.extend(group_errors)
+        if errors:
+            raise ValueError("\n".join(errors))
+        return plans
+
+    def _split_rows_by_grouping(
+        self,
+    ) -> tuple[list[tuple[int, File]], dict[str, list[tuple[int, File]]]]:
+        """Split the manifest rows into single rows and groups.
+
+        For each row, the dcqc_grouping value is removed from the file
+        metadata, and the spaces at its start and end are removed. A row
+        with an empty or missing value is a single row. All rows with the
+        same value are one group.
+
+        Returns:
+            The single rows, as pairs of a row number and the file, in
+            manifest order. Then a dictionary that maps each grouping value
+            to the pairs of a row number and the file of each row in that
+            group, in manifest order.
+        """
+        singles: list[tuple[int, File]] = []
+        groups: dict[str, list[tuple[int, File]]] = {}
         for index, _, file in self.list_rows_and_files():
-            if not file.is_file_local() and self.stage_files:
-                destination = self.path.parent / "staged_files" / f"index_{index}"
-                destination.mkdir(parents=True, exist_ok=True)
-                file.stage(destination, overwrite=True)
-            yield index, file
+            group = (file.metadata.pop("dcqc_grouping", None) or "").strip()
+            if group:
+                groups.setdefault(group, []).append((index, file))
+            else:
+                singles.append((index, file))
+        return singles, groups
 
-    def create_targets(self) -> Iterator[SingleTarget]:
-        """Create a single-file target for each row of the manifest.
+    @classmethod
+    def _plan_single_rows(
+        cls, singles: list[tuple[int, File]]
+    ) -> tuple[list[_PlannedTarget], list[str]]:
+        """Make a SingleTarget plan for each single row, and check it.
+
+        A single row is bad if its file has an unknown file type, or if the
+        suite for its file type does not accept a SingleTarget. All rows are
+        checked. This method does not raise an error for a bad row.
+
+        Args:
+            singles: The single rows, as pairs of a row number and the file,
+                in manifest order.
+
+        Returns:
+            The plans of the good rows, in manifest order. Then the error
+            messages of the bad rows, in manifest order. Each message starts
+            with the row number.
+        """
+        plans: list[_PlannedTarget] = []
+        errors: list[str] = []
+        for index, file in singles:
+            plan = _PlannedTarget(SingleTarget, [(index, file)])
+            error_message = cls._check_plan(plan, f"Row {index}")
+            if error_message:
+                errors.append(error_message)
+            else:
+                plans.append(plan)
+        return plans, errors
+
+    @classmethod
+    def _plan_groups(
+        cls, groups: dict[str, list[tuple[int, File]]]
+    ) -> tuple[list[_PlannedTarget], list[str]]:
+        """Make a PairedTarget plan for each group, and check it.
+
+        A group is bad if a file has an unknown file type, if it does not
+        have exactly two files, if the files have different file types, or
+        if the suite for its file type does not accept a PairedTarget. All
+        groups are checked. This method does not raise an error for a bad
+        group.
+
+        Args:
+            groups: A dictionary that maps each grouping value to the pairs
+                of a row number and the file of each row in that group, in
+                manifest order.
+
+        Returns:
+            The plans of the good groups, in the order of the dictionary.
+            Then the error messages of the bad groups, in the same order.
+            Each message starts with the grouping value and the row numbers.
+        """
+        plans: list[_PlannedTarget] = []
+        errors: list[str] = []
+        for group, members in groups.items():
+            indices = [index for index, _ in members]
+            plan = _PlannedTarget(PairedTarget, members)
+            location = f"Group ({group}) in rows {indices}"
+            error_message = cls._check_plan(plan, location)
+            if error_message:
+                errors.append(error_message)
+            else:
+                plans.append(plan)
+        return plans, errors
+
+    @classmethod
+    def _check_plan(cls, plan: _PlannedTarget, location: str) -> Optional[str]:
+        """Check the files and the target class of a plan.
+
+        First, every file must have a known file type. Then the files are
+        checked with the validate_files method of the target class, so the
+        parser and the target use the same rule. Then the target class is
+        checked against the suite for the file type. The check stops at the
+        first problem.
+
+        Args:
+            plan: The planned target to check.
+            location: The rows of the plan, for the start of the message,
+                for example "Row 3" or "Group (a) in rows [2, 5]".
+
+        Returns:
+            None if the plan is good. If not, the error message, which
+            starts with the location.
+        """
+        unknown_message = cls._check_file_types_known(plan, location)
+        if unknown_message:
+            return unknown_message
+        files = [file for _, file in plan.members]
+        problems = plan.target_cls.validate_files(files)
+        if problems:
+            return f"{location} " + " ".join(problems)
+        file_type = files[0].get_file_type()
+        return cls._check_suite_accepts_plan(plan, file_type, location)
+
+    @classmethod
+    def _check_suite_accepts_plan(
+        cls, plan: _PlannedTarget, file_type: FileType, location: str
+    ) -> Optional[str]:
+        """Check the target class of a plan against its suite.
+
+        If the check fails, the message also tells the rows of the plan, and
+        how to change the dcqc_grouping column.
+        SuiteABC.ensure_accepts_target_cls does not give this hint, because
+        some of its callers have no CSV manifest.
+
+        Args:
+            plan: The planned target to check.
+            file_type: The file type of the files of the plan.
+            location: The rows of the plan, for the start of the message,
+                for example "Row 3" or "Group (a) in rows [2, 5]".
+
+        Returns:
+            None if the suite accepts the target class. If not, the error
+            message, with the rows and the dcqc_grouping hint.
+        """
+        suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
+        urls = [file.url for _, file in plan.members]
+        try:
+            suite_cls.ensure_accepts_target_cls(plan.target_cls, file_type, urls)
+        except ValueError as error:
+            if issubclass(plan.target_cls, PairedTarget):
+                hint = "Remove the 'dcqc_grouping' value from these files."
+            else:
+                hint = "Give the files the same 'dcqc_grouping' value."
+            return f"{location}: {error} {hint}"
+        return None
+
+    @classmethod
+    def _check_file_types_known(
+        cls, plan: _PlannedTarget, location: str
+    ) -> Optional[str]:
+        """Check that each file of a plan has a known file type.
+
+        For a plan with more than one file, the message also gives the row
+        of the bad file.
+
+        Args:
+            plan: The planned target to check.
+            location: The rows of the plan, for the start of the message,
+                for example "Row 3" or "Group (a) in rows [2, 5]".
+
+        Returns:
+            None if all file types are known. If not, the error message for
+            the first bad file, which starts with the location.
+        """
+        for index, file in plan.members:
+            try:
+                file.get_file_type()
+            except ValueError as error:
+                row = f" in row {index}" if len(plan.members) > 1 else ""
+                return f"{location} has an unknown file type{row}. {error}"
+        return None
+
+    def _build_targets(self, plans: list[_PlannedTarget]) -> Iterator[BaseTarget]:
+        """Stage the files of the checked plans, and build their targets.
+
+        Args:
+            plans: The planned targets from _plan_targets.
 
         Yields:
-            The targets. Each identifier is the row number with four digits,
-            such as 0001.
+            The targets, as described in create_targets.
         """
-        for index, file in self.create_files():
-            yield SingleTarget(file, id=f"{index:04}")
+        for plan in plans:
+            for index, file in plan.members:
+                self._stage_file(index, file)
+            files = [file for _, file in plan.members]
+            # The members are in manifest order, so the first row number is
+            # the lowest.
+            yield plan.target_cls(files, id=f"{plan.members[0][0]:04}")
 
     def create_suites(
         self,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> Iterator[SuiteABC]:
-        """Create a test suite for each row of the manifest.
+        """Create a test suite for each target of the manifest.
 
-        The suite class is selected from the file type of the target.
+        The suite class is selected from the file type of the target. The
+        targets come from create_targets, so each row and group is checked,
+        also against its suite, before a file is staged. Thus a bad manifest
+        raises an error before any download, and the caller does not get
+        part of the suites. All suites are created before the first suite
+        is yielded.
 
         Args:
             required_tests: Names of the tests that must pass. If None, the
@@ -145,11 +416,19 @@ class CsvParser:
             skipped_tests: Names of the tests that are not run. If None, no
                 test is skipped. An unknown name is ignored.
 
+        Raises:
+            ValueError: If a row or group is bad, as described in
+                create_targets.
+
         Yields:
-            The suites, one for each row.
+            The suites, one for each target.
         """
-        for target in self.create_targets():
-            yield SuiteABC.from_target(target, required_tests, skipped_tests)
+        targets = list(self.create_targets())
+        suites = [
+            SuiteABC.from_target(target, required_tests, skipped_tests)
+            for target in targets
+        ]
+        yield from suites
 
 
 class JsonParser:

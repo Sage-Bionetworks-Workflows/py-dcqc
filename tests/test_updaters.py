@@ -9,6 +9,7 @@ import pytest
 
 from dcqc.parsers import CsvParser
 from dcqc.suites.suite_abc import SuiteABC, SuiteStatus
+from dcqc.tests.base_test import TestStatus
 from dcqc.updaters import CsvUpdater
 
 
@@ -81,10 +82,10 @@ def test_that_csv_updater_joins_a_manifest_of_relative_local_paths(tmp_path):
     manifest.write_text("url,file_type\ntest.txt,TXT\n")
 
     # Build the suite URL the way the pipeline does, through CsvParser.
-    _, file = next(iter(CsvParser(manifest).create_files()))
+    _, _, file = next(iter(CsvParser(manifest).list_rows_and_files()))
     suite = MagicMock()
     suite.cls = SuiteABC
-    suite.target.files[0].url = file.url
+    suite.target.files = [file]
     suite.get_status.return_value = SuiteStatus.GREEN
 
     output_file = tmp_path / "output.csv"
@@ -94,12 +95,51 @@ def test_that_csv_updater_joins_a_manifest_of_relative_local_paths(tmp_path):
     assert get_dcqc_status_list_from_file(output_file) == ["GREEN"]
 
 
-# def test_that_csv_updater_updates_csv_as_expected_with_multi_targets(
-#     get_data, mocked_suites_multi_targets
-# ):
-#     input_file = get_data("input.csv")
-#     output_file = get_data("output.csv")
-#     updater = CsvUpdater(input_file, output_file)
-#     updater.update(mocked_suites_multi_targets)
-#     status_list = get_dcqc_status_list_from_file(output_file)
-#     assert status_list == ["GREEN", "RED", "AMBER"]
+def test_that_csv_updater_writes_the_same_results_to_both_rows_of_a_pair(
+    tmp_path: Path,
+) -> None:
+    """Test that every file of a paired target gets the results of its suite."""
+    # GIVEN a manifest with one pair of grouped rows and one single row
+    manifest = tmp_path / "input.csv"
+    manifest.write_text(
+        "url,file_type,dcqc_grouping\n"
+        "syn://syn51585496,FASTQ,pair\n"
+        "syn://syn51585494,FASTQ,pair\n"
+        "syn://syn51585495,TXT,\n"
+    )
+    failed_test = MagicMock(type="PairedFastqParityTest", metrics={"lines": 4})
+    failed_test._status = TestStatus.FAIL
+    paired_suite = MagicMock()
+    paired_suite.target.files = [
+        MagicMock(url="syn://syn51585496"),
+        MagicMock(url="syn://syn51585494"),
+    ]
+    paired_suite.get_status.return_value = SuiteStatus.RED
+    paired_suite.required_tests = ["PairedFastqParityTest"]
+    paired_suite.skipped_tests = []
+    paired_suite.tests = [failed_test]
+    single_suite = MagicMock()
+    single_suite.target.files = [MagicMock(url="syn://syn51585495")]
+    single_suite.get_status.return_value = SuiteStatus.GREEN
+    single_suite.required_tests = []
+    single_suite.skipped_tests = []
+    single_suite.tests = []
+    output_file = tmp_path / "output.csv"
+    updater = CsvUpdater(manifest, output_file)
+
+    # WHEN I update the CSV with the suites
+    updater.update([paired_suite, single_suite])
+
+    # THEN both rows of the pair get the same dcqc values
+    with open(output_file, "r") as file:
+        rows = list(csv.DictReader(file))
+    dcqc_columns = [key for key in rows[0] if key.startswith("dcqc_")]
+    dcqc_rows = [{key: row[key] for key in dcqc_columns} for row in rows]
+    assert dcqc_rows[0] == dcqc_rows[1]
+    assert dcqc_rows[0]["dcqc_status"] == "RED"
+    assert dcqc_rows[0]["dcqc_failed_tests"] == "PairedFastqParityTest"
+    assert json.loads(dcqc_rows[0]["dcqc_metrics"]) == {
+        "PairedFastqParityTest": {"lines": 4}
+    }
+    # AND the single row gets the results of its own suite
+    assert dcqc_rows[2]["dcqc_status"] == "GREEN"

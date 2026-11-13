@@ -80,6 +80,21 @@ Do these two steps.
      every class in the method resolution order, so a subclass also runs the
      tests of its parents. Inheritance is the only way to share tests between
      suites.
+   - Give a target class only if the files of your type come in pairs. Set
+     the `target_cls` class attribute in the class body, as `FastqSuite` does
+     with `target_cls = PairedTarget`. A suite that does not set `target_cls`
+     inherits it from its parent, and `SuiteABC` sets a default of
+     `SingleTarget`. Suites are not generic, so do not write
+     `FileSuite[PairedTarget]`. Because `FastqSuite` gives `PairedTarget`, a FASTQ target must be
+     two manifest rows with the same `dcqc_grouping` value. A grouped row for a
+     `SingleTarget` type, or an ungrouped row for a `PairedTarget` type, makes
+     `CsvParser.create_targets` and `SuiteABC.from_target` raise a
+     `ValueError`. Both use `SuiteABC.ensure_accepts_target_cls` for the check.
+   - Every test of the suite, inherited tests included, must accept
+     `target_cls`. That is, the `target_cls` of the suite must be the
+     `target_cls` of the test, or a subclass of it. `SuiteABC.__init_subclass__` checks this and
+     raises a `TypeError` at import time. Thus a `PairedTarget` suite cannot
+     inherit a test whose `target` is `SingleTarget`.
    - Two suites must not claim the same file type. The registry is a dictionary
      keyed on the file type name, so the second class replaces the first one with
      no warning.
@@ -145,17 +160,20 @@ When contributing an internal test be sure to do the following:
 
 2. Add a new module at `src/dcqc/tests/<snake_case>_test.py`, with one test class in it. These modules are package code, not unit tests, although their names end in `_test.py`. The unit tests are in the `tests/` directory at the root of the repository.
 
-3. Subclass `InternalBaseTest`, and import it from `dcqc.tests.base_test`. The `dcqc.tests` package does not re-export it:
+3. Subclass `InternalBaseTest`, and import it from `dcqc.tests.base_test`. The `dcqc.tests` package does not re-export it. Give the target class of the test as the type argument of the base class:
 
    ```python
+   from dcqc.target import SingleTarget
    from dcqc.tests.base_test import InternalBaseTest
 
 
-   class MyNewTest(InternalBaseTest):
+   class MyNewTest(InternalBaseTest[SingleTarget]):
        """Tests that ..."""
    ```
 
-   The other names that you need, such as `TestStatus`, `TestTier` and `Process`, also come from `dcqc.tests.base_test`. `SingleTarget` and `PairedTarget` come from `dcqc.target`.
+   Use `SingleTarget` for individual files, `PairedTarget` for paired files, and `BaseTarget` for a test that works on any target. You give the class one time only. mypy reads it as the type of `self.target`, and `BaseTest.__init_subclass__` copies it into the `target_cls` class attribute. The suite checks its own `target_cls` against the test `target_cls` at import time, and raises a `TypeError` if they do not match. A test that you add to `FileSuite` runs in every suite, `FastqSuite` included, so it must use `BaseTarget`, as `FileExtensionTest` and `Md5ChecksumTest` do. Do not set `target` or `target_cls` in the class body.
+
+   The other names that you need, such as `TestStatus`, `TestTier` and `Process`, also come from `dcqc.tests.base_test`. `BaseTarget`, `SingleTarget` and `PairedTarget` come from `dcqc.target`.
 
 4. Include a class docstring that describes the purpose of the test. The
    docstring goes into the Sphinx API documentation. `dcqc list-tests` does not
@@ -169,12 +187,11 @@ When contributing an internal test be sure to do the following:
      - `INTERNAL_CONFORMANCE`: Ensures file internal consistency and format compliance. Only needs the files themselves and their format specification for validation against schema and internal metadata checks.
      - `EXTERNAL_CONFORMANCE`: Verifies file features against separately submitted metadata. Uses additional information while remaining objective/quantitative for validating channel counts, file sizes, nomenclature, and required companion files.
      - `SUBJECTIVE_CONFORMANCE`: Evaluates files using qualitative criteria that may need expert review. Uses metrics, heuristics, or models for tasks like sample swap detection, PHI detection, and outlier identification.
-   - `target`: The target class that the test will be applied to. This value will be `SingleTarget` for individual files and `PairedTarget` for paired files.
 
 6. Implement the major logic of the test in the `compute_status` method. This should include a condition for returning a `status` of `TestStatus.PASS` when the test conditions are met and `TestStatus.FAIL` when they are not.
    - For failing cases be sure to include a line setting the class' `status_reason` to a helpful string that will tell users why the test failed before returning the `status`.
    - To report extra values that the test computes (for example, a count or a size), set them in `self.metrics`. They must be JSON-serializable. They appear in `suites.json` and in the `dcqc_metrics` column of the output CSV.
-   - Call `self.target.file.stage()` to get a local `Path` to the file. This works for remote URLs, such as `syn://`, as well as local files.
+   - Call `self.target.file.stage()` to get a local `Path` to the file. This works for remote URLs, such as `syn://`, as well as local files. Only `SingleTarget` has the `file` property. In a `BaseTarget` or `PairedTarget` test, loop over `self.target.files` and call `stage()` on each file, as `Md5ChecksumTest` does.
 
 7. Register the test with the two steps in the "Registering a New Test" section above. Without them the test never runs.
 
@@ -233,7 +250,7 @@ Put the class in a new module at `src/dcqc/tests/<snake_case>_test.py`, with one
 - **Import `ExternalBaseTest` from `dcqc.tests.base_test`.** The `dcqc.tests` package does not re-export it. `Process`, `TestStatus` and `TestTier` also come from `dcqc.tests.base_test`. `SingleTarget` and `PairedTarget` come from `dcqc.target`.
 - **Give the class a docstring that tells the purpose of the test.** The docstring goes into the Sphinx API documentation. `dcqc list-tests` does not show it: that command prints only the file type, the EDAM identifier, the test name, the tier and the test type.
 - **Set `tier` to a `TestTier` value.** The values are `FILE_INTEGRITY`, `INTERNAL_CONFORMANCE`, `EXTERNAL_CONFORMANCE` and `SUBJECTIVE_CONFORMANCE`. See [Contributing Internal Tests] for the meaning of each tier.
-- **Set `target` to `SingleTarget`.**
+- **Give `SingleTarget` as the type argument of `ExternalBaseTest`,** as in `ExternalBaseTest[SingleTarget]`. This sets the type of `self.target` and the `target_cls` of the test.
 - **Set `pass_code` and `fail_code`.** These are the exit codes of the command for a passed test and for a failed test. See [Return Codes](#return-codes).
 - **Set `failure_reason_location` to `"std_out"` or `"std_err"`.** This is the stream that holds the reason for a failure. Any other value raises a `KeyError`, but only when a test fails, so a test on good files does not find the mistake.
 
@@ -248,14 +265,13 @@ from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestStatus, TestTier
 
 
-class MyTypeValidatorTest(ExternalBaseTest):
+class MyTypeValidatorTest(ExternalBaseTest[SingleTarget]):
     """Tests if a file is a valid MY-TYPE file."""
 
     tier = TestTier.INTERNAL_CONFORMANCE
     pass_code = 0
     fail_code = 1
     failure_reason_location = "std_err"
-    target: SingleTarget
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()

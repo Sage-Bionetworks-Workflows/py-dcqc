@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from dcqc import tests
@@ -105,7 +107,7 @@ class TestFileExtensionTest:
         path.touch()
         file = File(str(path), {})
         assert file.get_file_type().name == "*"
-        target = SingleTarget(file)
+        target = SingleTarget([file])
         assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
 
     def test_that_the_file_extension_test_handles_a_list_of_extensions(self, tmp_path):
@@ -123,14 +125,14 @@ class TestFileExtensionTest:
         path = tmp_path / "sample.foo"
         path.touch()
         file = File(str(path), {"file_type": file_type.name})
-        target = SingleTarget(file)
+        target = SingleTarget([file])
         assert tests.FileExtensionTest(target).get_status() == TestStatus.PASS
 
     def test_that_the_file_extension_test_works_on_incorrect_files(self):
         assert self.bad_txt_test.get_status() == TestStatus.FAIL
         assert self.bad_txt_test.status_reason == (
-            "File extension does not match one of: "
-            f"{self.bad_txt_target.get_file_type().file_extensions}"
+            f"File extension of {self.bad_txt_target.file.name} does not match "
+            f"one of: {self.bad_txt_target.get_file_type().file_extensions}"
         )
 
 
@@ -157,11 +159,46 @@ class TestMd5ChecksumTest:
         status = self.bad_txt_test.get_status()
         # THEN the test fails and the computed checksum is recorded as a metric
         assert status == TestStatus.FAIL
-        assert (
-            self.bad_txt_test.status_reason
-            == "Computed MD5 checksum does not match provided value"
+        assert self.bad_txt_test.status_reason == (
+            "Computed MD5 checksum does not match provided value for: "
+            f"{self.bad_txt_target.file.name}"
         )
-        assert self.bad_txt_test.metrics == {"md5_checksum": actual_md5}
+        url = self.bad_txt_target.file.url
+        assert self.bad_txt_test.metrics == {"md5_checksum": {url: actual_md5}}
+
+    def test_that_the_md5_checksum_test_records_only_the_failing_files_of_a_pair(
+        self, test_files: dict[str, File]
+    ) -> None:
+        # GIVEN a paired target where only the second file has a wrong checksum
+        good_file = test_files["good_txt"]
+        date_url = test_files["date_string_txt"].url
+        bad_file = File(date_url, {"file_type": "txt", "md5_checksum": "wrong"})
+        test = tests.Md5ChecksumTest(PairedTarget([good_file, bad_file]))
+        # WHEN I compute the test status
+        status = test.get_status()
+        # THEN the test fails and only the second file is recorded as a metric
+        assert status == TestStatus.FAIL
+        actual_md5 = test_files["date_string_txt"].get_metadata("md5_checksum")
+        assert test.metrics == {"md5_checksum": {bad_file.url: actual_md5}}
+        assert test.status_reason.endswith(f"for: {bad_file.name}")
+
+    def test_that_the_md5_checksum_test_records_files_with_the_same_name(
+        self, tmp_path: Path
+    ) -> None:
+        # GIVEN a paired target of two files with the same name in different folders
+        files = []
+        for folder, text in [("run1", "first"), ("run2", "second")]:
+            path = tmp_path / folder / "sample.txt"
+            path.parent.mkdir()
+            path.write_text(text)
+            metadata = {"file_type": "txt", "md5_checksum": "wrong"}
+            files.append(File(path.as_posix(), metadata))
+        test = tests.Md5ChecksumTest(PairedTarget(files))
+        # WHEN I compute the test status
+        status = test.get_status()
+        # THEN the test fails and the metrics hold one entry for each file
+        assert status == TestStatus.FAIL
+        assert set(test.metrics["md5_checksum"]) == {file.url for file in files}
 
 
 class TestJsonLoadTest:
