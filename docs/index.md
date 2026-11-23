@@ -15,6 +15,7 @@ workflow that runs the QC steps in parallel.
 :maxdepth: 2
 
 Overview <readme>
+MultiQC plugin <multiqc>
 Contributions & Help <contributing>
 Architecture <architecture>
 License <license>
