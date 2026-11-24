@@ -12,7 +12,7 @@ See README.md for concepts and CLI usage, CONTRIBUTING.md for setup, ARCHITECTUR
 
 ## Stack
 
-- Python `>=3.11, <3.15` (setup.cfg `[options] python_requires`). CI matrix: 3.11–3.14 on ubuntu and macos. Windows is intentionally disabled (.github/workflows/CI.yml, the `test` job's platform matrix, ORCA-348).
+- Python `>=3.11, <3.16` (setup.cfg `[options] python_requires`). CI matrix: 3.11–3.15 on ubuntu and macos. Windows is intentionally disabled (.github/workflows/CI.yml, the `test` job's platform matrix, ORCA-348).
 - Typer + Click CLI; entry point `dcqc = dcqc.main:app` (setup.cfg `[options.entry_points]`). Also runnable as `python -m dcqc`.
 - fsspec for file I/O, with `fs-synapse` providing the `syn://` protocol. The URLs in a manifest go through fsspec, but **most CLI path arguments do not accept a URL.** They are `pathlib.Path`, and the code reads and writes them locally: `CsvParser` and `JsonParser` use `Path.open()`, `update-csv` uses `open()`, and the `create-*` commands call `mkdir()`. Also, `Path` changes `syn://x` to `syn:/x`, so `qc-file` cannot take a URL. Only the `output_json` argument of `create-suite` and `combine-suites` is a `str` that goes through fsspec (`main.py:22-29`).
 - tox for task running, pytest for tests, Sphinx + MyST for docs. The dev environment is pipenv-based (`Pipfile` plus a committed `Pipfile.lock`) — see Commands.
