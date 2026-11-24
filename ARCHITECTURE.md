@@ -202,7 +202,7 @@ Before you make an image, make sure that you need an external test. See [Interna
 
    The command makes these three files:
 
-   - `exit_code.txt` holds one integer: the exit code of `command`. DCQC reads it for every test, and it is the only file that selects the status. If the file does not contain an integer, `compute-test` stops with an error.
+   - `exit_code.txt` holds one integer: the exit code of `command`. DCQC reads it for every test. In the base class, it is the only file that selects the status. A class that overrides `compute_status()`, as the example in [Creating the Test Class](#creating-the-test-class) does, can also use stdout to select the status. If the file does not contain an integer, `compute-test` stops with an error.
    - `std_out.txt` holds the stdout of `command`. The base class reads it only for a failed test whose class sets `failure_reason_location = "std_out"`. A test class can also read metrics from it, as the example in [Creating the Test Class](#creating-the-test-class) does.
    - `std_err.txt` holds the stderr of `command`. DCQC reads it for a failed test whose class sets `failure_reason_location = "std_err"`, and for every test with the status `error`.
 
@@ -212,7 +212,7 @@ Before you make an image, make sure that you need an external test. See [Interna
 
 4. `dcqc compute-test` reads `exit_code.txt` and compares it with the `pass_code` and `fail_code` of the test. It copies the text of `std_out.txt` or `std_err.txt` into `status_reason`.
 
-In step 4, the exit code alone selects the status, and the status selects the stream that DCQC copies into `status_reason`:
+In step 4, unless the class overrides `compute_status()`, the exit code alone selects the status, and the status selects the stream that DCQC copies into `status_reason`:
 
 - For `passed`, DCQC copies no stream. `status_reason` stays empty.
 - For `failed`, DCQC copies the stream that `failure_reason_location` names. Each test class sets this value, because some tools write the reason for a failure to stdout and other tools write it to stderr.
@@ -523,7 +523,7 @@ Note these points:
 - **The shell makes codes too.** Bash returns `126` if the command is not executable and `127` if it does not exist. A process that the kernel stops for lack of memory returns `137`. All of these become `error`, which is correct. Do not choose them as your `pass_code` or `fail_code`.
 - **The codes can be inverted.** `GrepDateTest`, `TiffDateTimeTest` and `TiffTag306DateTimeTest` use `pass_code = 1` and `fail_code = 0`, because `grep` and `jq -e` return 0 when they find a match, and for PHI detection a match is a failure. This works, but it is fragile. With inverted codes, 1 means `passed`, and many tools also return 1 when they fail. In `TiffDateTimeTest`, if `tifftools` crashes, `grep` receives no input and returns 1, so a file that was not checked is reported as `passed`. A tool of your own can return 0 for a pass.
 - **A pipeline has a different exit code in nf-dcqc and in `examples/external.sh`.** nf-dcqc runs bash with `-o pipefail`, so a pipeline returns the code of the last command that failed. `examples/external.sh` runs `sh -c`, which has no `pipefail`, so a pipeline returns the code of the last command. Put the logic into the entry file instead of a `|` in the command. Then there is one exit code, and both runners get the same one from the command. But `examples/external.sh` records the exit code of `docker run`, not of the command. If Docker itself fails, the code is one of its own, such as `125`, and `std_err.txt` holds a Docker message, not a message from the tool. To run the image exactly as nf-dcqc does, use the command in [Testing the Image](#testing-the-image).
-- **Exit with the code. Do not only print it.** `dcqc compute-test` reads `exit_code.txt`, which comes from `$?`. Text on standard output has no effect on the status.
+- **Exit with the code. Do not only print it.** `dcqc compute-test` reads `exit_code.txt`, which comes from `$?`. Unless the class overrides `compute_status()`, as the example does, text on standard output has no effect on the status.
 
 #### Testing the Image
 
