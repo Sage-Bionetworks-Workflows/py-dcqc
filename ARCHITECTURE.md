@@ -510,7 +510,7 @@ This command runs the image as the nf-dcqc `docker` profile does. The nf-dcqc `a
 Make sure that:
 
 - the good file gives `pass_code`, and the bad file gives `fail_code`,
-- a file that the tool cannot read, such as an empty file or a truncated file, gives a code that is neither,
+- a path that the tool cannot open, such as a missing name or a directory, gives a code that is neither,
 - the failure reason is in the stream that `failure_reason_location` names,
 - nothing is written into the directory other than the three output files.
 
