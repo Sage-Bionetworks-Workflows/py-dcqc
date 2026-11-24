@@ -236,16 +236,28 @@ Put the class in a new module at `src/dcqc/tests/<snake_case>_test.py`, with one
 - **Set `target` to `SingleTarget`.**
 - **Set `pass_code` and `fail_code`.** These are the exit codes of the command for a passed test and for a failed test. See [Return Codes](#return-codes).
 - **Set `failure_reason_location` to `"std_out"` or `"std_err"`.** This is the stream that holds the reason for a failure. Any other value raises a `KeyError`, but only when a test fails, so a test on good files does not find the mistake.
+- **Add the image to `src/dcqc/tests/constants.py`, and import it from there.** Each image has one module-level constant in that file, and no test module holds an image name. If the image is new, add a constant for it, with a version tag. If an existing test uses the same image, use its constant.
 
 The class sets only two exit codes, `pass_code` and `fail_code`. There is no error code. DCQC gives the status `error` to every other exit code, for example 2 from the entry file, 127 when the command is not found, or 137 when the container is killed. See [How DCQC Runs an External Test](#how-dcqc-runs-an-external-test) for the stream that DCQC reads for each status.
 
 The class can also record metrics, as an internal test such as `Md5ChecksumTest` does. The base class does not read metrics from the container, so the metrics of an external test stay `{}` unless the class overrides `compute_status()`. The example below uses stdout to carry the metrics as one JSON object. nf-dcqc already keeps `std_out.txt` for every test, so this needs no change to nf-dcqc. To keep stdout for JSON only, the class sets `failure_reason_location = "std_err"`. The exit code still tells a failure from an error.
+
+First, add the image constant to `src/dcqc/tests/constants.py`:
+
+```python
+MYTYPE_VALIDATOR_CONTAINER = (
+    "ghcr.io/sage-bionetworks-workflows/mytype-validator:0.1.0"
+)
+```
+
+Then write the test class:
 
 ```python
 import json
 
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestStatus, TestTier
+from dcqc.tests.constants import MYTYPE_VALIDATOR_CONTAINER
 
 
 class MyTypeValidatorTest(ExternalBaseTest):
@@ -265,7 +277,7 @@ class MyTypeValidatorTest(ExternalBaseTest):
             f"'{path.name}'",
         ]
         process = Process(
-            container="ghcr.io/sage-bionetworks-workflows/mytype-validator:0.1.0",
+            container=MYTYPE_VALIDATOR_CONTAINER,
             command_args=command_args,
         )
         return process
@@ -339,7 +351,7 @@ Obey these rules:
 - **Do not set an `ENTRYPOINT` or a `CMD`.** The workflow supplies the full command. An entrypoint puts its own program in front of that command. If your base image sets one, clear it with `ENTRYPOINT []`. A `CMD` has no effect, because every run overrides it.
 - **Do not hard-code a working directory.** nf-dcqc starts each container with `-w <task directory>`, and this replaces any `WORKDIR` in the image. Each run has a new task directory, so the path is different each time. The input file is in that directory, and the command gives the tool only the file name, such as `'file.mytype'`, with no directory. Thus the tool must open the name that it receives, relative to the current directory. Do not add a fixed directory, such as `/data`, to the name, and do not change directory before the tool opens the file.
 - **Let any user run the tool.** The nf-dcqc `docker` and `arm` profiles pass `-u $(id -u):$(id -g)`, and Singularity runs the container as the calling user by default. Thus the user ID is not known when you build the image. Install files so that all users can read and execute them. Send every cache and temporary file to a directory that all users can write to, such as `/tmp`. Libraries such as matplotlib and numba write a cache under `HOME` by default, and they fail if `HOME` is not writable.
-- **Pin the tool version and tag the image with a version.** Pin the tool version in the `Dockerfile`, and use a tag such as `0.1.1` in `generate_process()`, not `latest`. Then a QC result can always be traced to one version of the tool.
+- **Pin the tool version and tag the image with a version.** Pin the tool version in the `Dockerfile`, and use a tag such as `0.1.0` in the image constant in `src/dcqc/tests/constants.py`, not `latest`. Then a QC result can always be traced to one version of the tool.
 - **Put all the reference data into the image.** The tool must not download data when it runs. See [What Makes a Good Test].
 - **Keep the image small.** nf-dcqc pulls it for each run on a new machine. Use a slim base image, remove package caches, and install only what the tool needs at run time.
 
