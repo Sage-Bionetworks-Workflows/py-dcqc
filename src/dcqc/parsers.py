@@ -151,10 +151,12 @@ class CsvParser:
 
         Raises:
             ValueError: If a file has an unknown file type, if a group does
-                not have exactly two files, if the files of a group have
-                different file types, or if the suite for the file type
-                does not accept the target class. For example, an ungrouped
-                FASTQ row and a grouped TIFF row are errors.
+                not have exactly two files, or if the files of a group have
+                different file types. Any file type can be a single row or a
+                group. The suite makes only the tests that accept the target
+                class, so an ungrouped FASTQ row does not get
+                PairedFastqParityTest, and a grouped TIFF pair gets only the
+                tests that accept any target.
 
         Yields:
             The targets. Each identifier is the lowest row number of the
@@ -231,9 +233,8 @@ class CsvParser:
     ) -> tuple[list[_PlannedTarget], list[str]]:
         """Make a SingleTarget plan for each single row, and check it.
 
-        A single row is bad if its file has an unknown file type, or if the
-        suite for its file type does not accept a SingleTarget. All rows are
-        checked. This method does not raise an error for a bad row.
+        A single row is bad if its file has an unknown file type. All rows
+        are checked. This method does not raise an error for a bad row.
 
         Args:
             singles: The single rows, as pairs of a row number and the file,
@@ -262,9 +263,8 @@ class CsvParser:
         """Make a PairedTarget plan for each group, and check it.
 
         A group is bad if a file has an unknown file type, if it does not
-        have exactly two files, if the files have different file types, or
-        if the suite for its file type does not accept a PairedTarget. All
-        groups are checked. This method does not raise an error for a bad
+        have exactly two files, or if the files have different file types.
+        All groups are checked. This method does not raise an error for a bad
         group.
 
         Args:
@@ -292,13 +292,14 @@ class CsvParser:
 
     @classmethod
     def _check_plan(cls, plan: _PlannedTarget, location: str) -> Optional[str]:
-        """Check the files and the target class of a plan.
+        """Check the files of a plan.
 
         First, every file must have a known file type. Then the files are
         checked with the validate_files method of the target class, so the
-        parser and the target use the same rule. Then the target class is
-        checked against the suite for the file type. The check stops at the
-        first problem.
+        parser and the target use the same rule. The check stops at the
+        first problem. The suite does not check the target class, because
+        it makes only the tests that accept the target (see
+        SuiteABC.list_test_classes_for_target).
 
         Args:
             plan: The planned target to check.
@@ -316,40 +317,6 @@ class CsvParser:
         problems = plan.target_cls.validate_files(files)
         if problems:
             return f"{location} " + " ".join(problems)
-        file_type = files[0].get_file_type()
-        return cls._check_suite_accepts_plan(plan, file_type, location)
-
-    @classmethod
-    def _check_suite_accepts_plan(
-        cls, plan: _PlannedTarget, file_type: FileType, location: str
-    ) -> Optional[str]:
-        """Check the target class of a plan against its suite.
-
-        If the check fails, the message also tells the rows of the plan, and
-        how to change the dcqc_grouping column.
-        SuiteABC.ensure_accepts_target_cls does not give this hint, because
-        some of its callers have no CSV manifest.
-
-        Args:
-            plan: The planned target to check.
-            file_type: The file type of the files of the plan.
-            location: The rows of the plan, for the start of the message,
-                for example "Row 3" or "Group (a) in rows [2, 5]".
-
-        Returns:
-            None if the suite accepts the target class. If not, the error
-            message, with the rows and the dcqc_grouping hint.
-        """
-        suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
-        urls = [file.url for _, file in plan.members]
-        try:
-            suite_cls.ensure_accepts_target_cls(plan.target_cls, file_type, urls)
-        except ValueError as error:
-            if issubclass(plan.target_cls, PairedTarget):
-                hint = "Remove the 'dcqc_grouping' value from these files."
-            else:
-                hint = "Give the files the same 'dcqc_grouping' value."
-            return f"{location}: {error} {hint}"
         return None
 
     @classmethod

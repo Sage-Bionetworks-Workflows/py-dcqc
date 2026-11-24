@@ -5,7 +5,6 @@ from collections.abc import Collection, Sequence
 from copy import deepcopy
 from enum import Enum
 from typing import (
-    Any,
     ClassVar,
     Optional,
     Type,
@@ -14,7 +13,7 @@ from typing import (
 
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
-from dcqc.target import BaseTarget, SingleTarget
+from dcqc.target import BaseTarget
 from dcqc.tests import BaseTest, TestStatus
 
 
@@ -41,15 +40,16 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
         skipped_tests: List of tests that should not be
             evaluated. Defaults to None.
 
-    A suite gives the target class that it accepts in the target_cls class
-    attribute, for example target_cls = PairedTarget in FastqSuite. A suite
-    that does not set target_cls inherits it from its parent, and SuiteABC
-    sets a default of SingleTarget.
+    A suite accepts a target of any class. Each test gives the target class
+    that it needs in its target_cls attribute, and the suite makes only the
+    tests whose target_cls the target is an instance of (see
+    list_test_classes_for_target). For example, FastqSuite makes
+    PairedFastqParityTest only for a PairedTarget. For a SingleTarget, it
+    makes only FileExtensionTest and Md5ChecksumTest.
     """
 
     # Class attributes
     file_type: ClassVar[FileType]
-    target_cls: ClassVar[type[BaseTarget]] = SingleTarget
     add_tests: ClassVar[tuple[Type[BaseTest], ...]]
     del_tests: ClassVar[tuple[Type[BaseTest], ...]]
 
@@ -68,12 +68,12 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
         self.type = self.__class__.__name__
         self.target = target
 
-        test_classes = self.list_test_classes()
+        test_classes = self.list_test_classes_for_target(target)
         test_names = set(test.__name__ for test in test_classes)
 
         # To differentiate between None and []
         if required_tests is None:
-            required_tests = self._default_required_tests()
+            required_tests = self._default_required_tests(target)
         self.required_tests = set(required_tests).intersection(test_names)
 
         skipped_tests = skipped_tests or list()
@@ -81,106 +81,6 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
 
         self.tests = self.init_test_classes()
         self._status = SuiteStatus.NONE
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Set up and check each new suite class when it is defined.
-
-        Python calls this hook one time for each subclass, when the class
-        statement runs (at import time). The hook does these steps:
-
-        1. Make sure that target_cls is a BaseTarget subclass. A suite that
-           does not set target_cls inherits it from its parent (default
-           SingleTarget).
-        2. Make sure that every test of the suite, inherited tests included,
-           accepts target_cls (see ensure_tests_match_target_cls). Thus a
-           bad suite fails at import time, not during a QC run.
-        3. If step 1 or 2 fails, mark the class as failed before the error is
-           raised again. Python adds the class to __subclasses__() before
-           this hook runs, so the class stays there after the error. The mark
-           makes list_subclasses leave the class out, so that
-           get_subclass_by_file_type cannot return a broken suite in place
-           of a real one.
-
-        Args:
-            **kwargs: Keyword arguments from the class statement. They go
-                to the parent hook.
-
-        Raises:
-            TypeError: If target_cls is not a BaseTarget subclass, or if a
-                test does not accept the suite target class.
-        """
-        super().__init_subclass__(**kwargs)
-        try:
-            cls.ensure_target_cls_is_a_target_class()
-            cls.ensure_tests_match_target_cls()
-        except TypeError:
-            cls.mark_registration_failed()
-            raise
-
-    @classmethod
-    def ensure_target_cls_is_a_target_class(cls) -> None:
-        """Ensure that the target_cls attribute is a BaseTarget subclass.
-
-        This check examines the declaration of the suite only, not its
-        tests. SuiteABC sets SingleTarget as the default, and a suite
-        that does not set target_cls gets the value of its parent. Thus
-        the attribute always exists, and this method checks only its
-        value.
-
-        The isinstance check comes before the issubclass check, because
-        issubclass raises its own error for a value that is not a class.
-        With the isinstance check, such a value gives a clear message.
-
-        __init_subclass__ calls this method one time for each suite class,
-        at class definition (import) time. It must run before
-        ensure_tests_match_target_cls, because that method calls
-        issubclass on target_cls.
-
-        Raises:
-            TypeError: If target_cls is not a BaseTarget subclass, for
-                example a Union or an instance.
-        """
-        target_cls = cls.target_cls
-        if not (isinstance(target_cls, type) and issubclass(target_cls, BaseTarget)):
-            message = (
-                f"{cls.__name__} must set target_cls to a BaseTarget subclass, "
-                f"not {target_cls!r}."
-            )
-            raise TypeError(message)
-
-    @classmethod
-    def ensure_tests_match_target_cls(cls) -> None:
-        """Ensure that every test accepts the suite target class.
-
-        A test accepts the suite target class if the target class
-        is the same as, or a subclass of, the target_cls attribute
-        of the test. A test that does not set target_cls inherits
-        BaseTarget from BaseTest, and thus accepts any target. A test
-        that needs a specific target shape sets a narrower class, for
-        example PairedTarget. Then only a suite whose target_cls is that
-        class, or a subclass of it, can include the test.
-
-        The check includes the tests that the suite inherits from its
-        parent suites (see list_test_classes). For example, if FastqSuite
-        (target_cls = PairedTarget) inherited a test that requires
-        SingleTarget, this method would raise TypeError at import time.
-
-        __init_subclass__ calls this method one time for each suite class,
-        after ensure_target_cls_is_a_target_class. This method checks the
-        suite classes only. To check the class of a real target at run
-        time, use ensure_accepts_target_cls.
-
-        Raises:
-            TypeError: If a test does not accept the suite target class.
-        """
-        for test_cls in cls.list_test_classes():
-            test_target_cls = test_cls.target_cls
-            if not issubclass(cls.target_cls, test_target_cls):
-                message = (
-                    f"{cls.__name__} uses target class {cls.target_cls.__name__}, "
-                    f"but {test_cls.__name__} requires {test_target_cls.__name__}."
-                )
-                raise TypeError(message)
 
     @classmethod
     def from_target(
@@ -206,8 +106,6 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
         """
         file_type = target.get_file_type()
         suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
-        urls = [file.url for file in target.files]
-        suite_cls.ensure_accepts_target_cls(type(target), file_type, urls)
         suite = suite_cls(target, required_tests, skipped_tests)
         return suite
 
@@ -271,6 +169,31 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
         return tuple(sorted(all_tests, key=lambda test_cls: test_cls.__name__))
 
     @classmethod
+    def list_test_classes_for_target(
+        cls, target: BaseTarget
+    ) -> tuple[Type[BaseTest], ...]:
+        """List the test classes that apply to a target, sorted by class name.
+
+        A test applies to a target if the target is an instance of the
+        target_cls attribute of the test. A test that does not set
+        target_cls accepts any target, because BaseTest sets BaseTarget.
+        Thus a SingleTarget in FastqSuite does not get PairedFastqParityTest,
+        and a PairedTarget in TiffSuite does not get the SingleTarget tests.
+
+        Args:
+            target: The target of the suite.
+
+        Returns:
+            The test classes of list_test_classes that accept the target.
+        """
+        test_classes = cls.list_test_classes()
+        return tuple(
+            test_cls
+            for test_cls in test_classes
+            if isinstance(target, test_cls.target_cls)
+        )
+
+    @classmethod
     def list_test_classes_by_file_type(cls) -> dict[str, list[Type[BaseTest]]]:
         """List test classes by file type."""
         result = dict()
@@ -282,15 +205,15 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
         return result
 
     @classmethod
-    def _default_required_tests(cls) -> list[str]:
-        test_classes = cls.list_test_classes()
+    def _default_required_tests(cls, target: BaseTarget) -> list[str]:
+        test_classes = cls.list_test_classes_for_target(target)
         required_tests = filter(lambda test: test.tier.value <= 2, test_classes)
         required_test_names = [test.__name__ for test in required_tests]
         return required_test_names
 
     def init_test_classes(self) -> list[BaseTest]:
         """Initialize applicable test classes with target."""
-        test_classes = self.list_test_classes()
+        test_classes = self.list_test_classes_for_target(self.target)
         tests = []
         for test_cls in test_classes:
             test_name = test_cls.__name__
@@ -317,50 +240,6 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
             #       composite file types (e.g., BAM/BAI file pair)
             return registry["*"]
         return registry[name]
-
-    @classmethod
-    def ensure_accepts_target_cls(
-        cls,
-        target_cls: Type[BaseTarget],
-        file_type: FileType,
-        urls: Sequence[str],
-    ) -> None:
-        """Make sure that this suite class accepts a target class.
-
-        Each suite class sets the target class that it accepts in its
-        target_cls attribute. For example, FastqSuite accepts only a
-        PairedTarget, and TiffSuite accepts only a SingleTarget. This method
-        makes sure that target_cls is that class or a subclass of it.
-
-        The method uses classes and URLs, not a target instance. Thus
-        CsvParser can do the check before it stages the files, so a bad
-        manifest fails before any download. SuiteABC.from_target also calls
-        this method, on every target.
-
-        Args:
-            target_cls: The class of the target to check, for example
-                SingleTarget or PairedTarget.
-            file_type: The file type of the target. It is used only in the
-                error message. It can be different from the file_type of
-                the suite, because FileSuite is used for each file type
-                that no suite claims.
-            urls: The URLs of the files in the target. They are used only
-                in the error message.
-
-        Raises:
-            ValueError: If this suite class does not accept target_cls. The
-                message gives the URLs, the two target classes and the
-                suite class. It does not tell about the 'dcqc_grouping'
-                column, because some callers have no CSV manifest, for
-                example qc-file. CsvParser adds that hint.
-        """
-        if not issubclass(target_cls, cls.target_cls):
-            message = (
-                f"Target ({', '.join(urls)}) is a {target_cls.__name__}, but "
-                f"{cls.__name__} for file type '{file_type.name}' requires "
-                f"a {cls.target_cls.__name__}."
-            )
-            raise ValueError(message)
 
     @property
     def tests_by_name(self) -> dict[str, BaseTest]:

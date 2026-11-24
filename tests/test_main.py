@@ -199,6 +199,18 @@ def test_qc_file_with_required_tests(get_data):
     check_command_result(result)
 
 
+def test_qc_file_fastq(get_data):
+    # GIVEN a FASTQ file, which qc-file puts into a SingleTarget
+    fastq_path = get_data("fastq1.fastq")
+    args = ["qc-file", "-t", "FASTQ", "--skipped-tests", "Md5ChecksumTest"]
+    # WHEN qc-file runs on the file
+    result = run_command([*args, fastq_path])
+    # THEN it succeeds, and the report does not have the paired test
+    check_command_result(result)
+    assert "FileExtensionTest" in result.stdout
+    assert "PairedFastqParityTest" not in result.stdout
+
+
 def test_qc_file_h5ad(get_data):
     h5ad_path = get_data("example.h5ad")
     args = [

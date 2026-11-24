@@ -145,11 +145,8 @@ def test_targets(test_files):
 
 @pytest.fixture
 def test_suites(test_targets):
-    # FastqSuite requires a PairedTarget, so the single FASTQ targets get no suite
     test_suites_dict = {
-        name: SuiteABC.from_target(target)
-        for name, target in test_targets.items()
-        if target.get_file_type().name != "FASTQ"
+        name: SuiteABC.from_target(target) for name, target in test_targets.items()
     }
     return test_suites_dict
 

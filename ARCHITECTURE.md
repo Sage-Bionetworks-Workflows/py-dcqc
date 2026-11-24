@@ -80,21 +80,16 @@ Do these two steps.
      every class in the method resolution order, so a subclass also runs the
      tests of its parents. Inheritance is the only way to share tests between
      suites.
-   - Give a target class only if the files of your type come in pairs. Set
-     the `target_cls` class attribute in the class body, as `FastqSuite` does
-     with `target_cls = PairedTarget`. A suite that does not set `target_cls`
-     inherits it from its parent, and `SuiteABC` sets a default of
-     `SingleTarget`. Suites are not generic, so do not write
-     `FileSuite[PairedTarget]`. Because `FastqSuite` gives `PairedTarget`, a FASTQ target must be
-     two manifest rows with the same `dcqc_grouping` value. A grouped row for a
-     `SingleTarget` type, or an ungrouped row for a `PairedTarget` type, makes
-     `CsvParser.create_targets` and `SuiteABC.from_target` raise a
-     `ValueError`. Both use `SuiteABC.ensure_accepts_target_cls` for the check.
-   - Every test of the suite, inherited tests included, must accept
-     `target_cls`. That is, the `target_cls` of the suite must be the
-     `target_cls` of the test, or a subclass of it. `SuiteABC.__init_subclass__` checks this and
-     raises a `TypeError` at import time. Thus a `PairedTarget` suite cannot
-     inherit a test whose `target` is `SingleTarget`.
+   - A suite does not give a target class. Each test gives the target class
+     that it needs (see [Contributing New Tests](#contributing-new-tests)), and the suite makes
+     only the tests that accept the target:
+     `SuiteABC.list_test_classes_for_target` keeps a test only if the target
+     is an instance of its `target_cls`. Thus a suite can mix `SingleTarget`,
+     `PairedTarget` and `BaseTarget` tests, as `FastqSuite` does. A FASTQ
+     `SingleTarget` gets only `FileExtensionTest` and `Md5ChecksumTest`, and a
+     FASTQ `PairedTarget` also gets `PairedFastqParityTest`. A test that does
+     not accept the target is also left out of the required and skipped
+     tests. Suites are not generic, so do not write `FileSuite[PairedTarget]`.
    - Two suites must not claim the same file type. The registry is a dictionary
      keyed on the file type name, so the second class replaces the first one with
      no warning.
@@ -171,7 +166,7 @@ When contributing an internal test be sure to do the following:
        """Tests that ..."""
    ```
 
-   Use `SingleTarget` for individual files, `PairedTarget` for paired files, and `BaseTarget` for a test that works on any target. You give the class one time only. mypy reads it as the type of `self.target`, and `BaseTest.__init_subclass__` copies it into the `target_cls` class attribute. The suite checks its own `target_cls` against the test `target_cls` at import time, and raises a `TypeError` if they do not match. A test that you add to `FileSuite` runs in every suite, `FastqSuite` included, so it must use `BaseTarget`, as `FileExtensionTest` and `Md5ChecksumTest` do. Do not set `target` or `target_cls` in the class body.
+   Use `SingleTarget` for individual files, `PairedTarget` for paired files, and `BaseTarget` for a test that works on any target. You give the class one time only. mypy reads it as the type of `self.target`, and `BaseTest.__init_subclass__` copies it into the `target_cls` class attribute. The suite makes the test only for a target that is an instance of `target_cls`, and leaves it out for other targets. A test that you add to `FileSuite` is in every suite. Give it `BaseTarget`, as `FileExtensionTest` and `Md5ChecksumTest` do, if it must run on every target. Do not set `target` or `target_cls` in the class body.
 
    The other names that you need, such as `TestStatus`, `TestTier` and `Process`, also come from `dcqc.tests.base_test`. `BaseTarget`, `SingleTarget` and `PairedTarget` come from `dcqc.target`.
 

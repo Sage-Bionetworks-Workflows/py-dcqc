@@ -3,7 +3,6 @@ from typing import ClassVar
 from dcqc import tests
 from dcqc.file import FileType
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.target import PairedTarget
 
 
 class FileSuite(SuiteABC):
@@ -63,7 +62,6 @@ class BAMSuite(FileSuite):
 class FastqSuite(FileSuite):
     """Suite class for FASTQ files."""
 
-    target_cls = PairedTarget
     file_type = FileType.get_file_type("FASTQ")
     add_tests = (tests.PairedFastqParityTest,)
 

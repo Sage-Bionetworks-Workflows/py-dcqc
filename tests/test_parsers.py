@@ -11,7 +11,7 @@ from dcqc.file import File
 from dcqc.mixins import SerializableMixin
 from dcqc.parsers import CsvParser, JsonParser, _PlannedTarget
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.suites.suites import FastqSuite, TXTSuite
+from dcqc.suites.suites import FastqSuite, TiffSuite, TXTSuite
 from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests.base_test import BaseTest, TestStatus
 
@@ -405,55 +405,47 @@ class TestCreateTargets:
         assert targets[-1].id == expected_id
 
     @pytest.mark.parametrize(
-        "rows, message",
+        "rows, expected_classes",
         [
             pytest.param(
                 [("TXT", ""), ("FASTQ", "")],
-                "Row 2: Target (",
+                [SingleTarget, SingleTarget],
                 id="ungrouped-fastq",
             ),
             pytest.param(
                 [("TXT", ""), ("TIFF", "a"), ("TIFF", "a")],
-                "Group (a) in rows [2, 3]: Target (",
+                [SingleTarget, PairedTarget],
                 id="grouped-tiff",
             ),
         ],
     )
-    def test_for_an_error_before_any_file_is_staged_when_a_suite_rejects_a_target(
+    def test_that_any_file_type_can_be_a_single_row_or_a_group(
         self,
-        mocker: MockerFixture,
         write_manifest: Callable,
         rows: list[tuple[str, str | None]],
-        message: str,
+        expected_classes: list[type],
     ) -> None:
-        """Make sure that a target class that its suite rejects is an error at once.
+        """Make sure that the target class does not depend on the file type.
 
-        FastqSuite accepts only a PairedTarget, and TiffSuite accepts only a
-        SingleTarget. The bad row or group is after a good single row. No
-        file may be staged, and no target may be yielded, before the error.
-        The error must tell the rows and the dcqc_grouping hint.
+        The suite makes only the tests that accept the target, so
+        create_targets does not check the target class against the suite.
+        An ungrouped FASTQ row gives a SingleTarget, and a grouped TIFF pair
+        gives a PairedTarget.
 
         Args:
-            mocker: Fixture that makes the spy on _stage_file.
             write_manifest: Fixture that writes the manifest.
             rows: The file type and the grouping value of each row.
-            message: The start of the error message.
+            expected_classes: The class of each target, in order.
         """
-        # GIVEN a manifest with a single TXT row and then a target that its
-        # suite does not accept
+        # GIVEN a manifest with a single TXT row and then an ungrouped FASTQ
+        # row or a grouped TIFF pair
         manifest = write_manifest(rows)
-        parser = CsvParser(manifest, stage_files=True)
-        spy = mocker.spy(parser, "_stage_file")
-        targets = parser.create_targets()
 
-        # WHEN the first target is requested
-        # THEN the error comes at once, and it tells the rows and the hint
-        with pytest.raises(ValueError, match="'dcqc_grouping' value") as info:
-            next(targets)
-        assert str(info.value).startswith(message)
+        # WHEN the targets are created
+        targets = list(CsvParser(manifest).create_targets())
 
-        # AND no file was staged
-        spy.assert_not_called()
+        # THEN no error is raised, and each target has the expected class
+        assert [type(target) for target in targets] == expected_classes
 
 
 class TestPlanTargets:
@@ -733,14 +725,12 @@ class TestPlanTargets:
         assert lines[1].startswith("Row 4 has an unknown file type.")
         assert lines[2].startswith("Group (one) in rows [1] has a file count of 1.")
 
-    def test_that_one_error_tells_about_all_target_class_errors(
+    def test_that_the_target_class_is_not_checked_against_the_suite(
         self, write_manifest: Callable
     ) -> None:
-        """Make sure that the suite checks do not stop at the first error.
+        """Make sure that ungrouped FASTQ rows and grouped TIFF rows are good.
 
-        The error must tell about each target that its suite does not
-        accept, and also about the other bad groups, in the same order as
-        the other errors.
+        Only the group of one file is bad, so the error tells only about it.
 
         Args:
             write_manifest: Fixture that writes the manifest.
@@ -762,16 +752,10 @@ class TestPlanTargets:
         with pytest.raises(ValueError) as info:
             parser._plan_targets()
 
-        # THEN the error tells about each bad single row and then each bad
-        # group
+        # THEN the error tells only about the group of one file
         lines = str(info.value).splitlines()
-        assert len(lines) == 4
-        assert lines[0].startswith("Row 1: Target (")
-        assert lines[0].endswith("Give the files the same 'dcqc_grouping' value.")
-        assert lines[1].startswith("Row 4: Target (")
-        assert lines[2].startswith("Group (a) in rows [2, 3]: Target (")
-        assert lines[2].endswith("Remove the 'dcqc_grouping' value from these files.")
-        assert lines[3].startswith("Group (b) in rows [5] has a file count of 1.")
+        assert len(lines) == 1
+        assert lines[0].startswith("Group (b) in rows [5] has a file count of 1.")
 
 
 class TestCreateSuites:
@@ -783,12 +767,45 @@ class TestCreateSuites:
     so a lazy create_suites would yield the TXT suite before the error.
     """
 
-    def test_for_an_error_before_any_suite_when_a_tiff_pair_is_grouped(
+    def test_that_an_ungrouped_fastq_row_gives_a_suite_without_the_paired_test(
         self, write_manifest: Callable
     ) -> None:
-        """Make sure that a grouped TIFF target raises an error before any suite.
+        """Make sure that an ungrouped FASTQ row gives a FastqSuite that runs.
 
-        TiffSuite accepts only a SingleTarget.
+        The suite has only the tests that accept any target, so it does not
+        have PairedFastqParityTest.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest with a single TXT row and then an ungrouped FASTQ row
+        rows: list[tuple[str, str | None]] = [("TXT", ""), ("FASTQ", "")]
+        manifest = write_manifest(rows)
+
+        # WHEN the suites are created
+        suites = list(CsvParser(manifest).create_suites())
+
+        # THEN the FASTQ row gives a FastqSuite with a SingleTarget
+        assert [type(suite) for suite in suites] == [TXTSuite, FastqSuite]
+        fastq_suite = suites[1]
+        assert isinstance(fastq_suite.target, SingleTarget)
+
+        # AND the suite does not have the paired test
+        test_names = {test.type for test in fastq_suite.tests}
+        assert test_names == {"FileExtensionTest", "Md5ChecksumTest"}
+
+        # AND each test runs without an error
+        fastq_suite.compute_tests()
+        statuses = {test.type: test.get_status() for test in fastq_suite.tests}
+        assert TestStatus.ERROR not in statuses.values(), statuses
+
+    def test_that_a_grouped_tiff_pair_gives_a_suite_with_the_tests_for_any_target(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that a grouped TIFF pair gives a TiffSuite that runs.
+
+        The TIFF tests need a SingleTarget, so the suite has only the tests
+        that accept any target.
 
         Args:
             write_manifest: Fixture that writes the manifest.
@@ -800,32 +817,23 @@ class TestCreateSuites:
             ("TIFF", "a"),
         ]
         manifest = write_manifest(rows)
-        suites = CsvParser(manifest).create_suites()
 
-        # WHEN the first suite is requested
-        # THEN the error comes at once and tells the user to remove the value
-        with pytest.raises(ValueError, match="Remove the 'dcqc_grouping' value"):
-            next(suites)
+        # WHEN the suites are created
+        suites = list(CsvParser(manifest).create_suites())
 
-    def test_for_an_error_before_any_suite_when_a_fastq_row_is_not_grouped(
-        self, write_manifest: Callable
-    ) -> None:
-        """Make sure that an ungrouped FASTQ row raises an error before any suite.
+        # THEN the pair gives a TiffSuite with a PairedTarget
+        assert [type(suite) for suite in suites] == [TXTSuite, TiffSuite]
+        tiff_suite = suites[1]
+        assert isinstance(tiff_suite.target, PairedTarget)
 
-        FastqSuite accepts only a PairedTarget.
+        # AND the suite has only the tests that accept any target
+        test_names = {test.type for test in tiff_suite.tests}
+        assert test_names == {"FileExtensionTest", "Md5ChecksumTest"}
 
-        Args:
-            write_manifest: Fixture that writes the manifest.
-        """
-        # GIVEN a manifest with a single TXT row and then an ungrouped FASTQ row
-        rows: list[tuple[str, str | None]] = [("TXT", ""), ("FASTQ", "")]
-        manifest = write_manifest(rows)
-        suites = CsvParser(manifest).create_suites()
-
-        # WHEN the first suite is requested
-        # THEN the error comes at once and tells the user to group the files
-        with pytest.raises(ValueError, match="same 'dcqc_grouping' value"):
-            next(suites)
+        # AND each test runs without an error
+        tiff_suite.compute_tests()
+        statuses = {test.type: test.get_status() for test in tiff_suite.tests}
+        assert TestStatus.ERROR not in statuses.values(), statuses
 
     def test_for_an_error_before_any_suite_when_a_single_row_type_is_unknown(
         self, tmp_path: Path, get_data: Callable
@@ -851,58 +859,6 @@ class TestCreateSuites:
         message = "Row 2 has an unknown file type."
         with pytest.raises(ValueError, match=re.escape(message)):
             next(suites)
-
-    def test_for_an_error_before_any_file_is_staged_when_a_tiff_pair_is_grouped(
-        self, mocker: MockerFixture, write_manifest: Callable
-    ) -> None:
-        """Make sure that a grouped TIFF target raises an error before staging.
-
-        Args:
-            mocker: Fixture that makes the spy on _stage_file.
-            write_manifest: Fixture that writes the manifest.
-        """
-        # GIVEN a manifest with a single TXT row and then two grouped TIFF rows
-        rows: list[tuple[str, str | None]] = [
-            ("TXT", ""),
-            ("TIFF", "a"),
-            ("TIFF", "a"),
-        ]
-        manifest = write_manifest(rows)
-        parser = CsvParser(manifest, stage_files=True)
-        spy = mocker.spy(parser, "_stage_file")
-        suites = parser.create_suites()
-
-        # WHEN the first suite is requested
-        # THEN the error comes at once
-        with pytest.raises(ValueError, match="Remove the 'dcqc_grouping' value"):
-            next(suites)
-
-        # AND no file was staged
-        spy.assert_not_called()
-
-    def test_for_an_error_before_any_file_is_staged_when_a_fastq_row_is_not_grouped(
-        self, mocker: MockerFixture, write_manifest: Callable
-    ) -> None:
-        """Make sure that an ungrouped FASTQ row raises an error before staging.
-
-        Args:
-            mocker: Fixture that makes the spy on _stage_file.
-            write_manifest: Fixture that writes the manifest.
-        """
-        # GIVEN a manifest with a single TXT row and then an ungrouped FASTQ row
-        rows: list[tuple[str, str | None]] = [("TXT", ""), ("FASTQ", "")]
-        manifest = write_manifest(rows)
-        parser = CsvParser(manifest, stage_files=True)
-        spy = mocker.spy(parser, "_stage_file")
-        suites = parser.create_suites()
-
-        # WHEN the first suite is requested
-        # THEN the error comes at once
-        with pytest.raises(ValueError, match="same 'dcqc_grouping' value"):
-            next(suites)
-
-        # AND no file was staged
-        spy.assert_not_called()
 
     def test_that_a_grouped_fastq_manifest_gives_a_suite_that_runs(
         self, write_manifest: Callable
@@ -1369,23 +1325,20 @@ class TestPlanSingleRows:
         assert len(errors) == 1
         assert errors[0].startswith("Row 3 has an unknown file type.")
 
-    def test_for_an_error_message_when_the_suite_rejects_a_single_target(
+    def test_that_an_ungrouped_fastq_row_gives_a_single_target_plan(
         self,
     ) -> None:
-        """Make sure that an ungrouped FASTQ row gives a message with a hint."""
+        """Make sure that an ungrouped FASTQ row is good."""
         # GIVEN an ungrouped FASTQ row
         singles = [(4, self.fastq_file)]
 
         # WHEN the single rows are planned
         plans, errors = CsvParser._plan_single_rows(singles)
 
-        # THEN there is no plan
-        assert plans == []
-
-        # AND one message tells the row number and how to fix the manifest
-        assert len(errors) == 1
-        assert errors[0].startswith("Row 4: ")
-        assert errors[0].endswith("Give the files the same 'dcqc_grouping' value.")
+        # THEN there are no errors, and the row has a SingleTarget plan
+        assert errors == []
+        assert [plan.target_cls for plan in plans] == [SingleTarget]
+        assert plan_indices(plans) == [[4]]
 
     def test_that_all_rows_are_checked_and_no_error_is_raised(self) -> None:
         """Make sure that bad rows do not stop the check of the other rows.
@@ -1393,13 +1346,14 @@ class TestPlanSingleRows:
         The good rows give plans and the bad rows give messages, both in
         manifest order.
         """
-        # GIVEN a good row, a row with an unknown file type, an ungrouped
-        # FASTQ row and one more good row
+        # GIVEN a good row, two rows with an unknown file type, and one more
+        # good row
         unknown_file = File(self.txt_file.url, {"file_type": "tiffx"})
+        other_unknown_file = File(self.fastq_file.url, {"file_type": "fastqx"})
         singles = [
             (1, self.txt_file),
             (2, unknown_file),
-            (3, self.fastq_file),
+            (3, other_unknown_file),
             (4, self.tiff_file),
         ]
 
@@ -1412,7 +1366,7 @@ class TestPlanSingleRows:
         # AND the bad rows have messages, in manifest order
         assert len(errors) == 2
         assert errors[0].startswith("Row 2 has an unknown file type.")
-        assert errors[1].startswith("Row 3: ")
+        assert errors[1].startswith("Row 3 has an unknown file type.")
 
 
 class TestPlanGroups:
@@ -1520,10 +1474,10 @@ class TestPlanGroups:
             "Group (a) in rows [1, 2] has different file types: ['FASTQ', 'TXT']."
         )
 
-    def test_for_an_error_message_when_the_suite_rejects_a_paired_target(
+    def test_that_a_grouped_txt_pair_gives_a_paired_target_plan(
         self,
     ) -> None:
-        """Make sure that a grouped TXT pair gives a message with a hint."""
+        """Make sure that a group of a file type other than FASTQ is good."""
         # GIVEN a group of two TXT files
         other_txt_file = File(self.txt_file.url, {"file_type": "TXT"})
         groups = {"a": [(2, self.txt_file), (3, other_txt_file)]}
@@ -1531,13 +1485,10 @@ class TestPlanGroups:
         # WHEN the groups are planned
         plans, errors = self.parser._plan_groups(groups)
 
-        # THEN there is no plan
-        assert plans == []
-
-        # AND one message tells the rows and how to fix the manifest
-        assert len(errors) == 1
-        assert errors[0].startswith("Group (a) in rows [2, 3]: ")
-        assert errors[0].endswith("Remove the 'dcqc_grouping' value from these files.")
+        # THEN there are no errors, and the group has a PairedTarget plan
+        assert errors == []
+        assert [plan.target_cls for plan in plans] == [PairedTarget]
+        assert plan_indices(plans) == [[2, 3]]
 
     def test_that_all_groups_are_checked_and_no_error_is_raised(self) -> None:
         """Make sure that bad groups do not stop the check of the other groups.
