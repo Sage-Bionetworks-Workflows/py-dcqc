@@ -498,7 +498,7 @@ The image receives these inputs and nothing more:
 | Input file | The staged file, in the working directory, with its original file name. In nf-dcqc it is a symbolic link. |
 | Working directory | A new task directory for each run. The path is different each time. |
 | User | The user ID and group ID of the person who runs the workflow. It is not root, and it has no entry in `/etc/passwd`. |
-| Resources | `cpus` and `memory` from the `Process`. The defaults are `cpus=1` and `memory=2`. py-dcqc means GB, but nf-dcqc does not apply a memory limit. See the note below. |
+| Resources | `cpus` and `memory` from the `Process`. The defaults are `cpus=1` and `memory=2`. The comment in `base_test.py` says GB, but nf-dcqc passes the number to Nextflow with no unit, so Nextflow reads it as 2 bytes. With the `docker` profile, this becomes `--memory 0m`, which Docker reads as no limit. Do not depend on a memory limit in the container. |
 
 Note these points:
 
