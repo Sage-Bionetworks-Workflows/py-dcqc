@@ -90,7 +90,7 @@ There are two types of targets:
 - `SingleTarget`: exactly one file.
 - `PairedTarget`: exactly two related files, such as paired-end sequencing data.
 
-Each test gives the type of target that it needs. A suite accepts both types of target, but it runs only the tests that accept the target. For example, the FASTQ suite runs its paired test, `PairedFastqParityTest`, only on a `PairedTarget`. For a FASTQ `SingleTarget`, it runs only `FileExtensionTest` and `Md5ChecksumTest`. The TIFF tests need a `SingleTarget`, so a TIFF `PairedTarget` also gets only `FileExtensionTest` and `Md5ChecksumTest`. In a manifest, a row becomes a `SingleTarget` by default. To make a `PairedTarget`, give two rows the same `dcqc_grouping` value. See [Input](#input).
+Each test gives the type of target that it needs. A suite accepts both types of target, but it runs only the tests that accept the target. For example, the FASTQ suite runs its paired test, `PairedFastqParityTest`, only on a `PairedTarget`. For a FASTQ `SingleTarget`, it runs only `FileExtensionTest` and `Md5ChecksumTest`. In a manifest, a row becomes a `SingleTarget` by default. To make a `PairedTarget`, give two rows the same `dcqc_grouping` value. A group is accepted only if its suite has a test that needs a `PairedTarget`, as the FASTQ suite does. See [Input](#input).
 
 #### Why targets exist
 
@@ -327,9 +327,9 @@ FASTQ files must be in pairs. Here is an example with two FASTQ files in one gro
   | sample1_R2.fastq  | FASTQ     | 5c113614144e63fe01c6b1ea38d2f1a1 | sample1       |
   | notes.txt         | TXT       | 14758f1afd44c09b7992073ccf00b43d |               |
 
-`create-targets` stops with a `ValueError` if a group does not have exactly two rows, if a file in a group has an unknown file type, or if the two files in a group have different file types. It checks all rows before it writes a target, so when one row or group is bad, no target file is written. One error message lists every bad row and group.
+`create-targets` stops with a `ValueError` if a group does not have exactly two rows, if a file in a group has an unknown file type, if the two files in a group have different file types, or if the suite of the group has no test that needs a `PairedTarget`. Only the FASTQ suite has such a test, so for example a group of two TIFF rows is an error. It checks all rows before it writes a target, so when one row or group is bad, no target file is written. One error message lists every bad row and group.
 
-Any file type can be a single row or a group. A FASTQ row with no grouping value is not an error, but its suite does not run `PairedFastqParityTest`. To check that two FASTQ files have the same number of reads, give them the same `dcqc_grouping` value.
+Any file type can be a single row. A FASTQ row with no grouping value is not an error, but its suite does not run `PairedFastqParityTest`. To check that two FASTQ files have the same number of reads, give them the same `dcqc_grouping` value.
 
 ## Output
 

@@ -151,12 +151,13 @@ class CsvParser:
 
         Raises:
             ValueError: If a file has an unknown file type, if a group does
-                not have exactly two files, or if the files of a group have
-                different file types. Any file type can be a single row or a
-                group. The suite makes only the tests that accept the target
-                class, so an ungrouped FASTQ row does not get
-                PairedFastqParityTest, and a grouped TIFF pair gets only the
-                tests that accept any target.
+                not have exactly two files, if the files of a group have
+                different file types, or if the suite of a group has no test
+                that needs a PairedTarget. Thus a grouped TIFF pair is an
+                error, but a grouped FASTQ pair is good. Any file type can be
+                a single row. The suite makes only the tests that accept the
+                target class, so an ungrouped FASTQ row does not get
+                PairedFastqParityTest.
 
         Yields:
             The targets. Each identifier is the lowest row number of the
@@ -263,9 +264,10 @@ class CsvParser:
         """Make a PairedTarget plan for each group, and check it.
 
         A group is bad if a file has an unknown file type, if it does not
-        have exactly two files, or if the files have different file types.
-        All groups are checked. This method does not raise an error for a bad
-        group.
+        have exactly two files, if the files have different file types, or
+        if the suite of its file type has no test that needs a PairedTarget
+        (see _check_suite_has_paired_test). All groups are checked. This
+        method does not raise an error for a bad group.
 
         Args:
             groups: A dictionary that maps each grouping value to the pairs
@@ -283,12 +285,49 @@ class CsvParser:
             indices = [index for index, _ in members]
             plan = _PlannedTarget(PairedTarget, members)
             location = f"Group ({group}) in rows {indices}"
-            error_message = cls._check_plan(plan, location)
+            error_message = cls._check_plan(
+                plan, location
+            ) or cls._check_suite_has_paired_test(plan, location)
             if error_message:
                 errors.append(error_message)
             else:
                 plans.append(plan)
         return plans, errors
+
+    @classmethod
+    def _check_suite_has_paired_test(
+        cls, plan: _PlannedTarget, location: str
+    ) -> Optional[str]:
+        """Check that the suite of a group has a test that needs a PairedTarget.
+
+        The suite makes only the tests that accept the target (see
+        SuiteABC.list_test_classes_for_target). Thus a group in a suite with
+        no paired test would quietly lose the tests that need a SingleTarget,
+        for example the TIFF tests. The rule comes from the target_cls
+        attribute of each test, so the suite does not store it again.
+
+        Call this method only after _check_plan, because it needs a known
+        file type, and the files of the group must have the same file type.
+
+        Args:
+            plan: The planned PairedTarget to check.
+            location: The rows of the plan, for the start of the message,
+                for example "Group (a) in rows [2, 5]".
+
+        Returns:
+            None if the suite has a test that needs a PairedTarget. If not,
+            the error message, which starts with the location.
+        """
+        file_type = plan.members[0][1].get_file_type()
+        suite_cls = SuiteABC.get_subclass_by_file_type(file_type)
+        for test_cls in suite_cls.list_test_classes():
+            if issubclass(test_cls.target_cls, PairedTarget):
+                return None
+        return (
+            f"{location} has file type {file_type.name}, but its suite "
+            f"({suite_cls.__name__}) has no test that needs a PairedTarget. "
+            "Remove the dcqc_grouping value from these rows."
+        )
 
     @classmethod
     def _check_plan(cls, plan: _PlannedTarget, location: str) -> Optional[str]:
@@ -297,9 +336,8 @@ class CsvParser:
         First, every file must have a known file type. Then the files are
         checked with the validate_files method of the target class, so the
         parser and the target use the same rule. The check stops at the
-        first problem. The suite does not check the target class, because
-        it makes only the tests that accept the target (see
-        SuiteABC.list_test_classes_for_target).
+        first problem. For a group, _plan_groups also checks the suite with
+        _check_suite_has_paired_test.
 
         Args:
             plan: The planned target to check.

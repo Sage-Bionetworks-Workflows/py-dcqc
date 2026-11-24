@@ -11,7 +11,7 @@ from dcqc.file import File
 from dcqc.mixins import SerializableMixin
 from dcqc.parsers import CsvParser, JsonParser, _PlannedTarget
 from dcqc.suites.suite_abc import SuiteABC
-from dcqc.suites.suites import FastqSuite, TiffSuite, TXTSuite
+from dcqc.suites.suites import FastqSuite, TXTSuite
 from dcqc.target import PairedTarget, SingleTarget
 from dcqc.tests.base_test import BaseTest, TestStatus
 
@@ -413,24 +413,24 @@ class TestCreateTargets:
                 id="ungrouped-fastq",
             ),
             pytest.param(
-                [("TXT", ""), ("TIFF", "a"), ("TIFF", "a")],
-                [SingleTarget, PairedTarget],
-                id="grouped-tiff",
+                [("TXT", ""), ("TIFF", "")],
+                [SingleTarget, SingleTarget],
+                id="ungrouped-tiff",
             ),
         ],
     )
-    def test_that_any_file_type_can_be_a_single_row_or_a_group(
+    def test_that_any_file_type_can_be_a_single_row(
         self,
         write_manifest: Callable,
         rows: list[tuple[str, str | None]],
         expected_classes: list[type],
     ) -> None:
-        """Make sure that the target class does not depend on the file type.
+        """Make sure that a single row is not checked against its suite.
 
-        The suite makes only the tests that accept the target, so
-        create_targets does not check the target class against the suite.
-        An ungrouped FASTQ row gives a SingleTarget, and a grouped TIFF pair
-        gives a PairedTarget.
+        The suite makes only the tests that accept the target, so an
+        ungrouped FASTQ row gives a SingleTarget, also though FastqSuite has
+        a test that needs a PairedTarget. Only a group is checked against
+        its suite.
 
         Args:
             write_manifest: Fixture that writes the manifest.
@@ -438,7 +438,7 @@ class TestCreateTargets:
             expected_classes: The class of each target, in order.
         """
         # GIVEN a manifest with a single TXT row and then an ungrouped FASTQ
-        # row or a grouped TIFF pair
+        # or TIFF row
         manifest = write_manifest(rows)
 
         # WHEN the targets are created
@@ -725,12 +725,14 @@ class TestPlanTargets:
         assert lines[1].startswith("Row 4 has an unknown file type.")
         assert lines[2].startswith("Group (one) in rows [1] has a file count of 1.")
 
-    def test_that_the_target_class_is_not_checked_against_the_suite(
+    def test_that_only_a_group_is_checked_against_the_suite(
         self, write_manifest: Callable
     ) -> None:
-        """Make sure that ungrouped FASTQ rows and grouped TIFF rows are good.
+        """Make sure that a grouped TIFF pair is bad, but ungrouped FASTQ rows are good.
 
-        Only the group of one file is bad, so the error tells only about it.
+        TiffSuite has no test that needs a PairedTarget, so the TIFF group is
+        bad. A single row is not checked against its suite, so the ungrouped
+        FASTQ rows are good. The group of one file is also bad.
 
         Args:
             write_manifest: Fixture that writes the manifest.
@@ -752,10 +754,14 @@ class TestPlanTargets:
         with pytest.raises(ValueError) as info:
             parser._plan_targets()
 
-        # THEN the error tells only about the group of one file
+        # THEN the error tells about the TIFF group and the group of one file
         lines = str(info.value).splitlines()
-        assert len(lines) == 1
-        assert lines[0].startswith("Group (b) in rows [5] has a file count of 1.")
+        assert len(lines) == 2
+        assert lines[0].startswith(
+            "Group (a) in rows [2, 3] has file type TIFF, but its suite "
+            "(TiffSuite) has no test that needs a PairedTarget."
+        )
+        assert lines[1].startswith("Group (b) in rows [5] has a file count of 1.")
 
 
 class TestCreateSuites:
@@ -799,13 +805,13 @@ class TestCreateSuites:
         statuses = {test.type: test.get_status() for test in fastq_suite.tests}
         assert TestStatus.ERROR not in statuses.values(), statuses
 
-    def test_that_a_grouped_tiff_pair_gives_a_suite_with_the_tests_for_any_target(
+    def test_for_an_error_before_any_suite_when_a_tiff_pair_is_grouped(
         self, write_manifest: Callable
     ) -> None:
-        """Make sure that a grouped TIFF pair gives a TiffSuite that runs.
+        """Make sure that a grouped TIFF pair raises an error before any suite.
 
-        The TIFF tests need a SingleTarget, so the suite has only the tests
-        that accept any target.
+        TiffSuite has no test that needs a PairedTarget, so the TIFF tests
+        would quietly be lost.
 
         Args:
             write_manifest: Fixture that writes the manifest.
@@ -817,23 +823,16 @@ class TestCreateSuites:
             ("TIFF", "a"),
         ]
         manifest = write_manifest(rows)
+        suites = CsvParser(manifest).create_suites()
 
-        # WHEN the suites are created
-        suites = list(CsvParser(manifest).create_suites())
-
-        # THEN the pair gives a TiffSuite with a PairedTarget
-        assert [type(suite) for suite in suites] == [TXTSuite, TiffSuite]
-        tiff_suite = suites[1]
-        assert isinstance(tiff_suite.target, PairedTarget)
-
-        # AND the suite has only the tests that accept any target
-        test_names = {test.type for test in tiff_suite.tests}
-        assert test_names == {"FileExtensionTest", "Md5ChecksumTest"}
-
-        # AND each test runs without an error
-        tiff_suite.compute_tests()
-        statuses = {test.type: test.get_status() for test in tiff_suite.tests}
-        assert TestStatus.ERROR not in statuses.values(), statuses
+        # WHEN the first suite is requested
+        # THEN the error comes at once and tells the group and the suite
+        message = (
+            "Group (a) in rows [2, 3] has file type TIFF, but its suite "
+            "(TiffSuite) has no test that needs a PairedTarget."
+        )
+        with pytest.raises(ValueError, match=re.escape(message)):
+            next(suites)
 
     def test_for_an_error_before_any_suite_when_a_single_row_type_is_unknown(
         self, tmp_path: Path, get_data: Callable
@@ -1474,10 +1473,14 @@ class TestPlanGroups:
             "Group (a) in rows [1, 2] has different file types: ['FASTQ', 'TXT']."
         )
 
-    def test_that_a_grouped_txt_pair_gives_a_paired_target_plan(
+    def test_for_an_error_message_when_the_suite_has_no_paired_test(
         self,
     ) -> None:
-        """Make sure that a group of a file type other than FASTQ is good."""
+        """Make sure that a group is bad if its suite has no paired test.
+
+        TXTSuite has no test that needs a PairedTarget, so a grouped TXT
+        pair would quietly lose its SingleTarget tests.
+        """
         # GIVEN a group of two TXT files
         other_txt_file = File(self.txt_file.url, {"file_type": "TXT"})
         groups = {"a": [(2, self.txt_file), (3, other_txt_file)]}
@@ -1485,10 +1488,15 @@ class TestPlanGroups:
         # WHEN the groups are planned
         plans, errors = self.parser._plan_groups(groups)
 
-        # THEN there are no errors, and the group has a PairedTarget plan
-        assert errors == []
-        assert [plan.target_cls for plan in plans] == [PairedTarget]
-        assert plan_indices(plans) == [[2, 3]]
+        # THEN there is no plan
+        assert plans == []
+
+        # AND one message tells the group value, the row numbers and the suite
+        assert errors == [
+            "Group (a) in rows [2, 3] has file type TXT, but its suite "
+            "(TXTSuite) has no test that needs a PairedTarget. "
+            "Remove the dcqc_grouping value from these rows."
+        ]
 
     def test_that_all_groups_are_checked_and_no_error_is_raised(self) -> None:
         """Make sure that bad groups do not stop the check of the other groups.
