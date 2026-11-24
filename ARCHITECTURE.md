@@ -253,6 +253,8 @@ MYTYPE_VALIDATOR_CONTAINER = (
 Then write the test class:
 
 ```python
+import shlex
+
 from dcqc.target import SingleTarget
 from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 from dcqc.tests.constants import MYTYPE_VALIDATOR_CONTAINER
@@ -272,7 +274,7 @@ class MyTypeValidatorTest(ExternalBaseTest):
 
         command_args = [
             "validate.py",
-            f"'{path.name}'",
+            shlex.quote(path.name),
         ]
         process = Process(
             container=MYTYPE_VALIDATOR_CONTAINER,
@@ -453,7 +455,7 @@ The image receives these inputs and nothing more:
 
 Note these points:
 
-- **The file name is the only argument that identifies the file.** The command uses `path.name`, not a full path. `generate_process()` puts single quotes around it (`f"'{path.name}'"`), and bash removes them, so the tool receives the plain name. Names with spaces work. A name that contains a single quote does not.
+- **The file name is the only argument that identifies the file.** The command uses `path.name`, not a full path. Always pass the name through `shlex.quote()`, as the example in [Creating the Test Class](#creating-the-test-class) does. `Process` joins the arguments with spaces and does not escape them, and nf-dcqc runs the result in bash. Thus a name that is not quoted correctly can run as bash code. For example, the name `x'; exit 0; '.tif` can make the test pass for a file that the tool did not check. `shlex.quote()` escapes all characters, and bash removes the quotes, so the tool receives the plain name. Do not copy the existing external tests. They use `f"'{path.name}'"`, which is not safe for a name that contains a single quote.
 - **Follow symbolic links.** nf-dcqc links the file into the task directory. A tool that refuses a symbolic link, or that checks the link instead of its target, gives a wrong result.
 - **Read the file only.** Do not change, move or delete it. `examples/external.sh` mounts the directory read-only (`:ro`), so a write fails there.
 - **Do not expect other metadata.** The tool does not receive the manifest columns.
