@@ -238,7 +238,7 @@ Put the class in a new module at `src/dcqc/tests/<snake_case>_test.py`, with one
 - **Set `failure_reason_location` to `"std_out"` or `"std_err"`.** This is the stream that holds the reason for a failure. Any other value raises a `KeyError`, but only when a test fails, so a test on good files does not find the mistake.
 - **Add the image to `src/dcqc/tests/constants.py`, and import it from there.** Each image has one module-level constant in that file, and no test module holds an image name. If the image is new, add a constant for it, with a version tag. If an existing test uses the same image, use its constant.
 
-The class sets only two exit codes, `pass_code` and `fail_code`. There is no error code. DCQC gives the status `error` to every other exit code, for example 2 from the entry file, 127 when the command is not found, or 137 when the container is killed. See [How DCQC Runs an External Test](#how-dcqc-runs-an-external-test) for the stream that DCQC reads for each status.
+The class sets only two exit codes, `pass_code` and `fail_code`. There is no error code. DCQC gives the status `error` to every other exit code, for example 2 from the entry file, 127 when the command is not found, or 137 when the kernel stops the tool for lack of memory. See [How DCQC Runs an External Test](#how-dcqc-runs-an-external-test) for the stream that DCQC reads for each status.
 
 External tests cannot record metrics yet. An internal test such as `Md5ChecksumTest` can set `self.metrics`, but DCQC does not read metrics from the container. Thus the metrics of an external test are always `{}`, and the test does not appear in the `dcqc_metrics` column of the output CSV. Do not override `compute_status()` to read metrics from the container output.
 
@@ -361,7 +361,6 @@ FAIL = 1
 ERROR = 2
 
 
-# Replace the body of this function with your check.
 def check(path: str) -> list[str]:
     """Example check: test that a file starts with the 8-byte HDF5 signature.
 
@@ -379,8 +378,6 @@ def check(path: str) -> list[str]:
     """
     problems = []
 
-    # Replace this check with your own. Add one string to problems for each
-    # problem that you find.
     expected = b"\x89HDF\r\n\x1a\n"
     with open(path, "rb") as file:
         header = file.read(len(expected))
@@ -392,16 +389,6 @@ def check(path: str) -> list[str]:
 
 def main() -> int:
     """Run the check on one file and select the exit code.
-
-    The function reads the file path from the command line and runs
-    check() on it. It writes nothing to standard output.
-
-    The function writes the problems to standard error, one line for each
-    problem, and each line starts with the file path. DCQC copies this
-    text into status_reason when the test fails. If check() raises an
-    exception, the function writes one line with the reason for the error
-    to standard error instead. It writes nothing to standard error for a
-    pass.
 
     Returns:
         The exit code for the process. PASS (0) means that the file is
