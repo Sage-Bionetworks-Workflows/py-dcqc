@@ -48,7 +48,7 @@ Serve built docs: `python3 -m http.server --directory 'docs/_build/html'`.
 
 Debugging a single test: `tox -- -k <TEST NAME> --pdb`. Note the CAUTION comment in setup.cfg `[tool:pytest] addopts` — the `--cov` flags there can prevent breakpoints from being hit; comment them out locally if `--pdb` misbehaves.
 
-Release (CONTRIBUTING.md "Releases"): bump `version` in setup.cfg `[metadata]` and merge it, tag `vX.Y.Z`, push the tag. The `v*` tag starts the `pypi-publish` job in CI — confirm PyPI serves the new version. The same tag starts `docker-publish`, which pushes image tags `X.Y.Z`, `X.Y` and `X` to ghcr (it also pushes a branch tag and a `sha-` tag on every push, CI.yml:151-152). The last step is a PR to nf-dcqc (`main`, its default branch) that sets the new tag in the `withLabel:dcqc` block of its `conf/base.config`; nf-dcqc pins one version and does not pick up a release on its own. `tox -e clean`, `tox -e build`, `tox -e publish -- --repository pypi` is the manual fallback for when CI does not run or fails, not the routine path.
+Release (CONTRIBUTING.md "Releases"): bump `version` in setup.cfg `[metadata]` and merge it, tag `vX.Y.Z`, push the tag. The `v*` tag starts the `pypi-publish` job in CI — confirm PyPI serves the new version. The same tag starts `docker-publish`, which pushes image tags `X.Y.Z`, `X.Y` and `X` to ghcr (it also pushes a branch tag and a `sha-` tag on every push, CI.yml:166-167). The last step is a PR to nf-dcqc (`main`, its default branch) that sets the new tag in the `withLabel:dcqc` block of its `conf/base.config`; nf-dcqc pins one version and does not pick up a release on its own. `tox -e clean`, `tox -e build`, `tox -e publish -- --repository pypi` is the manual fallback for when CI does not run or fails, not the routine path.
 
 ## Data Models
 
@@ -63,7 +63,7 @@ Suite  ── target ──> Target ── files ──> [File]
 
 **Output** is the input CSV plus six appended columns, written by `src/dcqc/updaters.py:93-99`: `dcqc_status`, `dcqc_required_tests`, `dcqc_skipped_tests`, `dcqc_failed_tests`, `dcqc_errored_tests`, `dcqc_metrics`. The four list columns are comma-joined inside a single cell. `dcqc_metrics` is a JSON object keyed by test name (sorted keys), which holds only the tests with non-empty `BaseTest.metrics`.
 
-**Statuses** are two distinct enums — do not mix them. `TestStatus` (`base_test.py:18`) is `pending`/`passed`/`failed`/`skipped`/`error`; note the member is `NONE` but the serialized value is `"pending"`. `SuiteStatus` (`suite_abc.py:21`) is `NONE`/`GREEN`/`RED`/`AMBER`/`GREY`.
+**Statuses** are two distinct enums — do not mix them. `TestStatus` (`base_test.py:20`) is `pending`/`passed`/`failed`/`skipped`/`error`; note the member is `NONE` but the serialized value is `"pending"`. `SuiteStatus` (`suite_abc.py:20`) is `NONE`/`GREEN`/`RED`/`AMBER`/`GREY`.
 
 **The CLI pipeline order is mandatory.** Each step validates the incoming JSON against an expected class, so a wrong-order input fails with `ValueError: JSON file (...) is not expected type (...)`:
 
@@ -111,7 +111,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do not touch the `[pyscaffold]` block** in setup.cfg — it is consumed by PyScaffold's updater, and the block itself says "This will be used when updating. Do not change!".
 - **Do not remove the `sphinx-apidoc` call from `docs/conf.py`.** Read the Docs does not run apidoc itself, so the module reference disappears without it (conf.py:23-29).
 - **Do not rename the `SYNAPSE_AUTH_TOKEN` CI secret.** That rename was made and reverted in `1cd983a`.
-- **Version lives in two places, but only one of them wins.** setup.cfg `[metadata] version` (line 7) is the effective source. setup.py `use_scm_version` and `[tool.setuptools_scm]` also derive one from git, but setuptools_scm finds the version already set and leaves it alone, so a build any number of commits past the last tag still reports the setup.cfg value (currently `1.8.1`, while the newest tag is `v1.8.0`). What setuptools_scm does still do is supply the sdist file list — there is no `MANIFEST.in` — and the `prepare` job deep-clones for it (`.github/workflows/CI.yml:34`). Bump setup.cfg when releasing; the tag alone is not enough. Do not remove the static value to make the tag the one source: it is a deliberate Won't fix, because every non-tag build then gets a `X.Y.Z.postN.devM+g...` version that `docker-publish` ships on every push to main, and a tree with no `.git` fails to build at all.
+- **Version lives in two places, but only one of them wins.** setup.cfg `[metadata] version` (line 7) is the effective source. setup.py `use_scm_version` and `[tool.setuptools_scm]` also derive one from git, but setuptools_scm finds the version already set and leaves it alone, so a build any number of commits past the last tag still reports the setup.cfg value (currently `1.8.1`, while the newest tag is `v1.8.0`). What setuptools_scm does still do is supply the sdist file list — there is no `MANIFEST.in` — and the `prepare` job deep-clones for it (`.github/workflows/CI.yml:42`). Bump setup.cfg when releasing; the tag alone is not enough. Do not remove the static value to make the tag the one source: it is a deliberate Won't fix, because every non-tag build then gets a `X.Y.Z.postN.devM+g...` version that `docker-publish` ships on every push to main, and a tree with no `.git` fails to build at all.
 
 ## Anti-Patterns — Do NOT
 
@@ -120,7 +120,7 @@ create-targets -> create-tests -> [create-process -> nf-dcqc runs container] -> 
 - **Do NOT change the test name in `test_that_skipped_tests_are_skipped_when_building_suite_from_tests`** — it must stay `LibTiffInfoTest`; swapping it was reverted in `9971463`.
 - **Do NOT add auth-token presence asserts to the test fixtures** — asserts in the `tests/test_acceptance.py` fixture were added in `39e4795` and removed in `eb67219`.
 - **Do NOT re-enable Windows in the CI matrix casually** — it has been toggled on and off repeatedly and is currently parked behind ORCA-348.
-- **Do NOT reword a `status_reason` string without grepping the tests** — several are asserted verbatim, for example `tests/test_internal_tests.py:274` pins "FASTQ files do not have the same number of lines".
+- **Do NOT reword a `status_reason` string without grepping the tests** — several are asserted verbatim, for example `tests/test_internal_tests.py:297` pins "FASTQ files do not have the same number of lines".
 - **Do NOT rename a `BaseTest`, `SuiteABC`, or `BaseTarget` subclass casually** — the serialized `"type"` field is the bare class name with no aliasing or migration table, so every previously written JSON and every `nf-dcqc` run that references it breaks.
 
 ## Known Broken / Stale

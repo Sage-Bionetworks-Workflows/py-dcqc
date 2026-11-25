@@ -30,13 +30,13 @@ Implement `compute_status()` returning `TestStatus.PASS` or `TestStatus.FAIL`. O
 
 A test can also record extra values in `self.metrics`, a dict that `BaseTest.__init__` sets to `{}`. Set it inside `compute_status()`. The values must be JSON-serializable. They are written to `suites.json` and, keyed by test name, to the `dcqc_metrics` column of the output CSV. `Md5ChecksumTest` is the example: only on the failure path, it records `md5_checksum` as a dict that maps the URL of each file that does not match to its computed checksum.
 
-Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:274`). Grep before rewording one.
+Several `status_reason` strings are asserted verbatim by unit tests (for example `tests/test_internal_tests.py:297`). Grep before rewording one.
 
 ## External tests
 
 `py-dcqc` never invokes Docker or `subprocess` in production code. It only emits a `Process` descriptor; *nf-dcqc* executes it. You therefore cannot fully test an external test from this repo alone — see CONTRIBUTING.md "Testing Your Changes".
 
-`ExternalBaseTest` is `class ExternalBaseTest(ExternalTestMixin[Target])` (`base_test.py:289`), and the mixin itself subclasses `BaseTest[Target]` (`base_test.py:216`), so the MRO is `ExternalBaseTest, ExternalTestMixin, BaseTest, ...`. **The mixin must come before `BaseTest`**, because its `compute_status` overrides the base one; `tests/test_external_tests.py:14-21` asserts this for every external test. Do not add `BaseTest` back as a second base of a test class — listing it before the mixin is now an MRO error.
+`ExternalBaseTest` is `class ExternalBaseTest(ExternalTestMixin[Target])` (`base_test.py:340`), and the mixin itself subclasses `BaseTest[Target]` (`base_test.py:267`), so the MRO is `ExternalBaseTest, ExternalTestMixin, BaseTest, ...`. **The mixin must come before `BaseTest`**, because its `compute_status` overrides the base one; `tests/test_external_tests.py:14-21` asserts this for every external test. Do not add `BaseTest` back as a second base of a test class — listing it before the mixin is now an MRO error.
 
 `generate_process()` follows the same three steps in every existing test:
 
@@ -65,11 +65,11 @@ Prefer contributing a tool whose failure and error exit codes differ. Many curre
 
 ### Status computation reads the current working directory
 
-`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:235-275`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
+`ExternalTestMixin.compute_status` reads `./std_out.txt`, `./std_err.txt` and `./exit_code.txt` from `Path(".")` and **ignores the target entirely** (`base_test.py:286-326`). Those three filenames are a contract with nf-dcqc — renaming them breaks the pipeline and `tests/data/tiffinfo/`.
 
 If the files are absent, `FileNotFoundError` propagates and crashes `dcqc compute-test`; it does not degrade to `TestStatus.ERROR`.
 
-Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:277-282`, and `dcqc create-process` regenerates it on demand.
+Serialized external tests deliberately **omit** their `Process` — the override is commented out at `base_test.py:328-333`, and `dcqc create-process` regenerates it on demand.
 
 The base class does not read `metrics` from the container. `_interpret_process_outputs()` reads only the exit code, `std_out` and `std_err`, so `metrics` stays `{}` unless the class overrides `compute_status()` and fills it, for example from one JSON object on stdout. That needs no change to nf-dcqc, which already keeps `std_out.txt` (ARCHITECTURE.md "Creating the Test Class").
 
