@@ -4,14 +4,17 @@ from abc import ABC
 from collections.abc import Collection, Sequence
 from copy import deepcopy
 from enum import Enum
-from typing import ClassVar, Generic, Optional, Type, TypeVar, Union
+from typing import (
+    ClassVar,
+    Optional,
+    Type,
+    Union,
+)
 
 from dcqc.file import FileType
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
-from dcqc.target import BaseTarget, SingleTarget
+from dcqc.target import BaseTarget
 from dcqc.tests import BaseTest, TestStatus
-
-Target = TypeVar("Target", bound=BaseTarget)
 
 
 class SuiteStatus(Enum):
@@ -26,7 +29,7 @@ class SuiteStatus(Enum):
 
 # TODO: Consider the Composite design pattern once
 #       we have higher-level QC suites
-class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
+class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC):
     """Abstract base class for QC test suites.
 
     Args:
@@ -36,6 +39,13 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
             which requires tier-1 and tier-2 tests.
         skipped_tests: List of tests that should not be
             evaluated. Defaults to None.
+
+    A suite accepts a target of any class. Each test gives the target class
+    that it needs in its target_cls attribute, and the suite makes only the
+    tests whose target_cls the target is an instance of (see
+    list_test_classes_for_target). For example, FastqSuite makes
+    PairedFastqParityTest only for a PairedTarget. For a SingleTarget, it
+    makes only FileExtensionTest and Md5ChecksumTest.
     """
 
     # Class attributes
@@ -45,25 +55,25 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
     # Instance attributes
     type: str
-    target: Target
+    target: BaseTarget
     required_tests: set[str]
     skipped_tests: set[str]
 
     def __init__(
         self,
-        target: Target,
+        target: BaseTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ):
         self.type = self.__class__.__name__
         self.target = target
 
-        test_classes = self.list_test_classes()
+        test_classes = self.list_test_classes_for_target(target)
         test_names = set(test.__name__ for test in test_classes)
 
         # To differentiate between None and []
         if required_tests is None:
-            required_tests = self._default_required_tests()
+            required_tests = self._default_required_tests(target)
         self.required_tests = set(required_tests).intersection(test_names)
 
         skipped_tests = skipped_tests or list()
@@ -75,11 +85,11 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     @classmethod
     def from_target(
         cls,
-        target: SingleTarget,
+        target: BaseTarget,
         required_tests: Optional[Collection[str]] = None,
         skipped_tests: Optional[Collection[str]] = None,
     ) -> SuiteABC:
-        """Generate a suite from a single-file target.
+        """Generate a suite from a target.
 
         The suite is selected based on the target file type.
 
@@ -136,8 +146,6 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         if not all(representative_target == target for target in targets):
             message = f"Not all tests refer to the same target ({targets})."
             raise ValueError(message)
-        if not isinstance(representative_target, SingleTarget):  # pragma: no cover
-            raise ValueError("Can only recreate suite from single-file target.")
         suite = cls.from_target(representative_target, required_tests, skipped_tests)
         suite.tests = suite_tests
 
@@ -161,6 +169,31 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return tuple(sorted(all_tests, key=lambda test_cls: test_cls.__name__))
 
     @classmethod
+    def list_test_classes_for_target(
+        cls, target: BaseTarget
+    ) -> tuple[Type[BaseTest], ...]:
+        """List the test classes that apply to a target, sorted by class name.
+
+        A test applies to a target if the target is an instance of the
+        target_cls attribute of the test. A test that does not set
+        target_cls accepts any target, because BaseTest sets BaseTarget.
+        Thus a SingleTarget in FastqSuite does not get PairedFastqParityTest,
+        and a PairedTarget in TiffSuite does not get the SingleTarget tests.
+
+        Args:
+            target: The target of the suite.
+
+        Returns:
+            The test classes of list_test_classes that accept the target.
+        """
+        test_classes = cls.list_test_classes()
+        return tuple(
+            test_cls
+            for test_cls in test_classes
+            if isinstance(target, test_cls.target_cls)
+        )
+
+    @classmethod
     def list_test_classes_by_file_type(cls) -> dict[str, list[Type[BaseTest]]]:
         """List test classes by file type."""
         result = dict()
@@ -172,15 +205,15 @@ class SuiteABC(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         return result
 
     @classmethod
-    def _default_required_tests(cls) -> list[str]:
-        test_classes = cls.list_test_classes()
+    def _default_required_tests(cls, target: BaseTarget) -> list[str]:
+        test_classes = cls.list_test_classes_for_target(target)
         required_tests = filter(lambda test: test.tier.value <= 2, test_classes)
         required_test_names = [test.__name__ for test in required_tests]
         return required_test_names
 
     def init_test_classes(self) -> list[BaseTest]:
         """Initialize applicable test classes with target."""
-        test_classes = self.list_test_classes()
+        test_classes = self.list_test_classes_for_target(self.target)
         tests = []
         for test_cls in test_classes:
             test_name = test_cls.__name__

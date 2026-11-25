@@ -139,7 +139,7 @@ def test_files(get_data):
 
 @pytest.fixture
 def test_targets(test_files):
-    test_targets = {name: SingleTarget(file) for name, file in test_files.items()}
+    test_targets = {name: SingleTarget([file]) for name, file in test_files.items()}
     yield test_targets
 
 
@@ -176,25 +176,7 @@ def mocked_suites_single_targets():
     for url, status in mock_dict_single.items():
         suite = MagicMock()
         suite.cls = SuiteABC
-        suite.target.files[0].url = url
+        suite.target.files = [MagicMock(url=url)]
         suite.get_status.return_value = status
         mocked_suites.append(suite)
     return mocked_suites
-
-
-# TODO: Add this once we have multi-targets
-# @pytest.fixture
-# def mocked_suites_multi_targets():
-#     mock_dict_multi = {
-#         "syn://syn51585496": SuiteStatus.GREEN,
-#         "syn://syn51585494": SuiteStatus.RED,
-#         "syn://syn51585495": SuiteStatus.AMBER,
-#     }
-#     mocked_suites = []
-#     for url, status in mock_dict_multi.items():
-#         suite = MagicMock()
-#         suite.cls = SuiteABC
-#         suite.target.files[0].url = url
-#         suite.get_status.return_value = status
-#         mocked_suites.append(suite)
-#     return mocked_suites

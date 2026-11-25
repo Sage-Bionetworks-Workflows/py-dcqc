@@ -1,18 +1,25 @@
+from typing import Generic, TypeVar
 from unittest.mock import patch
 
 import pytest
 
-from dcqc.file import FileType
+from dcqc.file import File, FileType
 from dcqc.suites.suite_abc import SuiteABC, SuiteStatus
-from dcqc.suites.suites import FileSuite, OmeTiffSuite, TiffSuite
+from dcqc.suites.suites import FastqSuite, FileSuite, OmeTiffSuite, TiffSuite
+from dcqc.target import BaseTarget, PairedTarget, SingleTarget
 from dcqc.tests import (
     BaseTest,
     FileExtensionTest,
     LibTiffInfoTest,
+    Md5ChecksumTest,
+    PairedFastqParityTest,
     TestStatus,
     TiffDateTimeTest,
     TiffTag306DateTimeTest,
 )
+from dcqc.tests.base_test import ExternalBaseTest, InternalBaseTest
+
+BoxValue = TypeVar("BoxValue")
 
 FileType("None", ())
 FileType("Unpaired", ())
@@ -50,6 +57,96 @@ def test_that_the_ome_tiff_suite_has_a_superset_of_the_tiff_suite_tests():
     tiff_tests = TiffSuite.list_test_classes()
     ome_tiff_tests = OmeTiffSuite.list_test_classes()
     assert set(ome_tiff_tests) > set(tiff_tests)
+
+
+def test_for_an_error_when_a_suite_is_given_a_type_argument() -> None:
+    # GIVEN a suite class that is not generic
+    # WHEN I define a suite with a type argument
+    # THEN a TypeError is raised
+    with pytest.raises(TypeError):
+
+        class SubscriptedSuite(FileSuite[PairedTarget]):  # type: ignore
+            file_type = FileType.get_file_type("None")
+
+
+def test_that_the_default_test_target_class_is_base_target() -> None:
+    # GIVEN the base test class and a test without a type argument
+    # WHEN I get their target classes
+    # THEN both are BaseTarget
+    assert BaseTest.target_cls is BaseTarget
+    assert DummyTest.target_cls is BaseTarget
+
+
+def test_that_the_test_target_class_is_set_from_the_type_argument() -> None:
+    # GIVEN tests with different type arguments
+    # WHEN I get their target classes
+    # THEN each one is the target class of its type argument
+    assert LibTiffInfoTest.target_cls is SingleTarget
+    assert PairedFastqParityTest.target_cls is PairedTarget
+    assert FileExtensionTest.target_cls is BaseTarget
+
+
+def test_that_a_test_subclass_inherits_the_target_class_of_its_parent() -> None:
+    # GIVEN a subclass of a PairedTarget test with no type argument
+    class ChildTest(PairedFastqParityTest):
+        pass
+
+    # WHEN I get its target class
+    # THEN it is the PairedTarget class of its parent
+    assert ChildTest.target_cls is PairedTarget
+
+
+def test_for_an_error_when_the_test_type_argument_is_not_a_target_class() -> None:
+    # GIVEN a test whose type argument is a union of two target classes
+    # WHEN I define the test
+    # THEN an error tells that it must give a BaseTarget subclass
+    with pytest.raises(TypeError, match="must give a BaseTarget subclass"):
+
+        class UnionTest(BaseTest[SingleTarget | PairedTarget]):  # type: ignore
+            def compute_status(self) -> TestStatus:
+                return TestStatus.NONE
+
+
+def test_that_a_test_that_fails_its_check_is_not_registered() -> None:
+    # GIVEN a test whose type argument is not a target class
+    # WHEN I define the test
+    with pytest.raises(TypeError, match="must give a BaseTarget subclass"):
+
+        class UnregisteredTest(BaseTest[int]):  # type: ignore
+            def compute_status(self) -> TestStatus:
+                return TestStatus.NONE
+
+    # THEN the test is not registered
+    test_names = [test.__name__ for test in BaseTest.list_subclasses()]
+    assert "UnregisteredTest" not in test_names
+
+
+class GenericBox(Generic[BoxValue]):
+    pass
+
+
+def test_that_an_unrelated_generic_base_is_ignored() -> None:
+    # GIVEN a test with a generic base that is not a test and a PairedTarget base
+    class BoxedTest(GenericBox[int], InternalBaseTest[PairedTarget]):
+        def compute_status(self) -> TestStatus:
+            return TestStatus.NONE
+
+    # WHEN I get its target class
+    # THEN it is PairedTarget
+    assert BoxedTest.target_cls is PairedTarget
+
+
+def test_for_an_error_when_two_bases_give_a_target_class() -> None:
+    # GIVEN a test with two bases that give different target classes
+    # WHEN I define the test
+    # THEN an error tells that it must give one target type
+    with pytest.raises(TypeError, match="must give one target type"):
+
+        class TwiceTest(  # type: ignore
+            InternalBaseTest[SingleTarget], ExternalBaseTest[PairedTarget]
+        ):
+            def compute_status(self) -> TestStatus:
+                return TestStatus.NONE
 
 
 def test_that_a_test_suite_can_be_retrieved_by_name():
@@ -106,6 +203,120 @@ def test_for_an_error_when_building_suite_from_tests_with_diff_targets(test_targ
     tests = [test_1, test_2]
     with pytest.raises(ValueError):
         SuiteABC.from_tests(tests)
+
+
+def test_that_a_fastq_suite_is_built_from_a_paired_target(
+    test_files: dict[str, File],
+) -> None:
+    # GIVEN a paired target of two FASTQ files
+    files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
+    # WHEN I build a suite from the target
+    suite = SuiteABC.from_target(PairedTarget(files))
+    # THEN the suite is a FASTQ suite with exactly the expected tests
+    assert isinstance(suite, FastqSuite)
+    assert {test.type for test in suite.tests} == {
+        "FileExtensionTest",
+        "Md5ChecksumTest",
+        "PairedFastqParityTest",
+    }
+
+
+def test_that_a_fastq_suite_is_built_from_tests_with_a_paired_target(
+    test_files: dict[str, File],
+) -> None:
+    # GIVEN the tests of a FASTQ suite with a paired target
+    files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
+    suite = SuiteABC.from_target(PairedTarget(files))
+    # WHEN I build a suite from the tests
+    new_suite = SuiteABC.from_tests(suite.tests)
+    # THEN the new suite is a FASTQ suite with the same target
+    assert isinstance(new_suite, FastqSuite)
+    assert new_suite.target == suite.target
+
+
+def test_that_the_tests_for_a_single_fastq_target_leave_out_the_paired_test(
+    test_targets: dict[str, SingleTarget],
+) -> None:
+    # GIVEN a single target of a FASTQ file
+    target = test_targets["good_fastq"]
+    # WHEN I list the test classes of the FASTQ suite for the target
+    test_classes = FastqSuite.list_test_classes_for_target(target)
+    # THEN only the tests that accept any target are listed
+    assert test_classes == (FileExtensionTest, Md5ChecksumTest)
+
+
+def test_that_the_tests_for_a_paired_fastq_target_include_the_paired_test(
+    test_files: dict[str, File],
+) -> None:
+    # GIVEN a paired target of two FASTQ files
+    files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
+    target = PairedTarget(files)
+    # WHEN I list the test classes of the FASTQ suite for the target
+    test_classes = FastqSuite.list_test_classes_for_target(target)
+    # THEN all the tests of the suite are listed
+    assert test_classes == FastqSuite.list_test_classes()
+    assert PairedFastqParityTest in test_classes
+
+
+def test_that_a_fastq_suite_from_a_single_target_has_no_paired_test(
+    test_targets: dict[str, SingleTarget],
+) -> None:
+    # GIVEN a single target of a FASTQ file
+    target = test_targets["good_fastq"]
+    # WHEN I build a suite from the target
+    suite = SuiteABC.from_target(target)
+    # THEN the suite is a FASTQ suite with only the tests for any target
+    assert isinstance(suite, FastqSuite)
+    test_names = {test.type for test in suite.tests}
+    assert test_names == {"FileExtensionTest", "Md5ChecksumTest"}
+    # AND the paired test is not required
+    assert "PairedFastqParityTest" not in suite.required_tests
+
+
+def test_that_a_required_test_that_does_not_accept_the_target_is_ignored(
+    test_targets: dict[str, SingleTarget],
+) -> None:
+    # GIVEN a single target of a FASTQ file
+    target = test_targets["good_fastq"]
+    # WHEN I build a suite that requires and skips the paired test
+    required_tests = ["PairedFastqParityTest", "Md5ChecksumTest"]
+    skipped_tests = ["PairedFastqParityTest"]
+    suite = SuiteABC.from_target(target, required_tests, skipped_tests)
+    # THEN the suite does not keep the paired test in either list
+    assert suite.required_tests == {"Md5ChecksumTest"}
+    assert suite.skipped_tests == set()
+
+
+def test_that_a_tiff_suite_from_a_paired_target_has_only_the_tests_for_any_target(
+    test_files: dict[str, File],
+) -> None:
+    # GIVEN a paired target of two TIFF files
+    files = [test_files["good_tiff"], test_files["date_in_tag_tiff"]]
+    target = PairedTarget(files)
+    # WHEN I build a suite from the target
+    suite = SuiteABC.from_target(target)
+    # THEN the suite is a TIFF suite without the SingleTarget tests
+    assert isinstance(suite, TiffSuite)
+    test_names = {test.type for test in suite.tests}
+    assert test_names == {"FileExtensionTest", "Md5ChecksumTest"}
+
+
+def test_that_a_fastq_suite_from_a_single_target_survives_serialization(
+    test_targets: dict[str, SingleTarget],
+) -> None:
+    # GIVEN a FASTQ suite with a single target. The FASTQ test file has no
+    # md5_checksum, so Md5ChecksumTest is skipped.
+    target = test_targets["good_fastq"]
+    suite = SuiteABC.from_target(target, skipped_tests=["Md5ChecksumTest"])
+    # WHEN I serialize and deserialize the suite
+    suite_from_dict = SuiteABC.from_dict(suite.to_dict())
+    # THEN it has the same tests and required tests
+    assert isinstance(suite_from_dict, FastqSuite)
+    assert {test.type for test in suite_from_dict.tests} == {
+        test.type for test in suite.tests
+    }
+    assert suite_from_dict.required_tests == suite.required_tests
+    assert suite_from_dict.skipped_tests == {"Md5ChecksumTest"}
 
 
 def test_that_a_suite_will_consider_non_required_failed_tests(test_targets):

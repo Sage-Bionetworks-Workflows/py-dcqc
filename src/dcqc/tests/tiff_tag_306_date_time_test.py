@@ -3,7 +3,7 @@ from dcqc.tests.base_test import ExternalBaseTest, Process, TestTier
 from dcqc.tests.constants import TIFFTOOLS_CONTAINER
 
 
-class TiffTag306DateTimeTest(ExternalBaseTest):
+class TiffTag306DateTimeTest(ExternalBaseTest[SingleTarget]):
     """Tests if a tiff file has the `306` date/time tag in its metadata.
     Used for detecting potential PHI in files.
     """
@@ -12,7 +12,6 @@ class TiffTag306DateTimeTest(ExternalBaseTest):
     pass_code = 1
     fail_code = 0
     failure_reason_location = "std_out"
-    target: SingleTarget
 
     def generate_process(self) -> Process:
         path = self.target.file.stage()

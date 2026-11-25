@@ -6,11 +6,10 @@ from dcqc.target import PairedTarget
 from dcqc.tests.base_test import InternalBaseTest, TestStatus, TestTier
 
 
-class PairedFastqParityTest(InternalBaseTest):
+class PairedFastqParityTest(InternalBaseTest[PairedTarget]):
     """Test that paired FASTQ files have the same number of lines."""
 
     tier = TestTier.INTERNAL_CONFORMANCE
-    target: PairedTarget
 
     def compute_status(self) -> TestStatus:
         """Compute test status."""

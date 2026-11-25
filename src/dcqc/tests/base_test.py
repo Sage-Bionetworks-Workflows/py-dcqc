@@ -9,7 +9,7 @@ from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Generic, Optional, TypeVar
+from typing import Any, ClassVar, Generic, Optional, TypeVar, get_args, get_origin
 
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
 from dcqc.target import BaseTarget
@@ -36,6 +36,55 @@ class TestTier(Enum):
     SUBJECTIVE_CONFORMANCE = 4
 
 
+def get_target_type_argument(cls: type) -> Optional[type[BaseTarget]]:
+    """Get the target class that a test class gives as the type argument of a base.
+
+    BaseTest is generic in Target. A subclass gives its target class one
+    time, as the type argument of its base class, for example
+    InternalBaseTest[SingleTarget]. Base classes are evaluated when the
+    class is defined, so this works on every supported Python version,
+    with no eval.
+
+    Only the bases in the class statement of cls are read, not the bases
+    of its parents. Only a base whose origin is a subclass of BaseTest is
+    read, so an unrelated generic base, for example SomeMixin[int], is
+    ignored. A base whose type argument is still a TypeVar, for example
+    InternalBaseTest[Target], is ignored too.
+
+    Args:
+        cls: The new class, from BaseTest.__init_subclass__.
+
+    Raises:
+        TypeError: If the type argument is not a BaseTarget subclass, for
+            example a Union, or if more than one base gives a target class.
+
+    Returns:
+        The target class, or None if cls gives no type argument. Then the
+        caller keeps the target_cls that cls inherits from its parent.
+    """
+    target_classes: list[type[BaseTarget]] = []
+    for base in cls.__dict__.get("__orig_bases__", ()):
+        origin = get_origin(base)
+        if not (isinstance(origin, type) and issubclass(origin, BaseTest)):
+            continue
+        args = get_args(base)
+        if not args or isinstance(args[0], TypeVar):
+            continue
+        target_cls = args[0]
+        if not (isinstance(target_cls, type) and issubclass(target_cls, BaseTarget)):
+            message = (
+                f"{cls.__name__} must give a BaseTarget subclass as the "
+                f"target type, not {target_cls!r}."
+            )
+            raise TypeError(message)
+        target_classes.append(target_cls)
+    if len(target_classes) > 1:
+        names = [target_cls.__name__ for target_cls in target_classes]
+        message = f"{cls.__name__} must give one target type, not {names}."
+        raise TypeError(message)
+    return target_classes[0] if target_classes else None
+
+
 # TODO: Look into the @typing.final decorator
 class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     """Abstract base class for QC tests.
@@ -53,6 +102,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
 
     # Class attributes
     tier: TestTier
+    target_cls: ClassVar[type[BaseTarget]] = BaseTarget
     is_external_test: bool = False
 
     # Instance attributes
@@ -60,6 +110,29 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     target: Target
     status_reason: str = ""
     metrics: dict[str, Any]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Set target_cls from the type argument of the base class.
+
+        A test gives its target class one time, as the type argument of
+        its base class, for example InternalBaseTest[SingleTarget]. Then
+        mypy and target_cls get the same class. A test that does not give
+        a type argument inherits target_cls from its parent.
+
+        If the check fails, the class is removed from the registry before
+        the error is raised, so that get_subclass_by_name cannot return it.
+
+        Raises:
+            TypeError: If the type argument is not a BaseTarget subclass.
+        """
+        super().__init_subclass__(**kwargs)
+        try:
+            target_cls = get_target_type_argument(cls)
+        except TypeError:
+            cls.mark_registration_failed()
+            raise
+        if target_cls is not None:
+            cls.target_cls = target_cls
 
     def __init__(self, target: Target, skip: bool = False):
         self.type = self.__class__.__name__
@@ -191,7 +264,7 @@ class Process(SerializableMixin):
         return process
 
 
-class ExternalTestMixin(BaseTest):
+class ExternalTestMixin(BaseTest[Target]):
     """Class Mixin for external tests."""
 
     # Class attributes
@@ -260,9 +333,9 @@ class ExternalTestMixin(BaseTest):
     #     return dictionary
 
 
-class InternalBaseTest(BaseTest):
+class InternalBaseTest(BaseTest[Target]):
     """Base class for all internal tests."""
 
 
-class ExternalBaseTest(ExternalTestMixin, BaseTest):
+class ExternalBaseTest(ExternalTestMixin[Target]):
     """Base class for all external tests."""
