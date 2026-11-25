@@ -182,6 +182,26 @@ class TestMd5ChecksumTest:
         assert test.metrics == {"md5_checksum": {bad_file.url: actual_md5}}
         assert test.status_reason.endswith(f"for: {bad_file.name}")
 
+    def test_that_the_md5_checksum_test_fails_without_a_file_name_lookup(
+        self, test_files: dict[str, File], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # GIVEN a file with a wrong checksum whose name lookup cannot reach
+        # the file system, as for a remote file when the network is down
+        date_file = test_files["date_string_txt"]
+        bad_file = File(date_file.url, {"file_type": "txt", "md5_checksum": "wrong"})
+        expected_name = bad_file.stage().name
+
+        def fail_name_lookup(self: File) -> str:
+            raise ConnectionError("no network")
+
+        monkeypatch.setattr(File, "name", property(fail_name_lookup))
+        test = tests.Md5ChecksumTest(SingleTarget([bad_file]))
+        # WHEN I compute the test status
+        status = test.get_status()
+        # THEN the test fails, not errors, and names the staged file
+        assert status == TestStatus.FAIL
+        assert test.status_reason.endswith(f"for: {expected_name}")
+
     def test_that_the_md5_checksum_test_records_files_with_the_same_name(
         self, tmp_path: Path
     ) -> None:

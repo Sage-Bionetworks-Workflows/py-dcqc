@@ -29,7 +29,7 @@ class Md5ChecksumTest(InternalBaseTest[BaseTarget]):
             actual_md5 = self._compute_md5_checksum(path)
             if expected_md5 != actual_md5:
                 mismatches[file.url] = actual_md5
-                mismatched_names.append(file.name)
+                mismatched_names.append(path.name)
         if not mismatches:
             return TestStatus.PASS
         self.status_reason = (
