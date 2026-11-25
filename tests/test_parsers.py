@@ -701,6 +701,40 @@ class TestCreateTargets:
         # AND no staged_files directory is made
         assert not (manifest.parent / "staged_files").exists()
 
+    @pytest.mark.slow
+    def test_that_both_remote_files_of_a_pair_are_staged_in_their_own_directory(
+        self, write_manifest: Callable
+    ) -> None:
+        """Make sure that a remote pair is staged against live Synapse.
+
+        Each file of the pair must be downloaded into the
+        staged_files/index_<number> directory of its own row. Both rows point
+        at REMOTE_URL, so the two files have the same name, and only the
+        directory keeps them apart.
+
+        Args:
+            write_manifest: Fixture that writes the manifest.
+        """
+        # GIVEN a manifest where two remote FASTQ rows share a grouping value,
+        # and a parser that stages files
+        rows: list[tuple[str, str | None]] = [("FASTQ", "pair"), ("FASTQ", "pair")]
+        manifest = write_manifest(rows, remote_rows={1, 2})
+
+        # WHEN the targets are created
+        targets = list(CsvParser(manifest, stage_files=True).create_targets())
+
+        # THEN the two rows are one PairedTarget
+        assert len(targets) == 1
+        target = targets[0]
+        assert isinstance(target, PairedTarget)
+
+        # AND each file is staged in the directory of its own row
+        staged_dir = manifest.parent / "staged_files"
+        for index, file in enumerate(target.files, start=1):
+            local_path = file.local_path
+            assert local_path.parent == staged_dir / f"index_{index}"
+            assert local_path.is_file()
+
 
 class TestBuildTargets:
     """Tests for build_targets.

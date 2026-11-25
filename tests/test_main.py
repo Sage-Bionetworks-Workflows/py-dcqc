@@ -320,8 +320,16 @@ def test_pipeline_with_grouped_targets(
     rows = run_pipeline(input_csv, output_dir)
 
     # THEN the two FASTQ rows are one target and both get its results
-    # Three single-file targets and one PairedTarget for the two FASTQ rows
-    assert len(list((output_dir / "targets").iterdir())) == 4
+    # Three single-file targets and one PairedTarget for the two FASTQ rows.
+    # The pair (rows 2 and 4) gets the ID of its lowest row, so no target
+    # has ID 0004.
+    names = sorted(path.name for path in (output_dir / "targets").iterdir())
+    assert names == [
+        "target-0001.json",
+        "target-0002.json",
+        "target-0003.json",
+        "target-0005.json",
+    ]
     assert [row["url"] for row in rows] == [
         "test.txt",
         "fastq1.fastq",
