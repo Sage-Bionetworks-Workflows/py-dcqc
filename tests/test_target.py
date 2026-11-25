@@ -183,3 +183,15 @@ def test_that_the_target_error_message_starts_with_the_class_name(
     # THEN the error message starts with the class name
     with pytest.raises(ValueError, match=message):
         PairedTarget([txt_file])
+
+
+def test_that_the_target_error_message_includes_the_target_id(
+    test_files: dict[str, File],
+) -> None:
+    # GIVEN one TXT file for a paired target with an ID
+    txt_file = test_files["good_txt"]
+    message = "PairedTarget 0007 has a file count of 1."
+    # WHEN I create the paired target
+    # THEN the error message gives the class name and the target ID
+    with pytest.raises(ValueError, match=message):
+        PairedTarget([txt_file], id="0007")

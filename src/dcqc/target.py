@@ -58,7 +58,8 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
         self.type = self.__class__.__name__
         problems = self.validate_files(self.files)
         if problems:
-            raise ValueError(f"{self.type} " + " ".join(problems))
+            label = f"{self.type} {self.id}" if self.id else self.type
+            raise ValueError(f"{label} " + " ".join(problems))
 
     @classmethod
     def validate_files(cls, files: list[File]) -> list[str]:
