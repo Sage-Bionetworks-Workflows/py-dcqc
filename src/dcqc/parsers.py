@@ -126,7 +126,7 @@ class CsvParser:
             index: The row number of the file, which starts at 1.
             file: The file to stage.
         """
-        if not file.is_file_local() and self.stage_files:
+        if not file.is_url_local() and self.stage_files:
             destination = self.path.parent / "staged_files" / f"index_{index}"
             destination.mkdir(parents=True, exist_ok=True)
             file.stage(destination, overwrite=True)
