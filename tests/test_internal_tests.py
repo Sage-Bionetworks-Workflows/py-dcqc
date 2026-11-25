@@ -135,6 +135,26 @@ class TestFileExtensionTest:
             f"one of: {self.bad_txt_target.get_file_type().file_extensions}"
         )
 
+    def test_that_a_pair_with_a_bad_second_file_extension_fails(
+        self, tmp_path: Path
+    ) -> None:
+        # GIVEN a paired target where only the second FASTQ file has a bad extension
+        good_path = tmp_path / "sample_R1.fastq"
+        bad_path = tmp_path / "sample_R2.txt"
+        good_path.touch()
+        bad_path.touch()
+        metadata = {"file_type": "fastq"}
+        good_file = File(good_path.as_posix(), metadata)
+        bad_file = File(bad_path.as_posix(), metadata)
+        test = tests.FileExtensionTest(PairedTarget([good_file, bad_file]))
+        # WHEN I compute the test status
+        status = test.get_status()
+        # THEN the test fails and the status reason names the second file
+        assert status == TestStatus.FAIL
+        assert test.status_reason.startswith(
+            f"File extension of {bad_file.name} does not match"
+        )
+
 
 class TestMd5ChecksumTest:
     @pytest.fixture(scope="function", autouse=True)
@@ -181,6 +201,42 @@ class TestMd5ChecksumTest:
         actual_md5 = test_files["date_string_txt"].get_metadata("md5_checksum")
         assert test.metrics == {"md5_checksum": {bad_file.url: actual_md5}}
         assert test.status_reason.endswith(f"for: {bad_file.name}")
+
+    def test_that_the_md5_checksum_test_records_both_failing_files_of_a_pair(
+        self, test_files: dict[str, File]
+    ) -> None:
+        # GIVEN a paired target where both files have a wrong checksum
+        metadata = {"file_type": "txt", "md5_checksum": "wrong"}
+        good_txt = test_files["good_txt"]
+        date_txt = test_files["date_string_txt"]
+        first_file = File(good_txt.url, metadata)
+        second_file = File(date_txt.url, metadata)
+        test = tests.Md5ChecksumTest(PairedTarget([first_file, second_file]))
+        # WHEN I compute the test status
+        status = test.get_status()
+        # THEN the test fails, the metrics hold both files, and the reason names both
+        assert status == TestStatus.FAIL
+        assert test.metrics == {
+            "md5_checksum": {
+                first_file.url: good_txt.get_metadata("md5_checksum"),
+                second_file.url: date_txt.get_metadata("md5_checksum"),
+            }
+        }
+        assert test.status_reason.endswith(
+            f"for: {first_file.name}, {second_file.name}"
+        )
+
+    def test_that_the_md5_checksum_test_passes_on_a_pair_of_correct_files(
+        self, test_files: dict[str, File]
+    ) -> None:
+        # GIVEN a paired target where both files have a correct checksum
+        target = PairedTarget([test_files["good_txt"], test_files["date_string_txt"]])
+        test = tests.Md5ChecksumTest(target)
+        # WHEN I compute the test status
+        status = test.get_status()
+        # THEN the test passes and no checksum is recorded as a metric
+        assert status == TestStatus.PASS
+        assert test.metrics == {}
 
     def test_that_the_md5_checksum_test_fails_without_a_file_name_lookup(
         self, test_files: dict[str, File], monkeypatch: pytest.MonkeyPatch

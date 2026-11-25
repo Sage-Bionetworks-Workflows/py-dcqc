@@ -45,7 +45,7 @@ def test_that_a_paired_target_can_be_saved_and_restored_without_changing(test_fi
     assert target_1_dict == target_2_dict
 
 
-def test_for_an_error_when_creating_paired_file_target_with_one_file(test_files):
+def test_for_an_error_when_creating_paired_target_with_a_bare_file(test_files):
     test_file = test_files["good_txt"]
     with pytest.raises(TypeError):
         PairedTarget(test_file)
@@ -66,7 +66,7 @@ def test_for_an_error_when_creating_paired_file_target_with_one_file_in_list(
     test_files,
 ):
     test_file = test_files["good_txt"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must have exactly 2 files"):
         PairedTarget([test_file])
 
 
