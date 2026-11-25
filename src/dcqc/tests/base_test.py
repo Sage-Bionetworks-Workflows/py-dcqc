@@ -111,7 +111,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
     status_reason: str = ""
     metrics: dict[str, Any]
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Set target_cls from the type argument of the base class.
 
         A test gives its target class one time, as the type argument of
