@@ -4,7 +4,7 @@ from abc import ABC
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar, Optional, TypeVar, get_args, get_origin
+from typing import ClassVar, Optional
 
 from dcqc.file import File, FileType
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
@@ -234,58 +234,3 @@ class PairedTarget(BaseTarget):
     """Paired (two-file) target."""
 
     n_files: ClassVar[int] = 2
-
-
-Target = TypeVar("Target", bound=BaseTarget)
-
-
-def get_target_type_argument(cls: type, anchor: type) -> Optional[type[BaseTarget]]:
-    """Get the target class that a class gives as the type argument of a base.
-
-    BaseTest is generic in Target. A subclass gives its target class one
-    time, as the type argument of its base class, for example
-    InternalBaseTest[SingleTarget]. (SuiteABC is not generic. A suite sets
-    its target_cls class attribute directly.)
-    Base classes are evaluated when the class is defined, so this works
-    on every supported Python version, with no eval.
-
-    Only the bases in the class statement of cls are read, not the bases
-    of its parents. Only a base whose origin is a subclass of anchor is
-    read, so an unrelated generic base, for example SomeMixin[int], is
-    ignored. A base whose type argument is still a TypeVar, for example
-    InternalBaseTest[Target], is ignored too.
-
-    Args:
-        cls: The new class, from __init_subclass__.
-        anchor: The generic root class, for example BaseTest. This module
-            cannot import it, because it imports this module.
-
-    Raises:
-        TypeError: If the type argument is not a BaseTarget subclass, for
-            example a Union, or if more than one base gives a target class.
-
-    Returns:
-        The target class, or None if cls gives no type argument. Then the
-        caller keeps the target_cls that cls inherits from its parent.
-    """
-    target_classes: list[type[BaseTarget]] = []
-    for base in cls.__dict__.get("__orig_bases__", ()):
-        origin = get_origin(base)
-        if not (isinstance(origin, type) and issubclass(origin, anchor)):
-            continue
-        args = get_args(base)
-        if not args or isinstance(args[0], TypeVar):
-            continue
-        target_cls = args[0]
-        if not (isinstance(target_cls, type) and issubclass(target_cls, BaseTarget)):
-            message = (
-                f"{cls.__name__} must give a BaseTarget subclass as the "
-                f"target type, not {target_cls!r}."
-            )
-            raise TypeError(message)
-        target_classes.append(target_cls)
-    if len(target_classes) > 1:
-        names = [target_cls.__name__ for target_cls in target_classes]
-        message = f"{cls.__name__} must give one target type, not {names}."
-        raise TypeError(message)
-    return target_classes[0] if target_classes else None

@@ -9,10 +9,12 @@ from enum import Enum
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Generic, Optional
+from typing import Any, ClassVar, Generic, Optional, TypeVar, get_args, get_origin
 
 from dcqc.mixins import SerializableMixin, SerializedObject, SubclassRegistryMixin
-from dcqc.target import BaseTarget, Target, get_target_type_argument
+from dcqc.target import BaseTarget
+
+Target = TypeVar("Target", bound=BaseTarget)
 
 
 class TestStatus(Enum):
@@ -32,6 +34,55 @@ class TestTier(Enum):
     INTERNAL_CONFORMANCE = 2
     EXTERNAL_CONFORMANCE = 3
     SUBJECTIVE_CONFORMANCE = 4
+
+
+def get_target_type_argument(cls: type) -> Optional[type[BaseTarget]]:
+    """Get the target class that a test class gives as the type argument of a base.
+
+    BaseTest is generic in Target. A subclass gives its target class one
+    time, as the type argument of its base class, for example
+    InternalBaseTest[SingleTarget]. Base classes are evaluated when the
+    class is defined, so this works on every supported Python version,
+    with no eval.
+
+    Only the bases in the class statement of cls are read, not the bases
+    of its parents. Only a base whose origin is a subclass of BaseTest is
+    read, so an unrelated generic base, for example SomeMixin[int], is
+    ignored. A base whose type argument is still a TypeVar, for example
+    InternalBaseTest[Target], is ignored too.
+
+    Args:
+        cls: The new class, from BaseTest.__init_subclass__.
+
+    Raises:
+        TypeError: If the type argument is not a BaseTarget subclass, for
+            example a Union, or if more than one base gives a target class.
+
+    Returns:
+        The target class, or None if cls gives no type argument. Then the
+        caller keeps the target_cls that cls inherits from its parent.
+    """
+    target_classes: list[type[BaseTarget]] = []
+    for base in cls.__dict__.get("__orig_bases__", ()):
+        origin = get_origin(base)
+        if not (isinstance(origin, type) and issubclass(origin, BaseTest)):
+            continue
+        args = get_args(base)
+        if not args or isinstance(args[0], TypeVar):
+            continue
+        target_cls = args[0]
+        if not (isinstance(target_cls, type) and issubclass(target_cls, BaseTarget)):
+            message = (
+                f"{cls.__name__} must give a BaseTarget subclass as the "
+                f"target type, not {target_cls!r}."
+            )
+            raise TypeError(message)
+        target_classes.append(target_cls)
+    if len(target_classes) > 1:
+        names = [target_cls.__name__ for target_cls in target_classes]
+        message = f"{cls.__name__} must give one target type, not {names}."
+        raise TypeError(message)
+    return target_classes[0] if target_classes else None
 
 
 # TODO: Look into the @typing.final decorator
@@ -76,7 +127,7 @@ class BaseTest(SerializableMixin, SubclassRegistryMixin, ABC, Generic[Target]):
         """
         super().__init_subclass__(**kwargs)
         try:
-            target_cls = get_target_type_argument(cls, BaseTest)
+            target_cls = get_target_type_argument(cls)
         except TypeError:
             cls.mark_registration_failed()
             raise
