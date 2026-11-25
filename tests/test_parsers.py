@@ -8,7 +8,7 @@ from pytest_mock import MockerFixture
 
 from dcqc.file import File
 from dcqc.mixins import SerializableMixin
-from dcqc.parsers import CsvParser, JsonParser
+from dcqc.parsers import CsvParser, JsonParser, ManifestRow, build_targets
 from dcqc.suites.suite_abc import SuiteABC
 from dcqc.suites.suites import FastqSuite, TXTSuite
 from dcqc.target import PairedTarget, SingleTarget
@@ -700,6 +700,113 @@ class TestCreateTargets:
 
         # AND no staged_files directory is made
         assert not (manifest.parent / "staged_files").exists()
+
+
+class TestBuildTargets:
+    """Tests for build_targets.
+
+    Each test gives the rows in memory, so no manifest is written. Each row
+    points at a local test file, so no file is downloaded.
+    """
+
+    @pytest.fixture
+    def make_row(self, get_data: Callable) -> Callable:
+        """Give a function that makes one ManifestRow.
+
+        Args:
+            get_data: Fixture factory that gives the path of a test data file.
+
+        Returns:
+            A function that takes a row number, a file type, TXT, TIFF, FASTQ
+            or an unknown name, and a group value, and returns the row.
+        """
+        urls = {
+            "FASTQ": get_data("fastq1.fastq"),
+            "TIFF": get_data("circuit.tif"),
+            "TXT": get_data("test.txt"),
+        }
+
+        def _make_row(number: int, file_type: str, group: str = "") -> ManifestRow:
+            url = str(urls.get(file_type, urls["TXT"]))
+            return ManifestRow(number, File(url, {"file_type": file_type}), group)
+
+        return _make_row
+
+    def test_that_rows_become_targets_without_a_change_to_the_rows(
+        self, mocker: MockerFixture, make_row: Callable
+    ) -> None:
+        """Make sure that build_targets is pure and keeps the rows of each target.
+
+        Args:
+            mocker: Fixture that patches File.stage.
+            make_row: Fixture that makes one ManifestRow.
+        """
+        # GIVEN two single TXT rows and a FASTQ group whose rows are not
+        # adjacent
+        rows = [
+            make_row(1, "TXT"),
+            make_row(2, "FASTQ", "a"),
+            make_row(3, "TXT"),
+            make_row(4, "FASTQ", "a"),
+        ]
+        metadata_before = [dict(row.file.metadata) for row in rows]
+        stage = mocker.patch.object(File, "stage")
+
+        # WHEN the targets are built
+        result = build_targets(rows)
+
+        # THEN the single rows come first, and then the group
+        targets = [manifest_target.target for manifest_target in result]
+        assert [type(target) for target in targets] == [
+            SingleTarget,
+            SingleTarget,
+            PairedTarget,
+        ]
+        assert [target.id for target in targets] == ["0001", "0003", "0002"]
+
+        # AND each target keeps its rows, with the same file objects
+        assert [row.number for row in result[2].rows] == [2, 4]
+        assert all(
+            target_file is row.file
+            for manifest_target in result
+            for target_file, row in zip(
+                manifest_target.target.files, manifest_target.rows
+            )
+        )
+
+        # AND no file is staged, and no file metadata is changed
+        stage.assert_not_called()
+        assert [row.file.metadata for row in rows] == metadata_before
+
+    def test_for_one_error_that_lists_every_bad_row_and_group(
+        self, make_row: Callable
+    ) -> None:
+        """Make sure that all problems are given in one error, in order.
+
+        Args:
+            make_row: Fixture that makes one ManifestRow.
+        """
+        # GIVEN a single row with an unknown file type, a group of one row,
+        # and a TIFF group, whose suite has no paired test
+        rows = [
+            make_row(1, "TXT"),
+            make_row(2, "NOT-A-TYPE"),
+            make_row(3, "FASTQ", "a"),
+            make_row(4, "TIFF", "b"),
+            make_row(5, "TIFF", "b"),
+        ]
+
+        # WHEN the targets are built
+        # THEN one error is raised
+        with pytest.raises(ValueError) as error:
+            build_targets(rows)
+
+        # AND it has one line for each problem, single rows first
+        lines = str(error.value).splitlines()
+        assert len(lines) == 3
+        assert lines[0].startswith("Row 2 has an unknown file type.")
+        assert lines[1].startswith("Group (a) in rows [3] has a file count of 1.")
+        assert lines[2].startswith("Group (b) in rows [4, 5] has file type TIFF")
 
 
 class TestCreateSuites:

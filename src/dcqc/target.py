@@ -70,9 +70,9 @@ class BaseTarget(SerializableMixin, SubclassRegistryMixin, ABC):
         the file types are not checked.
 
         The method takes a list of files, not a target instance. Thus
-        CsvParser can do the check before it stages the files, and add
-        the row numbers to each message. __post_init__ uses the same
-        check, so the rule is in one place.
+        dcqc.parsers.build_targets can do the check before it makes the
+        target, and add the row numbers to each message. __post_init__
+        uses the same check, so the rule is in one place.
 
         Args:
             files: The files to check.
