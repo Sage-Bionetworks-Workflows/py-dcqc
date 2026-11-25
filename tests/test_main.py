@@ -91,9 +91,13 @@ def test_create_tests_with_paired_target(
     tests_dir = output_dir / "tests"
     args = ["create-tests", input_json, tests_dir]
     result = run_command(args)
-    # THEN the command succeeds and writes the paired FASTQ test
+    # THEN the command succeeds and writes exactly the expected test files
     check_command_result(result)
-    assert (tests_dir / "target.PairedFastqParityTest.json").exists()
+    assert {path.name for path in tests_dir.iterdir()} == {
+        "target.FileExtensionTest.json",
+        "target.Md5ChecksumTest.json",
+        "target.PairedFastqParityTest.json",
+    }
 
 
 def test_create_process(get_data, get_output):

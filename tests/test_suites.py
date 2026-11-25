@@ -212,8 +212,13 @@ def test_that_a_fastq_suite_is_built_from_a_paired_target(
     files = [test_files["good_fastq"], test_files["good_compressed_fastq"]]
     # WHEN I build a suite from the target
     suite = SuiteABC.from_target(PairedTarget(files))
-    # THEN the suite is a FASTQ suite
+    # THEN the suite is a FASTQ suite with exactly the expected tests
     assert isinstance(suite, FastqSuite)
+    assert {test.type for test in suite.tests} == {
+        "FileExtensionTest",
+        "Md5ChecksumTest",
+        "PairedFastqParityTest",
+    }
 
 
 def test_that_a_fastq_suite_is_built_from_tests_with_a_paired_target(
